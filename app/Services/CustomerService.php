@@ -13,12 +13,12 @@ class CustomerService
 {
     public function paginate(int $perPage = 20)
     {
-        return Customer::with(['preference', 'loyalty'])->orderByDesc('id')->paginate($perPage);
+        return Customer::with(['preference', 'loyalty'])->withCount('orders')->orderByDesc('id')->paginate($perPage);
     }
 
     public function findOrFail(int $id): Customer
     {
-        return Customer::with(['preference', 'loyalty', 'bodyProfile', 'bodyImages'])->findOrFail($id);
+        return Customer::with(['preference', 'loyalty', 'bodyProfile', 'bodyImages'])->withCount('orders')->findOrFail($id);
     }
 
     public function create(array $data): Customer

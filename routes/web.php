@@ -37,6 +37,9 @@ $router->group(['prefix' => 'api', 'namespace' => 'Api', 'middleware' => 'auth']
     $router->post('customers/{id:[0-9]+}/body-profile', 'CustomerController@upsertBodyProfile');
     $router->post('customers/{id:[0-9]+}/body-images', 'CustomerController@addBodyImage');
     $router->delete('customers/{id:[0-9]+}/body-images/{imageId:[0-9]+}', 'CustomerController@deleteBodyImage');
+    $router->post('customers/{id:[0-9]+}/body-images/upload/init', 'CustomerController@initBodyImageUpload');
+    $router->post('customers/{id:[0-9]+}/body-images/upload/chunk', 'CustomerController@uploadBodyImageChunk');
+    $router->post('customers/{id:[0-9]+}/body-images/upload/complete', 'CustomerController@completeBodyImageUpload');
 
     $router->get('appointment-services', 'AppointmentServiceController@index');
     $router->post('appointment-services', 'AppointmentServiceController@store');

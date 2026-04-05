@@ -3,13 +3,17 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
+use App\Services\ChunkUploadService;
 use App\Services\CustomerService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Validator;
 
 class CustomerController extends Controller
 {
-    public function __construct(private readonly CustomerService $customerService) {}
+    public function __construct(
+        private readonly CustomerService $customerService,
+        private readonly ChunkUploadService $chunkUploadService,
+    ) {}
 
     public function index(Request $request)
     {
@@ -97,5 +101,61 @@ class CustomerController extends Controller
     {
         $this->customerService->deleteBodyImage($id, $imageId);
         return response()->json(['message' => 'Deleted']);
+    }
+
+    public function initBodyImageUpload(int $id, Request $request)
+    {
+        $validator = Validator::make($request->all(), [
+            'image_type' => ['required', 'string', 'max:50'],
+            'original_name' => ['required', 'string', 'max:255'],
+            'total_chunks' => ['required', 'integer', 'min:1', 'max:10000'],
+        ]);
+
+        if ($validator->fails()) {
+            return response()->json(['message' => 'Validation failed', 'errors' => $validator->errors()], 422);
+        }
+
+        return response()->json(
+            $this->chunkUploadService->initCustomerBodyImageUpload(
+                $id,
+                (string)$request->input('image_type'),
+                (string)$request->input('original_name'),
+                (int)$request->input('total_chunks'),
+            ),
+            201,
+        );
+    }
+
+    public function uploadBodyImageChunk(int $id, Request $request)
+    {
+        $validator = Validator::make($request->all(), [
+            'upload_id' => ['required', 'string', 'max:64'],
+            'chunk_index' => ['required', 'integer', 'min:0', 'max:1000000'],
+        ]);
+
+        if ($validator->fails()) {
+            return response()->json(['message' => 'Validation failed', 'errors' => $validator->errors()], 422);
+        }
+
+        $chunk = $request->file('chunk');
+        if (!$chunk) {
+            return response()->json(['message' => 'Validation failed', 'errors' => ['chunk' => ['Chunk file is required']]], 422);
+        }
+
+        $this->chunkUploadService->storeChunk((string)$request->input('upload_id'), (int)$request->input('chunk_index'), $chunk);
+        return response()->json(['ok' => true]);
+    }
+
+    public function completeBodyImageUpload(int $id, Request $request)
+    {
+        $validator = Validator::make($request->all(), [
+            'upload_id' => ['required', 'string', 'max:64'],
+        ]);
+
+        if ($validator->fails()) {
+            return response()->json(['message' => 'Validation failed', 'errors' => $validator->errors()], 422);
+        }
+
+        return response()->json($this->chunkUploadService->completeCustomerBodyImageUpload((string)$request->input('upload_id')), 201);
     }
 }
