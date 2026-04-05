@@ -1,7 +1,8 @@
 import { useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Link } from "react-router-dom";
-import { Ruler, Search } from "lucide-react";
+import { Plus, Ruler, Search } from "lucide-react";
+import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import PageHeader from "@/components/PageHeader";
 import { listMeasurements } from "@/services/measurements";
@@ -23,7 +24,17 @@ export default function MeasurementList() {
 
   return (
     <div>
-      <PageHeader title="Measurements" subtitle="Customer measurement records" />
+      <PageHeader
+        title="Measurements"
+        subtitle="Customer measurement records"
+        actions={
+          <Button asChild size="sm">
+            <Link to="/measurements/new">
+              <Plus className="h-4 w-4 mr-1" /> New
+            </Link>
+          </Button>
+        }
+      />
 
       <div className="bg-card rounded-xl card-shadow p-4 mb-6">
         <div className="relative">
@@ -36,7 +47,14 @@ export default function MeasurementList() {
         {measurementsQuery.isLoading ? (
           <div className="text-sm text-muted-foreground">Loading...</div>
         ) : filtered.length === 0 ? (
-          <div className="text-sm text-muted-foreground">No measurements found</div>
+          <div className="text-sm text-muted-foreground flex items-center justify-between bg-card rounded-xl card-shadow p-5">
+            <span>No measurements found</span>
+            <Button asChild size="sm">
+              <Link to="/measurements/new">
+                <Plus className="h-4 w-4 mr-1" /> New
+              </Link>
+            </Button>
+          </div>
         ) : (
           filtered.map((m) => (
             <Link to={`/measurements/${m.id}`} key={m.id} className="bg-card rounded-xl card-shadow p-5 hover:card-shadow-hover transition-shadow">

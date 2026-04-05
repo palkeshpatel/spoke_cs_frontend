@@ -17,7 +17,7 @@ export default function MeasurementDetail() {
   const [isEditing, setIsEditing] = useState(false);
   const [valuesDraft, setValuesDraft] = useState<Record<number, string>>({});
   const [notesDraft, setNotesDraft] = useState("");
-  const [takenByDraft, setTakenByDraft] = useState<string>("");
+  const [takenByDraft, setTakenByDraft] = useState<string>("__none__");
 
   const measurementQuery = useQuery({
     queryKey: ["measurements", "detail", measurementId],
@@ -59,7 +59,7 @@ export default function MeasurementDetail() {
     }
     setValuesDraft(next);
     setNotesDraft(measurement.notes ?? "");
-    setTakenByDraft(measurement.taken_by ? String(measurement.taken_by) : "");
+    setTakenByDraft(measurement.taken_by ? String(measurement.taken_by) : "__none__");
   }, [fields, measurement, valuesByFieldId]);
 
   useEffect(() => {
@@ -77,7 +77,7 @@ export default function MeasurementDetail() {
       });
 
       return updateMeasurement(measurementId, {
-        taken_by: takenByDraft ? Number(takenByDraft) : null,
+        taken_by: takenByDraft && takenByDraft !== "__none__" ? Number(takenByDraft) : null,
         notes: notesDraft || null,
         values,
       });
@@ -132,11 +132,11 @@ export default function MeasurementDetail() {
           <EditableField label="Garment Type" value={measurement.garment_type} isEditing={false} onChange={() => {}} />
           <EditableField
             label="Taken By"
-            value={isEditing ? takenByDraft : measurement.taken_by ? String(measurement.taken_by) : ""}
+            value={isEditing ? takenByDraft : measurement.taker?.name ?? "—"}
             isEditing={isEditing}
             type="select"
             options={[
-              { value: "", label: "—" },
+              { value: "__none__", label: "—" },
               ...(staffQuery.data ?? []).map((s) => ({ value: String(s.id), label: s.name })),
             ]}
             onChange={(v) => setTakenByDraft(v)}

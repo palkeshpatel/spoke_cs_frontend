@@ -15,6 +15,7 @@ import AppointmentDetail from "@/views/AppointmentDetail";
 import AppointmentNew from "@/views/AppointmentNew";
 import MeasurementList from "@/views/MeasurementList";
 import MeasurementDetail from "@/views/MeasurementDetail";
+import MeasurementNew from "@/views/MeasurementNew";
 import OrderList from "@/views/OrderList";
 import OrderDetail from "@/views/OrderDetail";
 import OrderNew from "@/views/OrderNew";
@@ -59,6 +60,7 @@ const App = () => (
                   <Route path="/appointments/new" element={<AppointmentNew />} />
                   <Route path="/appointments/:id" element={<AppointmentDetail />} />
                   <Route path="/measurements" element={<MeasurementList />} />
+                  <Route path="/measurements/new" element={<MeasurementNew />} />
                   <Route path="/measurements/:id" element={<MeasurementDetail />} />
                   <Route path="/orders" element={<OrderList />} />
                   <Route path="/orders/new" element={<OrderNew />} />

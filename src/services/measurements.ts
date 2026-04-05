@@ -93,6 +93,17 @@ export async function updateMeasurement(
   return normalizeMeasurement(res);
 }
 
+export async function createMeasurement(payload: {
+  customer_id: number;
+  garment_type: string;
+  taken_by?: number | null;
+  notes?: string | null;
+  values?: Array<{ field_id: number; value: number | null }>;
+}) {
+  const res = await apiRequest<Raw>(`/api/measurements`, { method: "POST", body: payload });
+  return normalizeMeasurement(res);
+}
+
 export async function listMeasurementFields(garmentType?: string) {
   const query = garmentType ? `?garment_type=${encodeURIComponent(garmentType)}` : "";
   return apiRequest<MeasurementFieldDto[]>(`/api/measurement-fields${query}`);
@@ -101,4 +112,3 @@ export async function listMeasurementFields(garmentType?: string) {
 export async function listStaff() {
   return apiRequest<StaffDto[]>("/api/staff");
 }
-
