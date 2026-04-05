@@ -5,6 +5,7 @@ import { Plus, Ruler, Search } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import PageHeader from "@/components/PageHeader";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { listMeasurements } from "@/services/measurements";
 
 export default function MeasurementList() {
@@ -16,11 +17,52 @@ export default function MeasurementList() {
   });
 
   const measurements = useMemo(() => measurementsQuery.data?.data ?? [], [measurementsQuery.data]);
+
+  const groupedByCustomer = useMemo(() => {
+    const map = new Map<
+      number,
+      {
+        customerId: number;
+        customerName: string;
+        customerCode: string;
+        latestUpdatedAt: string;
+        byGarment: Partial<Record<"Suit" | "Shirt" | "Pants", (typeof measurements)[number]>>;
+      }
+    >();
+
+    for (const m of measurements) {
+      const customerId = m.customer_id;
+      const existing = map.get(customerId);
+      const customerName = m.customer?.name ?? "—";
+      const customerCode = m.customer?.customer_code ?? "";
+      const updatedAt = m.updated_at;
+
+      const garment = m.garment_type as "Suit" | "Shirt" | "Pants";
+      const byGarment = existing?.byGarment ?? {};
+      const currentForGarment = byGarment[garment];
+      if (!currentForGarment || Number(m.id) > Number(currentForGarment.id)) {
+        byGarment[garment] = m;
+      }
+
+      map.set(customerId, {
+        customerId,
+        customerName,
+        customerCode,
+        latestUpdatedAt: existing ? (existing.latestUpdatedAt > updatedAt ? existing.latestUpdatedAt : updatedAt) : updatedAt,
+        byGarment,
+      });
+    }
+
+    return Array.from(map.values()).sort((a, b) => (a.latestUpdatedAt < b.latestUpdatedAt ? 1 : -1));
+  }, [measurements]);
+
   const filtered = useMemo(() => {
     const q = search.trim().toLowerCase();
-    if (!q) return measurements;
-    return measurements.filter((m) => (m.customer?.name ?? "").toLowerCase().includes(q));
-  }, [measurements, search]);
+    if (!q) return groupedByCustomer;
+    return groupedByCustomer.filter((g) => {
+      return g.customerName.toLowerCase().includes(q) || (g.customerCode ? g.customerCode.toLowerCase().includes(q) : false);
+    });
+  }, [groupedByCustomer, search]);
 
   return (
     <div>
@@ -56,26 +98,65 @@ export default function MeasurementList() {
             </Button>
           </div>
         ) : (
-          filtered.map((m) => (
-            <Link to={`/measurements/${m.id}`} key={m.id} className="bg-card rounded-xl card-shadow p-5 hover:card-shadow-hover transition-shadow">
+          filtered.map((g) => (
+            <div key={g.customerId} className="bg-card rounded-xl card-shadow p-5">
               <div className="flex items-center justify-between mb-4">
-                <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 rounded-full bg-accent/10 flex items-center justify-center">
+                <div className="flex items-center gap-3 min-w-0">
+                  <div className="w-10 h-10 rounded-full bg-accent/10 flex items-center justify-center shrink-0">
                     <Ruler className="h-4 w-4 text-accent" />
                   </div>
-                  <div>
-                    <p className="text-sm font-semibold">{m.customer?.name ?? "—"}</p>
-                    <p className="text-xs text-muted-foreground">Updated {m.updated_at}</p>
+                  <div className="min-w-0">
+                    <p className="text-sm font-semibold truncate">{g.customerName}</p>
+                    <p className="text-xs text-muted-foreground truncate">
+                      {g.customerCode ? `${g.customerCode} · ` : ""}Updated {g.latestUpdatedAt}
+                    </p>
                   </div>
                 </div>
+                <Button asChild size="sm" variant="outline">
+                  <Link to={`/measurements/new?customer_id=${g.customerId}`}>
+                    <Plus className="h-4 w-4 mr-1" /> Add
+                  </Link>
+                </Button>
               </div>
-              <div className="flex gap-2 flex-wrap">
-                <span className="text-xs border border-border rounded-full px-2.5 py-0.5">{m.garment_type}</span>
-                {m.taker?.name ? (
-                  <span className="text-xs border border-border rounded-full px-2.5 py-0.5">By {m.taker.name}</span>
-                ) : null}
-              </div>
-            </Link>
+
+              <Tabs defaultValue={(g.byGarment.Suit ? "Suit" : g.byGarment.Shirt ? "Shirt" : g.byGarment.Pants ? "Pants" : "Suit")}>
+                <TabsList className="mb-4">
+                  <TabsTrigger value="Suit">Suit</TabsTrigger>
+                  <TabsTrigger value="Shirt">Shirt</TabsTrigger>
+                  <TabsTrigger value="Pants">Pants</TabsTrigger>
+                </TabsList>
+
+                {(["Suit", "Shirt", "Pants"] as const).map((garment) => {
+                  const m = g.byGarment[garment];
+                  return (
+                    <TabsContent key={garment} value={garment}>
+                      {m ? (
+                        <div className="flex items-center justify-between gap-3">
+                          <div className="flex gap-2 flex-wrap">
+                            <span className="text-xs border border-border rounded-full px-2.5 py-0.5">{m.garment_type}</span>
+                            {m.taker?.name ? (
+                              <span className="text-xs border border-border rounded-full px-2.5 py-0.5">By {m.taker.name}</span>
+                            ) : null}
+                          </div>
+                          <Button asChild size="sm">
+                            <Link to={`/measurements/${m.id}`}>Open</Link>
+                          </Button>
+                        </div>
+                      ) : (
+                        <div className="flex items-center justify-between gap-3">
+                          <div className="text-sm text-muted-foreground">No {garment} measurement yet</div>
+                          <Button asChild size="sm">
+                            <Link to={`/measurements/new?customer_id=${g.customerId}&garment_type=${encodeURIComponent(garment)}`}>
+                              <Plus className="h-4 w-4 mr-1" /> Create
+                            </Link>
+                          </Button>
+                        </div>
+                      )}
+                    </TabsContent>
+                  );
+                })}
+              </Tabs>
+            </div>
           ))
         )}
       </div>

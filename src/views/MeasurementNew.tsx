@@ -1,18 +1,20 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { useNavigate } from "react-router-dom";
+import { useLocation, useNavigate } from "react-router-dom";
 import PageHeader from "@/components/PageHeader";
 import SectionCard from "@/components/SectionCard";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { toast } from "@/hooks/use-toast";
 import { listCustomers } from "@/services/customers";
 import { createMeasurement, listMeasurementFields, listStaff } from "@/services/measurements";
 
 export default function MeasurementNew() {
   const navigate = useNavigate();
+  const location = useLocation();
   const queryClient = useQueryClient();
 
   const [customerId, setCustomerId] = useState<string | undefined>(undefined);
@@ -20,6 +22,17 @@ export default function MeasurementNew() {
   const [takenBy, setTakenBy] = useState<string>("__none__");
   const [notes, setNotes] = useState<string>("");
   const [valuesDraft, setValuesDraft] = useState<Record<number, string>>({});
+
+  useEffect(() => {
+    const params = new URLSearchParams(location.search);
+    const cid = params.get("customer_id");
+    const gt = params.get("garment_type");
+    if (cid) setCustomerId(cid);
+    if (gt === "Suit" || gt === "Shirt" || gt === "Pants") {
+      setGarmentType(gt);
+      setValuesDraft({});
+    }
+  }, [location.search]);
 
   const customersQuery = useQuery({
     queryKey: ["customers", "list"],
@@ -98,19 +111,19 @@ export default function MeasurementNew() {
 
             <div>
               <label className="text-xs text-muted-foreground mb-1 block">Garment Type *</label>
-              <Select value={garmentType} onValueChange={(v) => {
-                setGarmentType(v);
-                setValuesDraft({});
-              }}>
-                <SelectTrigger>
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="Suit">Suit</SelectItem>
-                  <SelectItem value="Shirt">Shirt</SelectItem>
-                  <SelectItem value="Pants">Pants</SelectItem>
-                </SelectContent>
-              </Select>
+              <Tabs
+                value={garmentType}
+                onValueChange={(v) => {
+                  setGarmentType(v);
+                  setValuesDraft({});
+                }}
+              >
+                <TabsList className="w-full">
+                  <TabsTrigger value="Suit" className="flex-1">Suit</TabsTrigger>
+                  <TabsTrigger value="Shirt" className="flex-1">Shirt</TabsTrigger>
+                  <TabsTrigger value="Pants" className="flex-1">Pants</TabsTrigger>
+                </TabsList>
+              </Tabs>
             </div>
 
             <div>
