@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { useLocation, useNavigate } from "react-router-dom";
+import { useLocation, useNavigate, useParams } from "react-router-dom";
 import PageHeader from "@/components/PageHeader";
 import SectionCard from "@/components/SectionCard";
 import { Button } from "@/components/ui/button";
@@ -10,20 +10,25 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { toast } from "@/hooks/use-toast";
 import { listCustomers } from "@/services/customers";
-import { createMeasurement, listMeasurementFields, listStaff } from "@/services/measurements";
+import { createMeasurement, getMeasurement, listMeasurementFields, listStaff, updateMeasurement } from "@/services/measurements";
 
 export default function MeasurementNew() {
   const navigate = useNavigate();
   const location = useLocation();
+  const params = useParams();
   const queryClient = useQueryClient();
+  const measurementId = params.id ? Number(params.id) : null;
+  const isEditMode = measurementId !== null && Number.isFinite(measurementId);
 
   const [customerId, setCustomerId] = useState<string | undefined>(undefined);
   const [garmentType, setGarmentType] = useState<string>("Suit");
   const [takenBy, setTakenBy] = useState<string>("__none__");
   const [notes, setNotes] = useState<string>("");
   const [valuesDraft, setValuesDraft] = useState<Record<number, string>>({});
+  const [isEditing, setIsEditing] = useState<boolean>(false);
 
   useEffect(() => {
+    if (isEditMode) return;
     const params = new URLSearchParams(location.search);
     const cid = params.get("customer_id");
     const gt = params.get("garment_type");
@@ -32,7 +37,7 @@ export default function MeasurementNew() {
       setGarmentType(gt);
       setValuesDraft({});
     }
-  }, [location.search]);
+  }, [isEditMode, location.search]);
 
   const customersQuery = useQuery({
     queryKey: ["customers", "list"],
@@ -51,6 +56,43 @@ export default function MeasurementNew() {
 
   const fields = useMemo(() => fieldsQuery.data ?? [], [fieldsQuery.data]);
 
+  const measurementQuery = useQuery({
+    queryKey: ["measurements", "detail", measurementId],
+    queryFn: () => getMeasurement(measurementId as number),
+    enabled: isEditMode,
+  });
+
+  const measurement = measurementQuery.data;
+
+  useEffect(() => {
+    if (!isEditMode) {
+      setIsEditing(true);
+      return;
+    }
+    if (!measurement) return;
+    setCustomerId(String(measurement.customer_id));
+    setGarmentType(measurement.garment_type);
+    setTakenBy(measurement.taken_by ? String(measurement.taken_by) : "__none__");
+    setNotes(measurement.notes ?? "");
+  }, [isEditMode, measurement]);
+
+  useEffect(() => {
+    if (!isEditMode) return;
+    if (!measurement) return;
+    if (fields.length === 0) return;
+    const next: Record<number, string> = {};
+    const valuesByFieldId = new Map<number, string>();
+    for (const v of measurement.values ?? []) {
+      if (typeof v.field_id !== "number") continue;
+      if (v.value === null || v.value === undefined) continue;
+      valuesByFieldId.set(v.field_id, String(v.value));
+    }
+    for (const f of fields) {
+      next[f.id] = valuesByFieldId.get(f.id) ?? "";
+    }
+    setValuesDraft(next);
+  }, [fields, isEditMode, measurement]);
+
   const createMutation = useMutation({
     mutationFn: createMeasurement,
     onSuccess: async (created) => {
@@ -62,6 +104,32 @@ export default function MeasurementNew() {
       const message =
         typeof err === "object" && err !== null && "message" in err ? String((err as { message?: unknown }).message ?? "") : "";
       toast({ title: "Create failed", description: message || "Unable to create measurement.", variant: "destructive" });
+    },
+  });
+
+  const updateMutation = useMutation({
+    mutationFn: async () => {
+      const values = fields.map((f) => {
+        const raw = valuesDraft[f.id] ?? "";
+        const num = raw.trim() === "" ? null : Number(raw);
+        return { field_id: f.id, value: Number.isFinite(num) ? num : null };
+      });
+      return updateMeasurement(measurementId as number, {
+        taken_by: takenBy !== "__none__" ? Number(takenBy) : null,
+        notes: notes || null,
+        values,
+      });
+    },
+    onSuccess: async () => {
+      await queryClient.invalidateQueries({ queryKey: ["measurements"] });
+      await queryClient.invalidateQueries({ queryKey: ["measurements", "detail", measurementId] });
+      toast({ title: "Saved", description: "Measurement updated." });
+      setIsEditing(false);
+    },
+    onError: (err: unknown) => {
+      const message =
+        typeof err === "object" && err !== null && "message" in err ? String((err as { message?: unknown }).message ?? "") : "";
+      toast({ title: "Save failed", description: message || "Unable to update measurement.", variant: "destructive" });
     },
   });
 
@@ -86,67 +154,125 @@ export default function MeasurementNew() {
     });
   };
 
+  const canEdit = !isEditMode || isEditing;
+
+  if (isEditMode && measurementQuery.isLoading) {
+    return <div className="p-8 text-center text-muted-foreground">Loading measurement...</div>;
+  }
+
+  if (isEditMode && !measurement) {
+    return <div className="p-8 text-center text-muted-foreground">Measurement not found</div>;
+  }
+
   return (
     <div>
-      <PageHeader title="New Measurement" subtitle="Create customer measurement record" backTo="/measurements" />
+      {isEditMode ? (
+        <PageHeader
+          title={measurement?.customer?.name ?? "Measurement"}
+          subtitle={`${garmentType} · Updated ${measurement?.updated_at ?? ""}`}
+          backTo="/measurements"
+          isEditing={isEditing}
+          onEdit={() => setIsEditing(true)}
+          onCancel={() => {
+            if (!measurement) return;
+            setTakenBy(measurement.taken_by ? String(measurement.taken_by) : "__none__");
+            setNotes(measurement.notes ?? "");
+            setGarmentType(measurement.garment_type);
+            setCustomerId(String(measurement.customer_id));
+            const next: Record<number, string> = {};
+            const valuesByFieldId = new Map<number, string>();
+            for (const v of measurement.values ?? []) {
+              if (typeof v.field_id !== "number") continue;
+              if (v.value === null || v.value === undefined) continue;
+              valuesByFieldId.set(v.field_id, String(v.value));
+            }
+            for (const f of fields) {
+              next[f.id] = valuesByFieldId.get(f.id) ?? "";
+            }
+            setValuesDraft(next);
+            setIsEditing(false);
+          }}
+          onSave={() => updateMutation.mutate()}
+        />
+      ) : (
+        <PageHeader title="New Measurement" subtitle="Create customer measurement record" backTo="/measurements" />
+      )}
 
       <div className="grid md:grid-cols-2 gap-4 sm:gap-6 mb-6">
         <SectionCard title="Measurement Details">
           <div className="space-y-4">
             <div>
               <label className="text-xs text-muted-foreground mb-1 block">Customer *</label>
-              <Select value={customerId} onValueChange={setCustomerId}>
-                <SelectTrigger>
-                  <SelectValue placeholder={customersQuery.isLoading ? "Loading customers..." : "Select customer"} />
-                </SelectTrigger>
-                <SelectContent>
-                  {(customersQuery.data?.data ?? []).map((c) => (
-                    <SelectItem key={c.id} value={String(c.id)}>
-                      {c.name} ({c.customer_code})
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+              {isEditMode ? (
+                <Input value={measurement?.customer ? `${measurement.customer.name} (${measurement.customer.customer_code})` : ""} readOnly />
+              ) : (
+                <Select value={customerId} onValueChange={setCustomerId}>
+                  <SelectTrigger>
+                    <SelectValue placeholder={customersQuery.isLoading ? "Loading customers..." : "Select customer"} />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {(customersQuery.data?.data ?? []).map((c) => (
+                      <SelectItem key={c.id} value={String(c.id)}>
+                        {c.name} ({c.customer_code})
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              )}
             </div>
 
             <div>
               <label className="text-xs text-muted-foreground mb-1 block">Garment Type *</label>
-              <Tabs
-                value={garmentType}
-                onValueChange={(v) => {
-                  setGarmentType(v);
-                  setValuesDraft({});
-                }}
-              >
-                <TabsList className="w-full">
-                  <TabsTrigger value="Suit" className="flex-1">Suit</TabsTrigger>
-                  <TabsTrigger value="Shirt" className="flex-1">Shirt</TabsTrigger>
-                  <TabsTrigger value="Pants" className="flex-1">Pants</TabsTrigger>
-                </TabsList>
-              </Tabs>
+              {isEditMode ? (
+                <Input value={garmentType} readOnly />
+              ) : (
+                <Tabs
+                  value={garmentType}
+                  onValueChange={(v) => {
+                    setGarmentType(v);
+                    setValuesDraft({});
+                  }}
+                >
+                  <TabsList className="w-full">
+                    <TabsTrigger value="Suit" className="flex-1">Suit</TabsTrigger>
+                    <TabsTrigger value="Shirt" className="flex-1">Shirt</TabsTrigger>
+                    <TabsTrigger value="Pants" className="flex-1">Pants</TabsTrigger>
+                  </TabsList>
+                </Tabs>
+              )}
             </div>
 
             <div>
               <label className="text-xs text-muted-foreground mb-1 block">Taken By</label>
-              <Select value={takenBy} onValueChange={setTakenBy}>
-                <SelectTrigger>
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="__none__">—</SelectItem>
-                  {(staffQuery.data ?? []).map((s) => (
-                    <SelectItem key={s.id} value={String(s.id)}>
-                      {s.name}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+              {canEdit ? (
+                <Select value={takenBy} onValueChange={setTakenBy}>
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="__none__">—</SelectItem>
+                    {(staffQuery.data ?? []).map((s) => (
+                      <SelectItem key={s.id} value={String(s.id)}>
+                        {s.name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              ) : (
+                <Input value={measurement?.taker?.name ?? "—"} readOnly />
+              )}
             </div>
           </div>
         </SectionCard>
 
         <SectionCard title="Notes">
-          <Textarea placeholder="Notes..." rows={8} value={notes} onChange={(e) => setNotes(e.target.value)} />
+          <Textarea
+            placeholder="Notes..."
+            rows={8}
+            value={notes}
+            onChange={(e) => setNotes(e.target.value)}
+            disabled={!canEdit}
+          />
         </SectionCard>
       </div>
 
@@ -165,6 +291,7 @@ export default function MeasurementNew() {
                   value={valuesDraft[f.id] ?? ""}
                   onChange={(e) => setValuesDraft((prev) => ({ ...prev, [f.id]: e.target.value }))}
                   placeholder={f.unit}
+                  disabled={!canEdit}
                 />
               </div>
             ))}
@@ -172,14 +299,16 @@ export default function MeasurementNew() {
         )}
       </SectionCard>
 
-      <div className="flex gap-2 justify-end">
-        <Button variant="outline" onClick={() => navigate("/measurements")}>
-          Cancel
-        </Button>
-        <Button onClick={submit} disabled={createMutation.isPending}>
-          {createMutation.isPending ? "Creating..." : "Create Measurement"}
-        </Button>
-      </div>
+      {!isEditMode ? (
+        <div className="flex gap-2 justify-end">
+          <Button variant="outline" onClick={() => navigate("/measurements")}>
+            Cancel
+          </Button>
+          <Button onClick={submit} disabled={createMutation.isPending}>
+            {createMutation.isPending ? "Creating..." : "Create Measurement"}
+          </Button>
+        </div>
+      ) : null}
     </div>
   );
 }
