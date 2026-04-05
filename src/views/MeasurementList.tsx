@@ -1,7 +1,7 @@
 import { useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { Link } from "react-router-dom";
-import { Plus, Ruler, Search } from "lucide-react";
+import { Link, useNavigate } from "react-router-dom";
+import { Pencil, Plus, Ruler, Search } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import PageHeader from "@/components/PageHeader";
@@ -10,6 +10,7 @@ import { listMeasurements } from "@/services/measurements";
 
 export default function MeasurementList() {
   const [search, setSearch] = useState("");
+  const navigate = useNavigate();
 
   const measurementsQuery = useQuery({
     queryKey: ["measurements", "list"],
@@ -112,18 +113,43 @@ export default function MeasurementList() {
                     </p>
                   </div>
                 </div>
-                <Button asChild size="sm" variant="outline">
-                  <Link to={`/measurements/new?customer_id=${g.customerId}`}>
-                    <Plus className="h-4 w-4 mr-1" /> Add
-                  </Link>
-                </Button>
               </div>
 
               <Tabs defaultValue={(g.byGarment.Suit ? "Suit" : g.byGarment.Shirt ? "Shirt" : g.byGarment.Pants ? "Pants" : "Suit")}>
                 <TabsList className="mb-4">
-                  <TabsTrigger value="Suit">Suit</TabsTrigger>
-                  <TabsTrigger value="Shirt">Shirt</TabsTrigger>
-                  <TabsTrigger value="Pants">Pants</TabsTrigger>
+                  {(["Suit", "Shirt", "Pants"] as const).map((garment) => {
+                    const m = g.byGarment[garment];
+                    const to = m
+                      ? `/measurements/${m.id}`
+                      : `/measurements/new?customer_id=${g.customerId}&garment_type=${encodeURIComponent(garment)}`;
+                    const Icon = m ? Pencil : Plus;
+
+                    return (
+                      <TabsTrigger
+                        key={garment}
+                        value={garment}
+                        className="flex-1 justify-between gap-2"
+                        onClick={(e) => {
+                          const el = e.target as HTMLElement | null;
+                          if (!el) return;
+                          if (el.closest("[data-action]")) {
+                            e.preventDefault();
+                            e.stopPropagation();
+                            navigate(to);
+                          }
+                        }}
+                      >
+                        <span>{garment}</span>
+                        <span
+                          data-action
+                          className="inline-flex items-center justify-center rounded-sm px-1.5 py-1 text-muted-foreground hover:text-foreground"
+                          title={m ? "Edit" : "Add"}
+                        >
+                          <Icon className="h-3.5 w-3.5" />
+                        </span>
+                      </TabsTrigger>
+                    );
+                  })}
                 </TabsList>
 
                 {(["Suit", "Shirt", "Pants"] as const).map((garment) => {
@@ -131,26 +157,14 @@ export default function MeasurementList() {
                   return (
                     <TabsContent key={garment} value={garment}>
                       {m ? (
-                        <div className="flex items-center justify-between gap-3">
-                          <div className="flex gap-2 flex-wrap">
-                            <span className="text-xs border border-border rounded-full px-2.5 py-0.5">{m.garment_type}</span>
-                            {m.taker?.name ? (
-                              <span className="text-xs border border-border rounded-full px-2.5 py-0.5">By {m.taker.name}</span>
-                            ) : null}
-                          </div>
-                          <Button asChild size="sm">
-                            <Link to={`/measurements/${m.id}`}>Open</Link>
-                          </Button>
+                        <div className="flex gap-2 flex-wrap">
+                          <span className="text-xs border border-border rounded-full px-2.5 py-0.5">{m.garment_type}</span>
+                          {m.taker?.name ? (
+                            <span className="text-xs border border-border rounded-full px-2.5 py-0.5">By {m.taker.name}</span>
+                          ) : null}
                         </div>
                       ) : (
-                        <div className="flex items-center justify-between gap-3">
-                          <div className="text-sm text-muted-foreground">No {garment} measurement yet</div>
-                          <Button asChild size="sm">
-                            <Link to={`/measurements/new?customer_id=${g.customerId}&garment_type=${encodeURIComponent(garment)}`}>
-                              <Plus className="h-4 w-4 mr-1" /> Create
-                            </Link>
-                          </Button>
-                        </div>
+                        <div className="text-sm text-muted-foreground">No {garment} measurement yet</div>
                       )}
                     </TabsContent>
                   );
