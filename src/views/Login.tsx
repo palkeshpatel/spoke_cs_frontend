@@ -8,6 +8,7 @@ import { Label } from "@/components/ui/label";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { InputOTP, InputOTPGroup, InputOTPSlot } from "@/components/ui/input-otp";
 import { toast } from "@/hooks/use-toast";
+import { loginWithPassword, requestOtp, verifyOtp } from "@/services/auth";
 import tailorBg from "@/assets/tailor-bg.jpg";
 
 export default function Login() {
@@ -22,6 +23,8 @@ export default function Login() {
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const isEmailValid = useMemo(() => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim()), [email]);
+  const getErrorMessage = (err: unknown) =>
+    typeof err === "object" && err !== null && "message" in err ? String((err as { message?: unknown }).message ?? "") : "";
 
   useEffect(() => {
     if (otpCooldown <= 0) return;
@@ -65,10 +68,19 @@ export default function Login() {
       return;
     }
 
-    setIsSubmitting(true);
-    await Promise.resolve();
-    setIsSubmitting(false);
-    signInSuccess();
+    try {
+      setIsSubmitting(true);
+      await loginWithPassword(email.trim(), password, remember);
+      signInSuccess();
+    } catch (err: unknown) {
+      toast({
+        title: "Login failed",
+        description: getErrorMessage(err) || "Please check your credentials.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   const sendOtp = async () => {
@@ -78,16 +90,24 @@ export default function Login() {
     }
     if (otpCooldown > 0) return;
 
-    setIsSubmitting(true);
-    await Promise.resolve();
-    setIsSubmitting(false);
-
-    setOtpStep("verify");
-    setOtpCooldown(30);
-    toast({
-      title: "OTP sent",
-      description: "Enter the 6-digit code sent to your email.",
-    });
+    try {
+      setIsSubmitting(true);
+      const res = await requestOtp(email.trim());
+      setOtpStep("verify");
+      setOtpCooldown(30);
+      toast({
+        title: "OTP sent",
+        description: res.debug_otp ? `Enter OTP. Debug OTP: ${res.debug_otp}` : "Enter the 6-digit code sent to your email.",
+      });
+    } catch (err: unknown) {
+      toast({
+        title: "OTP failed",
+        description: getErrorMessage(err) || "Unable to send OTP.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   const verifyOtp = async () => {
@@ -100,11 +120,19 @@ export default function Login() {
       return;
     }
 
-    setIsSubmitting(true);
-    await Promise.resolve();
-    setIsSubmitting(false);
-
-    signInSuccess();
+    try {
+      setIsSubmitting(true);
+      await verifyOtp(email.trim(), otp, remember);
+      signInSuccess();
+    } catch (err: unknown) {
+      toast({
+        title: "OTP verify failed",
+        description: getErrorMessage(err) || "Invalid OTP.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   const handleSendOtpSubmit = async (e: React.FormEvent) => {

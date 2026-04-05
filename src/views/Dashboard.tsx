@@ -1,34 +1,81 @@
-import { Users, Package, Clock, CheckCircle, DollarSign, TrendingUp } from 'lucide-react';
-import { customers, orders, appointments, invoices } from '@/data/mockData';
-import { StatusBadge } from '@/components/StatusBadge';
-import { Link } from 'react-router-dom';
-import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, PieChart, Pie, Cell } from 'recharts';
-
-const stats = [
-  { label: 'Total Customers', value: customers.length, icon: Users, color: 'text-primary' },
-  { label: 'Total Orders', value: orders.length, icon: Package, color: 'text-accent' },
-  { label: 'Pending Orders', value: orders.filter(o => o.status === 'pending' || o.status === 'in-progress').length, icon: Clock, color: 'text-warning' },
-  { label: 'Completed Orders', value: orders.filter(o => o.status === 'completed' || o.status === 'delivered').length, icon: CheckCircle, color: 'text-success' },
-  { label: 'Revenue This Month', value: `$${invoices.filter(i => i.status === 'paid').reduce((s, i) => s + i.amount, 0).toLocaleString()}`, icon: DollarSign, color: 'text-success' },
-  { label: 'Pending Revenue', value: `$${invoices.filter(i => i.status !== 'paid').reduce((s, i) => s + i.amount, 0).toLocaleString()}`, icon: TrendingUp, color: 'text-destructive' },
-];
-
-const monthlyData = [
-  { month: 'Oct', revenue: 8200 }, { month: 'Nov', revenue: 9100 },
-  { month: 'Dec', revenue: 11500 }, { month: 'Jan', revenue: 10200 },
-  { month: 'Feb', revenue: 9800 }, { month: 'Mar', revenue: 12450 },
-];
-
-const orderStatusData = [
-  { name: 'Pending', value: 2, color: 'hsl(38, 92%, 50%)' },
-  { name: 'In Progress', value: 2, color: 'hsl(199, 89%, 48%)' },
-  { name: 'Completed', value: 1, color: 'hsl(142, 76%, 36%)' },
-  { name: 'Delivered', value: 1, color: 'hsl(239, 84%, 67%)' },
-];
-
-const todaysAppointments = appointments.filter(a => a.date === '2026-03-06');
+import { useMemo } from "react";
+import { useQuery } from "@tanstack/react-query";
+import { CheckCircle, Clock, DollarSign, Package, TrendingUp, Users } from "lucide-react";
+import { StatusBadge } from "@/components/StatusBadge";
+import { Link } from "react-router-dom";
+import { Bar, BarChart, Cell, Pie, PieChart, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
+import { getDashboard } from "@/services/dashboard";
 
 export default function Dashboard() {
+  const dashboardQuery = useQuery({
+    queryKey: ["dashboard"],
+    queryFn: getDashboard,
+  });
+
+  const dashboard = dashboardQuery.data;
+  const role = (dashboard?.role ?? "Staff").toLowerCase();
+  const isAdmin = role === "admin";
+
+  const stats = useMemo(() => {
+    const s = dashboard?.stats;
+    if (!s) return [];
+
+    const base = [
+      { label: "Total Customers", value: s.total_customers, icon: Users, color: "text-primary" },
+      { label: "Total Orders", value: s.total_orders, icon: Package, color: "text-accent" },
+      { label: "Pending Orders", value: s.pending_orders, icon: Clock, color: "text-warning" },
+      { label: "Completed Orders", value: s.completed_orders, icon: CheckCircle, color: "text-success" },
+    ];
+
+    if (isAdmin) {
+      base.push(
+        {
+          label: "Revenue This Month",
+          value: `$${Number(s.revenue_this_month ?? 0).toLocaleString()}`,
+          icon: DollarSign,
+          color: "text-success",
+        },
+        {
+          label: "Pending Revenue",
+          value: `$${Number(s.pending_revenue ?? 0).toLocaleString()}`,
+          icon: TrendingUp,
+          color: "text-destructive",
+        },
+      );
+    } else {
+      base.push(
+        { label: "Pending Payments", value: s.pending_payments, icon: TrendingUp, color: "text-destructive" },
+        { label: "Role", value: dashboard?.role ?? "Staff", icon: Users, color: "text-primary" },
+      );
+    }
+
+    return base;
+  }, [dashboard?.role, dashboard?.stats, isAdmin]);
+
+  const monthlyData = useMemo(() => {
+    return (dashboard?.monthly_revenue ?? []).map((x) => ({ month: x.month, revenue: x.revenue }));
+  }, [dashboard?.monthly_revenue]);
+
+  const orderStatusData = useMemo(() => {
+    const os = dashboard?.order_status ?? {};
+    const colors: Record<string, string> = {
+      pending: "hsl(38, 92%, 50%)",
+      in_progress: "hsl(199, 89%, 48%)",
+      trial: "hsl(258, 90%, 66%)",
+      completed: "hsl(142, 76%, 36%)",
+      delivered: "hsl(239, 84%, 67%)",
+    };
+
+    return Object.entries(os).map(([key, value]) => ({
+      name: key.replaceAll("_", " ").replace(/\b\w/g, (m) => m.toUpperCase()),
+      value,
+      color: colors[key] ?? "hsl(239, 84%, 67%)",
+    }));
+  }, [dashboard?.order_status]);
+
+  const recentOrders = dashboard?.recent_orders ?? [];
+  const todaysAppointments = dashboard?.todays_appointments ?? [];
+
   return (
     <div>
       <div className="mb-6">
@@ -38,6 +85,11 @@ export default function Dashboard() {
 
       {/* Stats */}
       <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3 sm:gap-4 mb-6">
+        {dashboardQuery.isLoading ? (
+          <div className="col-span-2 sm:col-span-3 lg:col-span-6 bg-card rounded-xl card-shadow p-4 text-sm text-muted-foreground">
+            Loading dashboard...
+          </div>
+        ) : null}
         {stats.map(s => (
           <div key={s.label} className="bg-card rounded-xl card-shadow p-3 sm:p-4">
             <s.icon className={`h-5 w-5 ${s.color} mb-2`} />
@@ -51,14 +103,20 @@ export default function Dashboard() {
         {/* Revenue Chart */}
         <div className="bg-card rounded-xl card-shadow p-4 sm:p-5">
           <h3 className="text-base font-semibold mb-4">Monthly Revenue</h3>
-          <ResponsiveContainer width="100%" height={220}>
-            <BarChart data={monthlyData}>
-              <XAxis dataKey="month" axisLine={false} tickLine={false} className="text-xs" />
-              <YAxis axisLine={false} tickLine={false} className="text-xs" />
-              <Tooltip />
-              <Bar dataKey="revenue" fill="hsl(239, 84%, 67%)" radius={[6, 6, 0, 0]} />
-            </BarChart>
-          </ResponsiveContainer>
+          {isAdmin && monthlyData.length > 0 ? (
+            <ResponsiveContainer width="100%" height={220}>
+              <BarChart data={monthlyData}>
+                <XAxis dataKey="month" axisLine={false} tickLine={false} className="text-xs" />
+                <YAxis axisLine={false} tickLine={false} className="text-xs" />
+                <Tooltip />
+                <Bar dataKey="revenue" fill="hsl(239, 84%, 67%)" radius={[6, 6, 0, 0]} />
+              </BarChart>
+            </ResponsiveContainer>
+          ) : (
+            <div className="h-[220px] flex items-center justify-center text-sm text-muted-foreground">
+              {isAdmin ? "No revenue data" : "Admin only"}
+            </div>
+          )}
         </div>
 
         {/* Order Status */}
@@ -93,14 +151,13 @@ export default function Dashboard() {
             <Link to="/orders" className="text-xs text-primary font-medium hover:underline">View all</Link>
           </div>
           <div className="space-y-3">
-            {orders.slice(0, 4).map(o => (
+            {recentOrders.slice(0, 4).map(o => (
               <Link to={`/orders/${o.id}`} key={o.id} className="flex items-center justify-between p-2 sm:p-3 rounded-lg hover:bg-muted transition-colors">
                 <div className="min-w-0">
-                  <p className="text-sm font-medium truncate">{o.orderNumber}</p>
-                  <p className="text-xs text-muted-foreground truncate">{o.customerName} · {o.garmentType}</p>
+                  <p className="text-sm font-medium truncate">{o.order_number}</p>
+                  <p className="text-xs text-muted-foreground truncate">{o.customer?.name ?? '—'}</p>
                 </div>
                 <div className="text-right shrink-0 ml-2">
-                  <p className="text-sm font-semibold">${o.total.toFixed(2)}</p>
                   <StatusBadge status={o.status} />
                 </div>
               </Link>
@@ -118,12 +175,14 @@ export default function Dashboard() {
             {todaysAppointments.map(a => (
               <Link to={`/appointments/${a.id}`} key={a.id} className="flex items-center justify-between p-2 sm:p-3 rounded-lg hover:bg-muted transition-colors">
                 <div className="min-w-0">
-                  <p className="text-sm font-medium truncate">{a.customerName}</p>
-                  <p className="text-xs text-muted-foreground truncate">{a.service} · {a.time} ({a.duration})</p>
+                  <p className="text-sm font-medium truncate">{a.customer?.name ?? "—"}</p>
+                  <p className="text-xs text-muted-foreground truncate">{a.service_type} · {a.appointment_time ?? "—"} ({a.duration_minutes} min)</p>
                 </div>
                 <div className="text-right shrink-0 ml-2">
                   <StatusBadge status={a.status} />
-                  <p className={`text-xs font-bold mt-1 ${a.priority === 'HIGH' ? 'text-destructive' : 'text-primary'}`}>{a.priority}</p>
+                  <p className={`text-xs font-bold mt-1 ${a.priority === "high" ? "text-destructive" : "text-primary"}`}>
+                    {a.priority.toUpperCase()}
+                  </p>
                 </div>
               </Link>
             ))}

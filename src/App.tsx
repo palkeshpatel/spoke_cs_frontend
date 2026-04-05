@@ -1,9 +1,11 @@
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { BrowserRouter, Route, Routes } from "react-router-dom";
+import type { ReactElement } from "react";
+import { BrowserRouter, Navigate, Route, Routes, useLocation } from "react-router-dom";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import Layout from "@/components/Layout";
+import { getAuthToken } from "@/services/api";
 import Dashboard from "@/views/Dashboard";
 import CustomerList from "@/views/CustomerList";
 import CustomerDetail from "@/views/CustomerDetail";
@@ -25,36 +27,50 @@ import NotFound from "@/views/NotFound";
 
 const queryClient = new QueryClient();
 
+const RequireAuth = ({ children }: { children: ReactElement }) => {
+  const location = useLocation();
+  const token = getAuthToken();
+  if (!token) return <Navigate to="/login" replace state={{ from: location }} />;
+  return children;
+};
+
 const App = () => (
   <QueryClientProvider client={queryClient}>
     <TooltipProvider>
       <Toaster />
       <Sonner />
-      <BrowserRouter>
+      <BrowserRouter
+        future={{
+          v7_startTransition: true,
+          v7_relativeSplatPath: true,
+        }}
+      >
         <Routes>
           <Route path="/login" element={<Login />} />
           <Route path="*" element={
-            <Layout>
-              <Routes>
-                <Route path="/" element={<Dashboard />} />
-                <Route path="/customers" element={<CustomerList />} />
-                <Route path="/customers/new" element={<CustomerNew />} />
-                <Route path="/customers/:id" element={<CustomerDetail />} />
-                <Route path="/appointments" element={<AppointmentList />} />
-                <Route path="/appointments/new" element={<AppointmentNew />} />
-                <Route path="/appointments/:id" element={<AppointmentDetail />} />
-                <Route path="/measurements" element={<MeasurementList />} />
-                <Route path="/measurements/:id" element={<MeasurementDetail />} />
-                <Route path="/orders" element={<OrderList />} />
-                <Route path="/orders/new" element={<OrderNew />} />
-                <Route path="/orders/:id" element={<OrderDetail />} />
-                <Route path="/billing" element={<BillingList />} />
-                <Route path="/billing/:id" element={<BillingDetail />} />
-                <Route path="/reports" element={<Reports />} />
-                <Route path="/settings" element={<SettingsPage />} />
-                <Route path="*" element={<NotFound />} />
-              </Routes>
-            </Layout>
+            <RequireAuth>
+              <Layout>
+                <Routes>
+                  <Route path="/" element={<Dashboard />} />
+                  <Route path="/customers" element={<CustomerList />} />
+                  <Route path="/customers/new" element={<CustomerNew />} />
+                  <Route path="/customers/:id" element={<CustomerDetail />} />
+                  <Route path="/appointments" element={<AppointmentList />} />
+                  <Route path="/appointments/new" element={<AppointmentNew />} />
+                  <Route path="/appointments/:id" element={<AppointmentDetail />} />
+                  <Route path="/measurements" element={<MeasurementList />} />
+                  <Route path="/measurements/:id" element={<MeasurementDetail />} />
+                  <Route path="/orders" element={<OrderList />} />
+                  <Route path="/orders/new" element={<OrderNew />} />
+                  <Route path="/orders/:id" element={<OrderDetail />} />
+                  <Route path="/billing" element={<BillingList />} />
+                  <Route path="/billing/:id" element={<BillingDetail />} />
+                  <Route path="/reports" element={<Reports />} />
+                  <Route path="/settings" element={<SettingsPage />} />
+                  <Route path="*" element={<NotFound />} />
+                </Routes>
+              </Layout>
+            </RequireAuth>
           } />
         </Routes>
       </BrowserRouter>

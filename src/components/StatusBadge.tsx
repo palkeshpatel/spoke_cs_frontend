@@ -4,6 +4,8 @@ const statusStyles: Record<string, string> = {
   completed: 'bg-success text-success-foreground',
   cancelled: 'bg-destructive/10 text-destructive',
   'in-progress': 'bg-info/10 text-info',
+  in_progress: 'bg-info/10 text-info',
+  trial: 'bg-primary/10 text-primary',
   delivered: 'bg-success/10 text-success',
   paid: 'bg-foreground text-card',
   overdue: 'bg-destructive text-destructive-foreground',

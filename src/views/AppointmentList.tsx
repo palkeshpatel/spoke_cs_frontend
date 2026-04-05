@@ -1,37 +1,54 @@
-import { useState } from 'react';
-import { Link } from 'react-router-dom';
-import { Plus, Search } from 'lucide-react';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { appointments } from '@/data/mockData';
-import PageHeader from '@/components/PageHeader';
-import { StatusBadge, PriorityBadge } from '@/components/StatusBadge';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Calendar } from '@/components/ui/calendar';
-import { Calendar as CalendarIcon } from 'lucide-react';
+import { useMemo, useState } from "react";
+import { Link } from "react-router-dom";
+import { useQuery } from "@tanstack/react-query";
+import { Calendar as CalendarIcon, Plus, Search } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import PageHeader from "@/components/PageHeader";
+import { StatusBadge, PriorityBadge } from "@/components/StatusBadge";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Calendar } from "@/components/ui/calendar";
+import { listAppointments } from "@/services/appointments";
 
 export default function AppointmentList() {
-  const [search, setSearch] = useState('');
-  const [statusFilter, setStatusFilter] = useState('all');
-  const [serviceFilter, setServiceFilter] = useState('all');
-  const [selectedDate, setSelectedDate] = useState<Date | undefined>(new Date(2026, 2, 20));
+  const [search, setSearch] = useState("");
+  const [statusFilter, setStatusFilter] = useState("all");
+  const [serviceFilter, setServiceFilter] = useState("all");
+  const [selectedDate, setSelectedDate] = useState<Date | undefined>(new Date());
 
-  const filtered = appointments.filter(a => {
-    const matchSearch = a.customerName.toLowerCase().includes(search.toLowerCase()) || a.service.toLowerCase().includes(search.toLowerCase());
-    const matchStatus = statusFilter === 'all' || a.status === statusFilter;
-    const matchService = serviceFilter === 'all' || a.service.toLowerCase().includes(serviceFilter.toLowerCase());
+  const { data, isLoading } = useQuery({
+    queryKey: ["appointments", "list"],
+    queryFn: () => listAppointments(200),
+  });
+
+  const appointments = useMemo(() => data?.data ?? [], [data]);
+
+  const filtered = appointments.filter((a) => {
+    const customerName = a.customer?.name ?? "";
+    const matchSearch =
+      customerName.toLowerCase().includes(search.toLowerCase()) || a.service_type.toLowerCase().includes(search.toLowerCase());
+    const matchStatus = statusFilter === "all" || a.status === statusFilter;
+    const matchService = serviceFilter === "all" || a.service_type.toLowerCase().includes(serviceFilter.toLowerCase());
     return matchSearch && matchStatus && matchService;
   });
 
   const dateAppointments = selectedDate
-    ? appointments.filter(a => a.date === selectedDate.toISOString().split('T')[0])
+    ? appointments.filter((a) => a.appointment_date === selectedDate.toISOString().split("T")[0])
     : [];
 
   return (
     <div>
-      <PageHeader title="Appointments" subtitle={`${appointments.length} appointments`}
-        actions={<Link to="/appointments/new"><Button size="sm"><Plus className="h-4 w-4 mr-1" /> New</Button></Link>}
+      <PageHeader
+        title="Appointments"
+        subtitle={`${appointments.length} appointments`}
+        actions={
+          <Link to="/appointments/new">
+            <Button size="sm">
+              <Plus className="h-4 w-4 mr-1" /> New
+            </Button>
+          </Link>
+        }
       />
 
       <Tabs defaultValue="list">
@@ -70,28 +87,40 @@ export default function AppointmentList() {
             </div>
 
             <div className="divide-y divide-border">
-              {filtered.map(a => (
+              {isLoading ? (
+                <div className="p-6 text-center text-sm text-muted-foreground">Loading appointments...</div>
+              ) : filtered.length === 0 ? (
+                <div className="p-6 text-center text-sm text-muted-foreground">No appointments found</div>
+              ) : (
+                filtered.map((a) => (
                 <Link to={`/appointments/${a.id}`} key={a.id} className="flex items-center justify-between p-3 sm:p-4 hover:bg-muted/50 transition-colors">
                   <div className="flex items-center gap-3 sm:gap-4 min-w-0">
-                    <div className={`w-1 h-10 sm:h-14 rounded-full shrink-0 ${a.priority === 'HIGH' ? 'bg-destructive' : 'bg-primary'}`} />
+                    <div className={`w-1 h-10 sm:h-14 rounded-full shrink-0 ${a.priority === "high" ? "bg-destructive" : "bg-primary"}`} />
                     <div className="hidden sm:flex w-10 h-10 rounded-full bg-primary/10 items-center justify-center shrink-0">
                       <span className="text-primary text-sm">👤</span>
                     </div>
                     <div className="min-w-0">
                       <div className="flex items-center gap-2 flex-wrap">
-                        <p className="text-sm font-semibold">{a.customerName}</p>
-                        <span className="text-xs bg-muted px-1.5 py-0.5 rounded font-mono hidden sm:inline">C{String(a.customerId).padStart(3, '0')}</span>
+                        <p className="text-sm font-semibold">{a.customer?.name ?? "—"}</p>
+                        <span className="text-xs bg-muted px-1.5 py-0.5 rounded font-mono hidden sm:inline">
+                          {a.customer?.customer_code ?? `C${String(a.customer_id).padStart(3, "0")}`}
+                        </span>
                       </div>
-                      <p className="text-sm text-primary">{a.service}</p>
-                      <p className="text-xs text-muted-foreground truncate">📅 {a.date}  🕐 {a.time} ({a.duration})</p>
+                      <p className="text-sm text-primary">{a.service_type}</p>
+                      <p className="text-xs text-muted-foreground truncate">
+                        📅 {a.appointment_date} 🕐 {a.appointment_time ?? "—"} ({a.duration_minutes} min)
+                      </p>
                     </div>
                   </div>
                   <div className="text-right shrink-0 ml-2">
                     <StatusBadge status={a.status} />
-                    <div className="mt-1"><PriorityBadge priority={a.priority} /></div>
+                    <div className="mt-1">
+                      <PriorityBadge priority={a.priority === "high" ? "HIGH" : a.priority === "low" ? "LOW" : "NORMAL"} />
+                    </div>
                   </div>
                 </Link>
-              ))}
+              ))
+              )}
             </div>
           </div>
         </TabsContent>
@@ -125,10 +154,10 @@ export default function AppointmentList() {
                 </div>
               ) : (
                 <div className="space-y-3">
-                  {dateAppointments.map(a => (
+                  {dateAppointments.map((a) => (
                     <Link to={`/appointments/${a.id}`} key={a.id} className="block p-3 rounded-lg hover:bg-muted transition-colors">
-                      <p className="text-sm font-medium">{a.customerName} - {a.service}</p>
-                      <p className="text-xs text-muted-foreground">{a.time} ({a.duration})</p>
+                      <p className="text-sm font-medium">{a.customer?.name ?? "—"} - {a.service_type}</p>
+                      <p className="text-xs text-muted-foreground">{a.appointment_time ?? "—"} ({a.duration_minutes} min)</p>
                     </Link>
                   ))}
                 </div>
