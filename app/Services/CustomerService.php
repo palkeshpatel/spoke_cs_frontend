@@ -7,6 +7,7 @@ use App\Models\BodyProfile;
 use App\Models\CustomerBodyImage;
 use App\Models\CustomerLoyalty;
 use App\Models\CustomerPreference;
+use Illuminate\Support\Facades\File;
 use Illuminate\Support\Str;
 
 class CustomerService
@@ -115,7 +116,54 @@ class CustomerService
 
     public function deleteBodyImage(int $customerId, int $imageId): void
     {
-        CustomerBodyImage::where('customer_id', $customerId)->whereKey($imageId)->delete();
+        $image = CustomerBodyImage::where('customer_id', $customerId)->whereKey($imageId)->first();
+        if (!$image) {
+            return;
+        }
+
+        $this->deletePublicUploadIfExists((string)$image->image_path);
+        $image->delete();
+    }
+
+    public function deleteCustomerBodyImagesByType(int $customerId, string $imageType): void
+    {
+        $images = CustomerBodyImage::where('customer_id', $customerId)->where('image_type', $imageType)->get();
+        foreach ($images as $image) {
+            $this->deletePublicUploadIfExists((string)$image->image_path);
+            $image->delete();
+        }
+    }
+
+    private function deletePublicUploadIfExists(string $publicRelativePath): void
+    {
+        $publicRelativePath = trim($publicRelativePath);
+        if ($publicRelativePath === '') return;
+
+        if (str_starts_with($publicRelativePath, 'http://') || str_starts_with($publicRelativePath, 'https://')) {
+            return;
+        }
+
+        $publicRelativePath = '/' . ltrim($publicRelativePath, '/');
+        if (!str_starts_with($publicRelativePath, '/uploads/')) {
+            return;
+        }
+
+        $publicBase = app()->basePath('public');
+        $fullPath = $publicBase . DIRECTORY_SEPARATOR . ltrim(str_replace('/', DIRECTORY_SEPARATOR, $publicRelativePath), DIRECTORY_SEPARATOR);
+
+        $realPublicBase = realpath($publicBase);
+        $realFullPath = realpath($fullPath);
+        if (!$realPublicBase || !$realFullPath) {
+            return;
+        }
+
+        if (!str_starts_with($realFullPath, $realPublicBase)) {
+            return;
+        }
+
+        if (File::exists($realFullPath)) {
+            File::delete($realFullPath);
+        }
     }
 
     private function generateCustomerCode(): string
