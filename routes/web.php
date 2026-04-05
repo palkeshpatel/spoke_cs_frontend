@@ -18,6 +18,17 @@ $router->get('/', function () use ($router) {
 });
 
 $router->group(['prefix' => 'api', 'namespace' => 'Api'], function () use ($router) {
+    $router->post('auth/login', 'AuthController@login');
+    $router->post('auth/request-otp', 'AuthController@requestOtp');
+    $router->post('auth/verify-otp', 'AuthController@verifyOtp');
+});
+
+$router->group(['prefix' => 'api', 'namespace' => 'Api', 'middleware' => 'auth'], function () use ($router) {
+    $router->get('auth/me', 'AuthController@me');
+    $router->post('auth/logout', 'AuthController@logout');
+
+    $router->get('dashboard', 'DashboardController@index');
+
     $router->get('customers', 'CustomerController@index');
     $router->post('customers', 'CustomerController@store');
     $router->get('customers/{id:[0-9]+}', 'CustomerController@show');
