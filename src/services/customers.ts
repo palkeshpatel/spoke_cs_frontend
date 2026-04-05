@@ -171,3 +171,7 @@ export async function uploadCustomerBodyImage(params: { customerId: number; imag
 
   return completeCustomerBodyImageUpload({ customerId: params.customerId, uploadId: init.upload_id });
 }
+
+export async function deleteCustomerBodyImage(params: { customerId: number; imageId: number }) {
+  return apiRequest<{ message: string }>(`/api/customers/${params.customerId}/body-images/${params.imageId}`, { method: "DELETE" });
+}

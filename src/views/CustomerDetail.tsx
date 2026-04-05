@@ -1,14 +1,26 @@
 import { useMemo, useRef, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { CheckCircle2, Trash2 } from "lucide-react";
 import { useParams } from "react-router-dom";
 import PageHeader from "@/components/PageHeader";
 import SectionCard from "@/components/SectionCard";
 import EditableField from "@/components/EditableField";
 import { Button } from "@/components/ui/button";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
 import { toast } from "@/hooks/use-toast";
 import { CustomerImageCropDialog } from "@/components/CustomerImageCropDialog";
 import { apiBaseUrl } from "@/services/api";
-import { getCustomer, updateCustomer, uploadCustomerBodyImage } from "@/services/customers";
+import { deleteCustomerBodyImage, getCustomer, updateCustomer, uploadCustomerBodyImage } from "@/services/customers";
 
 export default function CustomerDetail() {
   const { id } = useParams();
@@ -98,6 +110,19 @@ export default function CustomerDetail() {
     },
   });
 
+  const deleteMutation = useMutation({
+    mutationFn: (params: { imageId: number }) => deleteCustomerBodyImage({ customerId, imageId: params.imageId }),
+    onSuccess: async () => {
+      await queryClient.invalidateQueries({ queryKey: ["customers", "detail", customerId] });
+      toast({ title: "Deleted", description: "Image deleted." });
+    },
+    onError: (err: unknown) => {
+      const message =
+        typeof err === "object" && err !== null && "message" in err ? String((err as { message?: unknown }).message ?? "") : "";
+      toast({ title: "Delete failed", description: message || "Unable to delete image.", variant: "destructive" });
+    },
+  });
+
   if (!Number.isFinite(customerId)) return <div className="p-8 text-center text-muted-foreground">Customer not found</div>;
   if (customerQuery.isLoading) return <div className="p-8 text-center text-muted-foreground">Loading customer...</div>;
   if (!customer) return <div className="p-8 text-center text-muted-foreground">Customer not found</div>;
@@ -130,7 +155,7 @@ export default function CustomerDetail() {
       />
 
       <div className="grid md:grid-cols-2 gap-4 sm:gap-6 mb-6">
-        <SectionCard title="Customer Information" onEdit={!isEditing ? () => setIsEditing(true) : undefined}>
+        <SectionCard title="Customer Information">
           <div className="grid sm:grid-cols-2 gap-4">
             <EditableField label="Name" value={isEditing ? form.name : customer.name} isEditing={isEditing} onChange={(v) => updateForm("name", v)} />
             <EditableField label="Phone" value={isEditing ? form.phone : customer.phone ?? ""} isEditing={isEditing} onChange={(v) => updateForm("phone", v)} />
@@ -139,7 +164,7 @@ export default function CustomerDetail() {
           </div>
         </SectionCard>
 
-        <SectionCard title="Preferences" onEdit={!isEditing ? () => setIsEditing(true) : undefined}>
+        <SectionCard title="Preferences">
           <div className="space-y-4">
             <EditableField
               label="Fit Preferences"
@@ -165,8 +190,11 @@ export default function CustomerDetail() {
             const src = image ? `${apiBaseUrl()}${image.path}` : null;
             return (
               <div key={t.key} className="border border-border rounded-lg p-3">
-                <div className="text-sm font-medium mb-2">{t.label}</div>
-                <div className="h-40 rounded-md bg-muted overflow-hidden flex items-center justify-center">
+                <div className="flex items-center justify-between gap-2 mb-2">
+                  <div className="text-sm font-medium">{t.label}</div>
+                  {src ? <CheckCircle2 className="h-4 w-4 text-green-600" /> : null}
+                </div>
+                <div className="relative h-40 rounded-md bg-muted overflow-hidden flex items-center justify-center">
                   {src ? <img src={src} alt={t.label} className="h-full w-full object-cover" /> : <div className="text-xs text-muted-foreground">No image</div>}
                 </div>
                 <div className="mt-3 flex gap-2">
@@ -181,6 +209,26 @@ export default function CustomerDetail() {
                   >
                     Upload
                   </Button>
+                  {image ? (
+                    <AlertDialog>
+                      <AlertDialogTrigger asChild>
+                        <Button type="button" size="sm" variant="outline" disabled={deleteMutation.isPending}>
+                          <Trash2 className="h-4 w-4 mr-1" />
+                          Delete
+                        </Button>
+                      </AlertDialogTrigger>
+                      <AlertDialogContent>
+                        <AlertDialogHeader>
+                          <AlertDialogTitle>Delete image?</AlertDialogTitle>
+                          <AlertDialogDescription>This will remove the image from server and database.</AlertDialogDescription>
+                        </AlertDialogHeader>
+                        <AlertDialogFooter>
+                          <AlertDialogCancel>Cancel</AlertDialogCancel>
+                          <AlertDialogAction onClick={() => deleteMutation.mutate({ imageId: image.id })}>Delete</AlertDialogAction>
+                        </AlertDialogFooter>
+                      </AlertDialogContent>
+                    </AlertDialog>
+                  ) : null}
                 </div>
               </div>
             );

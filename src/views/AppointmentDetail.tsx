@@ -135,7 +135,7 @@ export default function AppointmentDetail() {
       />
 
       <div className="grid md:grid-cols-2 gap-4 sm:gap-6 mb-6">
-        <SectionCard title="" onEdit={!isEditing ? () => setIsEditing(true) : undefined}>
+        <SectionCard title="">
           <div className="flex items-center justify-between mb-4 flex-wrap gap-2">
             <div>
               <div className="flex items-center gap-2 flex-wrap">
@@ -190,7 +190,7 @@ export default function AppointmentDetail() {
           </div>
         </SectionCard>
 
-        <SectionCard title="Appointment Information" onEdit={!isEditing ? () => setIsEditing(true) : undefined}>
+        <SectionCard title="Appointment Information">
           <div className="space-y-4">
             <EditableField label="Service" value={form.serviceType} isEditing={isEditing} onChange={(v) => updateForm("serviceType", v)} />
             {isEditing ? (
@@ -227,7 +227,7 @@ export default function AppointmentDetail() {
         </SectionCard>
       </div>
 
-      <SectionCard title="" onEdit={!isEditing ? () => setIsEditing(true) : undefined}>
+      <SectionCard title="">
         <div className="flex items-center gap-2 mb-3">
           <MessageSquare className="h-4 w-4 text-muted-foreground" />
           <h3 className="text-sm sm:text-base font-semibold">Appointment Notes</h3>
