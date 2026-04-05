@@ -1,15 +1,52 @@
-import { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
-import PageHeader from '@/components/PageHeader';
-import SectionCard from '@/components/SectionCard';
-import { Input } from '@/components/ui/input';
-import { Textarea } from '@/components/ui/textarea';
-import { Button } from '@/components/ui/button';
+import { useState } from "react";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { useNavigate } from "react-router-dom";
+import PageHeader from "@/components/PageHeader";
+import SectionCard from "@/components/SectionCard";
+import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
+import { Button } from "@/components/ui/button";
+import { toast } from "@/hooks/use-toast";
+import { createCustomer } from "@/services/customers";
 
 export default function CustomerNew() {
   const navigate = useNavigate();
-  const [form, setForm] = useState({ name: '', phone: '', email: '', address: '', preferences: '', notes: '' });
-  const update = (key: string, val: string) => setForm(f => ({ ...f, [key]: val }));
+  const queryClient = useQueryClient();
+  const [form, setForm] = useState({ name: "", phone: "", email: "", address: "", preferences: "", notes: "" });
+  const update = (key: keyof typeof form, val: string) => setForm((f) => ({ ...f, [key]: val }));
+
+  const createMutation = useMutation({
+    mutationFn: createCustomer,
+    onSuccess: async (created) => {
+      await queryClient.invalidateQueries({ queryKey: ["customers"] });
+      toast({ title: "Customer created", description: `Customer ${created.customer_code} created.` });
+      navigate(`/customers/${created.id}`);
+    },
+    onError: (err: unknown) => {
+      const message =
+        typeof err === "object" && err !== null && "message" in err ? String((err as { message?: unknown }).message ?? "") : "";
+      toast({ title: "Create failed", description: message || "Unable to create customer.", variant: "destructive" });
+    },
+  });
+
+  const submit = () => {
+    if (!form.name.trim()) {
+      toast({ title: "Name required", description: "Please enter customer name.", variant: "destructive" });
+      return;
+    }
+
+    createMutation.mutate({
+      name: form.name.trim(),
+      phone: form.phone.trim() || null,
+      email: form.email.trim() || null,
+      address: form.address.trim() || null,
+      preferences: {
+        fit_preference: form.preferences.trim() || null,
+        favorite_colors: null,
+        notes: form.notes.trim() || null,
+      },
+    });
+  };
 
   return (
     <div>
@@ -37,7 +74,9 @@ export default function CustomerNew() {
 
       <div className="flex gap-2 justify-end">
         <Button variant="outline" onClick={() => navigate('/customers')}>Cancel</Button>
-        <Button onClick={() => navigate('/customers')}>Create Customer</Button>
+        <Button onClick={submit} disabled={createMutation.isPending}>
+          {createMutation.isPending ? "Creating..." : "Create Customer"}
+        </Button>
       </div>
     </div>
   );

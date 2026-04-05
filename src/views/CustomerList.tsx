@@ -1,17 +1,28 @@
-import { useState } from 'react';
-import { Link } from 'react-router-dom';
-import { Plus, Search } from 'lucide-react';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { customers } from '@/data/mockData';
-import PageHeader from '@/components/PageHeader';
+import { useMemo, useState } from "react";
+import { useQuery } from "@tanstack/react-query";
+import { Link } from "react-router-dom";
+import { Plus, Search } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import PageHeader from "@/components/PageHeader";
+import { listCustomers } from "@/services/customers";
 
 export default function CustomerList() {
-  const [search, setSearch] = useState('');
-  const filtered = customers.filter(c =>
-    c.name.toLowerCase().includes(search.toLowerCase()) ||
-    c.email.toLowerCase().includes(search.toLowerCase())
-  );
+  const [search, setSearch] = useState("");
+  const customersQuery = useQuery({
+    queryKey: ["customers", "list"],
+    queryFn: () => listCustomers(200),
+  });
+
+  const customers = useMemo(() => customersQuery.data?.data ?? [], [customersQuery.data]);
+  const filtered = useMemo(() => {
+    const q = search.trim().toLowerCase();
+    if (!q) return customers;
+    return customers.filter((c) => {
+      const email = c.email ?? "";
+      return c.name.toLowerCase().includes(q) || email.toLowerCase().includes(q) || c.customer_code.toLowerCase().includes(q);
+    });
+  }, [customers, search]);
 
   return (
     <div>
@@ -38,17 +49,30 @@ export default function CustomerList() {
               </tr>
             </thead>
             <tbody>
-              {filtered.map(c => (
+              {customersQuery.isLoading ? (
+                <tr>
+                  <td className="px-4 py-6 text-sm text-muted-foreground" colSpan={5}>
+                    Loading...
+                  </td>
+                </tr>
+              ) : filtered.length === 0 ? (
+                <tr>
+                  <td className="px-4 py-6 text-sm text-muted-foreground" colSpan={5}>
+                    No customers found
+                  </td>
+                </tr>
+              ) : (
+              filtered.map(c => (
                 <tr key={c.id} className="border-b border-border last:border-0 hover:bg-muted/50 transition-colors">
                   <td className="px-4 py-3">
                     <Link to={`/customers/${c.id}`} className="text-sm font-medium text-foreground hover:text-primary">{c.name}</Link>
                   </td>
                   <td className="px-4 py-3 text-sm text-muted-foreground">{c.phone}</td>
                   <td className="px-4 py-3 text-sm text-muted-foreground">{c.email}</td>
-                  <td className="px-4 py-3 text-sm text-muted-foreground">{c.totalOrders}</td>
-                  <td className="px-4 py-3 text-sm text-muted-foreground">{c.lastVisit}</td>
+                  <td className="px-4 py-3 text-sm text-muted-foreground">{c.orders_count ?? 0}</td>
+                  <td className="px-4 py-3 text-sm text-muted-foreground">{c.loyalty?.last_visit ?? "—"}</td>
                 </tr>
-              ))}
+              )))}
             </tbody>
           </table>
         </div>

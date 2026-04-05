@@ -1,120 +1,218 @@
-import { useState } from 'react';
-import { useParams } from 'react-router-dom';
-import { customers, orders, appointments, measurements, invoices } from '@/data/mockData';
-import PageHeader from '@/components/PageHeader';
-import SectionCard from '@/components/SectionCard';
-import EditableField from '@/components/EditableField';
-import { StatusBadge } from '@/components/StatusBadge';
-import { Link } from 'react-router-dom';
+import { useMemo, useRef, useState } from "react";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { useParams } from "react-router-dom";
+import PageHeader from "@/components/PageHeader";
+import SectionCard from "@/components/SectionCard";
+import EditableField from "@/components/EditableField";
+import { Button } from "@/components/ui/button";
+import { toast } from "@/hooks/use-toast";
+import { CustomerImageCropDialog } from "@/components/CustomerImageCropDialog";
+import { apiBaseUrl } from "@/services/api";
+import { getCustomer, updateCustomer, uploadCustomerBodyImage } from "@/services/customers";
 
 export default function CustomerDetail() {
   const { id } = useParams();
-  const customer = customers.find(c => c.id === id);
-  const [isEditing, setIsEditing] = useState(false);
-  const [form, setForm] = useState(customer || customers[0]);
+  const queryClient = useQueryClient();
+  const customerId = id ? Number(id) : NaN;
+  const fileInputRef = useRef<HTMLInputElement | null>(null);
 
+  const [isEditing, setIsEditing] = useState(false);
+  const [form, setForm] = useState({
+    name: "",
+    phone: "",
+    email: "",
+    address: "",
+    fitPreference: "",
+    notes: "",
+  });
+
+  const [cropOpen, setCropOpen] = useState(false);
+  const [pendingType, setPendingType] = useState<string>("full_body");
+  const [pendingFile, setPendingFile] = useState<File | null>(null);
+
+  const customerQuery = useQuery({
+    queryKey: ["customers", "detail", customerId],
+    queryFn: () => getCustomer(customerId),
+    enabled: Number.isFinite(customerId),
+  });
+
+  const customer = customerQuery.data;
+
+  const imagesByType = useMemo(() => {
+    const map = new Map<string, { id: number; path: string }>();
+    for (const img of customer?.bodyImages ?? []) {
+      map.set(img.image_type, { id: img.id, path: img.image_path });
+    }
+    return map;
+  }, [customer?.bodyImages]);
+
+  const syncFormFromCustomer = () => {
+    if (!customer) return;
+    setForm({
+      name: customer.name ?? "",
+      phone: customer.phone ?? "",
+      email: customer.email ?? "",
+      address: customer.address ?? "",
+      fitPreference: customer.preference?.fit_preference ?? "",
+      notes: customer.preference?.notes ?? "",
+    });
+  };
+
+  const updateForm = (key: keyof typeof form, val: string) => setForm((f) => ({ ...f, [key]: val }));
+
+  const saveMutation = useMutation({
+    mutationFn: () =>
+      updateCustomer(customerId, {
+        name: form.name,
+        phone: form.phone || null,
+        email: form.email || null,
+        address: form.address || null,
+        preferences: {
+          fit_preference: form.fitPreference || null,
+          notes: form.notes || null,
+        },
+      }),
+    onSuccess: async () => {
+      await queryClient.invalidateQueries({ queryKey: ["customers"] });
+      toast({ title: "Saved", description: "Customer updated." });
+      setIsEditing(false);
+    },
+    onError: (err: unknown) => {
+      const message =
+        typeof err === "object" && err !== null && "message" in err ? String((err as { message?: unknown }).message ?? "") : "";
+      toast({ title: "Save failed", description: message || "Unable to update customer.", variant: "destructive" });
+    },
+  });
+
+  const uploadMutation = useMutation({
+    mutationFn: async (params: { type: string; blob: Blob; fileName: string }) =>
+      uploadCustomerBodyImage({ customerId, imageType: params.type, blob: params.blob, fileName: params.fileName }),
+    onSuccess: async () => {
+      await queryClient.invalidateQueries({ queryKey: ["customers", "detail", customerId] });
+      toast({ title: "Uploaded", description: "Image uploaded successfully." });
+    },
+    onError: (err: unknown) => {
+      const message =
+        typeof err === "object" && err !== null && "message" in err ? String((err as { message?: unknown }).message ?? "") : "";
+      toast({ title: "Upload failed", description: message || "Unable to upload image.", variant: "destructive" });
+    },
+  });
+
+  if (!Number.isFinite(customerId)) return <div className="p-8 text-center text-muted-foreground">Customer not found</div>;
+  if (customerQuery.isLoading) return <div className="p-8 text-center text-muted-foreground">Loading customer...</div>;
   if (!customer) return <div className="p-8 text-center text-muted-foreground">Customer not found</div>;
 
-  const customerOrders = orders.filter(o => o.customerId === id);
-  const customerAppts = appointments.filter(a => a.customerId === id);
-  const customerInvoices = invoices.filter(i => i.customerId === id);
-
-  const update = (key: keyof typeof form, val: string) => setForm(f => ({ ...f, [key]: val }));
+  const imageTypes = [
+    { key: "full_body", label: "Full Photo", aspect: 3 / 4 },
+    { key: "portrait", label: "Short Photo", aspect: 1 },
+    { key: "front_body", label: "Front Body", aspect: 3 / 4 },
+    { key: "side_body", label: "Side Body", aspect: 3 / 4 },
+    { key: "shoulder", label: "Shoulder", aspect: 1 },
+    { key: "back", label: "Back", aspect: 3 / 4 },
+  ];
 
   return (
     <div>
       <PageHeader
         title={customer.name}
-        subtitle={`Customer since ${customer.lastVisit}`}
+        subtitle={customer.customer_code}
         backTo="/customers"
         isEditing={isEditing}
-        onEdit={() => { setForm(customer); setIsEditing(true); }}
-        onSave={() => setIsEditing(false)}
-        onCancel={() => { setForm(customer); setIsEditing(false); }}
+        onEdit={() => {
+          syncFormFromCustomer();
+          setIsEditing(true);
+        }}
+        onSave={() => saveMutation.mutate()}
+        onCancel={() => {
+          syncFormFromCustomer();
+          setIsEditing(false);
+        }}
       />
 
       <div className="grid md:grid-cols-2 gap-4 sm:gap-6 mb-6">
         <SectionCard title="Customer Information" onEdit={!isEditing ? () => setIsEditing(true) : undefined}>
           <div className="grid sm:grid-cols-2 gap-4">
-            <EditableField label="Name" value={form.name} isEditing={isEditing} onChange={v => update('name', v)} />
-            <EditableField label="Phone" value={form.phone} isEditing={isEditing} onChange={v => update('phone', v)} />
-            <EditableField label="Email" value={form.email} isEditing={isEditing} onChange={v => update('email', v)} />
-            <EditableField label="Address" value={form.address} isEditing={isEditing} onChange={v => update('address', v)} />
+            <EditableField label="Name" value={isEditing ? form.name : customer.name} isEditing={isEditing} onChange={(v) => updateForm("name", v)} />
+            <EditableField label="Phone" value={isEditing ? form.phone : customer.phone ?? ""} isEditing={isEditing} onChange={(v) => updateForm("phone", v)} />
+            <EditableField label="Email" value={isEditing ? form.email : customer.email ?? ""} isEditing={isEditing} onChange={(v) => updateForm("email", v)} />
+            <EditableField label="Address" value={isEditing ? form.address : customer.address ?? ""} isEditing={isEditing} onChange={(v) => updateForm("address", v)} />
           </div>
         </SectionCard>
 
         <SectionCard title="Preferences" onEdit={!isEditing ? () => setIsEditing(true) : undefined}>
           <div className="space-y-4">
-            <EditableField label="Fit Preferences" value={form.preferences} isEditing={isEditing} onChange={v => update('preferences', v)} />
-            <EditableField label="Notes" value={form.notes} isEditing={isEditing} type="textarea" onChange={v => update('notes', v)} />
+            <EditableField
+              label="Fit Preferences"
+              value={isEditing ? form.fitPreference : customer.preference?.fit_preference ?? ""}
+              isEditing={isEditing}
+              onChange={(v) => updateForm("fitPreference", v)}
+            />
+            <EditableField
+              label="Notes"
+              value={isEditing ? form.notes : customer.preference?.notes ?? ""}
+              isEditing={isEditing}
+              type="textarea"
+              onChange={(v) => updateForm("notes", v)}
+            />
           </div>
         </SectionCard>
       </div>
 
-      {/* Orders */}
-      <SectionCard title="Orders" className="mb-6">
-        {customerOrders.length === 0 ? (
-          <p className="text-sm text-muted-foreground">No orders yet</p>
-        ) : (
-          <div className="space-y-2">
-            {customerOrders.map(o => (
-              <Link to={`/orders/${o.id}`} key={o.id} className="flex items-center justify-between p-2 sm:p-3 rounded-lg hover:bg-muted transition-colors">
-                <div className="min-w-0">
-                  <p className="text-sm font-medium">{o.orderNumber}</p>
-                  <p className="text-xs text-muted-foreground">{o.garmentType}</p>
+      <SectionCard title="Body Images">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+          {imageTypes.map((t) => {
+            const image = imagesByType.get(t.key);
+            const src = image ? `${apiBaseUrl()}${image.path}` : null;
+            return (
+              <div key={t.key} className="border border-border rounded-lg p-3">
+                <div className="text-sm font-medium mb-2">{t.label}</div>
+                <div className="h-40 rounded-md bg-muted overflow-hidden flex items-center justify-center">
+                  {src ? <img src={src} alt={t.label} className="h-full w-full object-cover" /> : <div className="text-xs text-muted-foreground">No image</div>}
                 </div>
-                <div className="text-right shrink-0 ml-2">
-                  <p className="text-sm font-semibold">${o.total.toFixed(2)}</p>
-                  <StatusBadge status={o.status} />
+                <div className="mt-3 flex gap-2">
+                  <Button
+                    type="button"
+                    size="sm"
+                    onClick={() => {
+                      setPendingType(t.key);
+                      fileInputRef.current?.click();
+                    }}
+                    disabled={uploadMutation.isPending}
+                  >
+                    Upload
+                  </Button>
                 </div>
-              </Link>
-            ))}
-          </div>
-        )}
+              </div>
+            );
+          })}
+        </div>
+
+        <input
+          ref={fileInputRef}
+          type="file"
+          accept="image/*"
+          className="hidden"
+          onChange={(e) => {
+            const file = e.target.files?.[0] ?? null;
+            e.target.value = "";
+            if (!file) return;
+            setPendingFile(file);
+            setCropOpen(true);
+          }}
+        />
+
+        <CustomerImageCropDialog
+          open={cropOpen}
+          onOpenChange={setCropOpen}
+          file={pendingFile}
+          title="Crop customer image"
+          aspect={imageTypes.find((t) => t.key === pendingType)?.aspect ?? 3 / 4}
+          onConfirm={async (blob) => {
+            const name = pendingFile?.name ?? "image.jpg";
+            await uploadMutation.mutateAsync({ type: pendingType, blob, fileName: name });
+          }}
+        />
       </SectionCard>
-
-      <div className="grid md:grid-cols-2 gap-4 sm:gap-6">
-        {/* Appointments */}
-        <SectionCard title="Appointments">
-          {customerAppts.length === 0 ? (
-            <p className="text-sm text-muted-foreground">No appointments</p>
-          ) : (
-            <div className="space-y-2">
-              {customerAppts.map(a => (
-                <Link to={`/appointments/${a.id}`} key={a.id} className="flex items-center justify-between p-2 sm:p-3 rounded-lg hover:bg-muted transition-colors">
-                  <div className="min-w-0">
-                    <p className="text-sm font-medium">{a.service}</p>
-                    <p className="text-xs text-muted-foreground">{a.date} · {a.time}</p>
-                  </div>
-                  <StatusBadge status={a.status} />
-                </Link>
-              ))}
-            </div>
-          )}
-        </SectionCard>
-
-        {/* Billing */}
-        <SectionCard title="Billing History">
-          {customerInvoices.length === 0 ? (
-            <p className="text-sm text-muted-foreground">No invoices</p>
-          ) : (
-            <div className="space-y-2">
-              {customerInvoices.map(inv => (
-                <Link to={`/billing/${inv.id}`} key={inv.id} className="flex items-center justify-between p-2 sm:p-3 rounded-lg hover:bg-muted transition-colors">
-                  <div className="min-w-0">
-                    <p className="text-sm font-medium">{inv.invoiceNumber}</p>
-                    <p className="text-xs text-muted-foreground">{inv.service}</p>
-                  </div>
-                  <div className="text-right shrink-0 ml-2">
-                    <p className="text-sm font-semibold">${inv.amount.toFixed(2)}</p>
-                    <StatusBadge status={inv.status} />
-                  </div>
-                </Link>
-              ))}
-            </div>
-          )}
-        </SectionCard>
-      </div>
     </div>
   );
 }
