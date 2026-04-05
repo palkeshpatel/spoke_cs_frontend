@@ -204,7 +204,9 @@ export default function MeasurementNew() {
             <div>
               <label className="text-xs text-muted-foreground mb-1 block">Customer *</label>
               {isEditMode ? (
-                <Input value={measurement?.customer ? `${measurement.customer.name} (${measurement.customer.customer_code})` : ""} readOnly />
+                <div className="flex h-10 w-full items-center rounded-md border border-input bg-muted px-3 text-sm">
+                  {measurement?.customer ? `${measurement.customer.name} (${measurement.customer.customer_code})` : "—"}
+                </div>
               ) : (
                 <Select value={customerId} onValueChange={setCustomerId}>
                   <SelectTrigger>
@@ -223,23 +225,20 @@ export default function MeasurementNew() {
 
             <div>
               <label className="text-xs text-muted-foreground mb-1 block">Garment Type *</label>
-              {isEditMode ? (
-                <Input value={garmentType} readOnly />
-              ) : (
-                <Tabs
-                  value={garmentType}
-                  onValueChange={(v) => {
-                    setGarmentType(v);
-                    setValuesDraft({});
-                  }}
-                >
-                  <TabsList className="w-full">
-                    <TabsTrigger value="Suit" className="flex-1">Suit</TabsTrigger>
-                    <TabsTrigger value="Shirt" className="flex-1">Shirt</TabsTrigger>
-                    <TabsTrigger value="Pants" className="flex-1">Pants</TabsTrigger>
-                  </TabsList>
-                </Tabs>
-              )}
+              <Tabs
+                value={garmentType}
+                onValueChange={(v) => {
+                  if (isEditMode) return;
+                  setGarmentType(v);
+                  setValuesDraft({});
+                }}
+              >
+                <TabsList className={isEditMode ? "w-full pointer-events-none opacity-90" : "w-full"}>
+                  <TabsTrigger value="Suit" className="flex-1">Suit</TabsTrigger>
+                  <TabsTrigger value="Shirt" className="flex-1">Shirt</TabsTrigger>
+                  <TabsTrigger value="Pants" className="flex-1">Pants</TabsTrigger>
+                </TabsList>
+              </Tabs>
             </div>
 
             <div>
@@ -259,7 +258,9 @@ export default function MeasurementNew() {
                   </SelectContent>
                 </Select>
               ) : (
-                <Input value={measurement?.taker?.name ?? "—"} readOnly />
+                <div className="flex h-10 w-full items-center rounded-md border border-input bg-muted px-3 text-sm">
+                  {measurement?.taker?.name ?? "—"}
+                </div>
               )}
             </div>
           </div>
