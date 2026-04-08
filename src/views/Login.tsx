@@ -8,7 +8,7 @@ import { Label } from "@/components/ui/label";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { InputOTP, InputOTPGroup, InputOTPSlot } from "@/components/ui/input-otp";
 import { toast } from "@/hooks/use-toast";
-import { loginWithPassword, requestOtp, verifyOtp } from "@/services/auth";
+import { loginWithPassword, requestOtp, verifyOtp as verifyOtpApi } from "@/services/auth";
 import tailorBg from "@/assets/tailor-bg.jpg";
 
 export default function Login() {
@@ -122,7 +122,7 @@ export default function Login() {
 
     try {
       setIsSubmitting(true);
-      await verifyOtp(email.trim(), otp, remember);
+      await verifyOtpApi(email.trim(), otp, remember);
       signInSuccess();
     } catch (err: unknown) {
       toast({

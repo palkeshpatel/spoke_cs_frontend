@@ -14,6 +14,23 @@ dist-ssr
 .next
 out
 
+# Env files
+.env
+.env.*
+!.env.example
+
+# Test outputs
+coverage
+playwright-report
+test-results
+
+# Tooling caches
+.turbo
+.cache
+.eslintcache
+.swc
+.parcel-cache
+
 # Editor directories and files
 .vscode/*
 !.vscode/extensions.json

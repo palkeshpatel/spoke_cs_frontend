@@ -21,10 +21,10 @@ export default function Dashboard() {
     if (!s) return [];
 
     const base = [
-      { label: "Total Customers", value: s.total_customers, icon: Users, color: "text-primary" },
-      { label: "Total Orders", value: s.total_orders, icon: Package, color: "text-accent" },
-      { label: "Pending Orders", value: s.pending_orders, icon: Clock, color: "text-warning" },
-      { label: "Completed Orders", value: s.completed_orders, icon: CheckCircle, color: "text-success" },
+      { label: "Total Customers", value: Number(s.total_customers ?? 0).toLocaleString(), icon: Users, color: "text-primary" },
+      { label: "Total Orders", value: Number(s.total_orders ?? 0).toLocaleString(), icon: Package, color: "text-accent" },
+      { label: "Pending Orders", value: Number(s.pending_orders ?? 0).toLocaleString(), icon: Clock, color: "text-warning" },
+      { label: "Completed Orders", value: Number(s.completed_orders ?? 0).toLocaleString(), icon: CheckCircle, color: "text-success" },
     ];
 
     if (isAdmin) {
@@ -44,7 +44,7 @@ export default function Dashboard() {
       );
     } else {
       base.push(
-        { label: "Pending Payments", value: s.pending_payments, icon: TrendingUp, color: "text-destructive" },
+        { label: "Pending Payments", value: Number(s.pending_payments ?? 0).toLocaleString(), icon: TrendingUp, color: "text-destructive" },
         { label: "Role", value: dashboard?.role ?? "Staff", icon: Users, color: "text-primary" },
       );
     }
@@ -67,7 +67,7 @@ export default function Dashboard() {
     };
 
     return Object.entries(os).map(([key, value]) => ({
-      name: key.replaceAll("_", " ").replace(/\b\w/g, (m) => m.toUpperCase()),
+      name: key.replace(/_/g, " ").replace(/\b\w/g, (m) => m.toUpperCase()),
       value,
       color: colors[key] ?? "hsl(239, 84%, 67%)",
     }));
