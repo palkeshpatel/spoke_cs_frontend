@@ -4,7 +4,9 @@ type ApiError = {
   details?: unknown;
 };
 
-const DEFAULT_BASE_URL = "http://localhost/spoke_cs_backend/public";
+const DEFAULT_BASE_URL = "https://system.spokebynishitsoni.com";
+
+
 
 export const apiBaseUrl = () => process.env.NEXT_PUBLIC_API_BASE_URL ?? DEFAULT_BASE_URL;
 
