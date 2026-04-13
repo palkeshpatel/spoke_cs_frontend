@@ -34,6 +34,7 @@ class CustomerController extends Controller
             'email' => ['nullable', 'email', 'max:150'],
             'phone' => ['nullable', 'string', 'max:20'],
             'address' => ['nullable', 'string'],
+            'birthday' => ['nullable', 'date'],
         ]);
 
         if ($validator->fails()) {
@@ -51,6 +52,7 @@ class CustomerController extends Controller
             'email' => ['sometimes', 'nullable', 'email', 'max:150'],
             'phone' => ['sometimes', 'nullable', 'string', 'max:20'],
             'address' => ['sometimes', 'nullable', 'string'],
+            'birthday' => ['sometimes', 'nullable', 'date'],
         ]);
 
         if ($validator->fails()) {
