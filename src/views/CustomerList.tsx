@@ -37,11 +37,29 @@ export default function CustomerList() {
     });
   }, [customers, search]);
 
+  const totalCustomers = customers.length;
+  const activeThisMonth = useMemo(() => {
+    const now = new Date();
+    return customers.filter(c => {
+      if (!c.loyalty?.last_visit) return false;
+      const d = new Date(c.loyalty.last_visit);
+      return d.getMonth() === now.getMonth() && d.getFullYear() === now.getFullYear();
+    }).length;
+  }, [customers]);
+
+  const newThisWeek = useMemo(() => {
+    const nowTime = Date.now();
+    return customers.filter(c => {
+      if (!c.created_at) return false;
+      return (nowTime - new Date(c.created_at).getTime()) <= 7 * 24 * 60 * 60 * 1000;
+    }).length;
+  }, [customers]);
+
   return (
     <div>
       <PageHeader
-        title="Customers"
-        subtitle={`${customers.length} customers`}
+        title="Customer Profiles"
+        subtitle="Manage customer database"
         actions={
           <div className="flex items-center gap-2">
             <ToggleGroup
@@ -70,6 +88,38 @@ export default function CustomerList() {
           </div>
         }
       />
+
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+        <div className="bg-card rounded-xl card-shadow p-5 flex items-center gap-4">
+          <div className="w-12 h-12 rounded-lg bg-orange-50 flex items-center justify-center shrink-0">
+            <User className="h-6 w-6 text-orange-500" />
+          </div>
+          <div>
+            <div className="text-sm text-muted-foreground font-medium">Total Customers</div>
+            <div className="text-2xl font-bold">{totalCustomers}</div>
+          </div>
+        </div>
+        
+        <div className="bg-card rounded-xl card-shadow p-5 flex items-center gap-4">
+          <div className="w-12 h-12 rounded-lg bg-blue-50 flex items-center justify-center shrink-0">
+            <User className="h-6 w-6 text-blue-500" />
+          </div>
+          <div>
+            <div className="text-sm text-muted-foreground font-medium">Active This Month</div>
+            <div className="text-2xl font-bold">{activeThisMonth}</div>
+          </div>
+        </div>
+
+        <div className="bg-card rounded-xl card-shadow p-5 flex items-center gap-4">
+          <div className="w-12 h-12 rounded-lg bg-purple-50 flex items-center justify-center shrink-0">
+            <User className="h-6 w-6 text-purple-500" />
+          </div>
+          <div>
+            <div className="text-sm text-muted-foreground font-medium">New This Week</div>
+            <div className="text-2xl font-bold">{newThisWeek}</div>
+          </div>
+        </div>
+      </div>
 
       <div className="bg-card rounded-xl card-shadow">
         <div className="p-4 border-b border-border">
