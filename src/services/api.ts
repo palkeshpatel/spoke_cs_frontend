@@ -8,7 +8,17 @@ const DEFAULT_BASE_URL = "https://system.spokebynishitsoni.com";
 
 
 
-export const apiBaseUrl = () => process.env.NEXT_PUBLIC_API_BASE_URL ?? DEFAULT_BASE_URL;
+export const apiBaseUrl = () => {
+  // @ts-ignore
+  if (typeof import.meta !== "undefined" && import.meta.env && import.meta.env.VITE_API_BASE_URL) {
+    // @ts-ignore
+    return import.meta.env.VITE_API_BASE_URL;
+  }
+  if (typeof process !== "undefined" && process.env && process.env.NEXT_PUBLIC_API_BASE_URL) {
+    return process.env.NEXT_PUBLIC_API_BASE_URL;
+  }
+  return DEFAULT_BASE_URL;
+};
 
 export const tokenStorageKey = "tm_token";
 
