@@ -34,6 +34,7 @@ export default function CustomerDetail() {
     phone: "",
     email: "",
     address: "",
+    birthday: "",
     fitPreference: "",
     notes: "",
   });
@@ -65,6 +66,7 @@ export default function CustomerDetail() {
       phone: customer.phone ?? "",
       email: customer.email ?? "",
       address: customer.address ?? "",
+      birthday: customer.birthday ?? "",
       fitPreference: customer.preference?.fit_preference ?? "",
       notes: customer.preference?.notes ?? "",
     });
@@ -79,6 +81,7 @@ export default function CustomerDetail() {
         phone: form.phone || null,
         email: form.email || null,
         address: form.address || null,
+        birthday: form.birthday || null,
         preferences: {
           fit_preference: form.fitPreference || null,
           notes: form.notes || null,
@@ -161,6 +164,7 @@ export default function CustomerDetail() {
             <EditableField label="Phone" value={isEditing ? form.phone : customer.phone ?? ""} isEditing={isEditing} onChange={(v) => updateForm("phone", v)} />
             <EditableField label="Email" value={isEditing ? form.email : customer.email ?? ""} isEditing={isEditing} onChange={(v) => updateForm("email", v)} />
             <EditableField label="Address" value={isEditing ? form.address : customer.address ?? ""} isEditing={isEditing} onChange={(v) => updateForm("address", v)} />
+            <EditableField label="Birth Date" value={isEditing ? form.birthday : customer.birthday ?? ""} isEditing={isEditing} type="date" onChange={(v) => updateForm("birthday", v)} />
           </div>
         </SectionCard>
 

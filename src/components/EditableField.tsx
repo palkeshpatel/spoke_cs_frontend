@@ -7,7 +7,7 @@ interface EditableFieldProps {
   value: string | number;
   isEditing: boolean;
   onChange?: (value: string) => void;
-  type?: 'text' | 'textarea' | 'select' | 'number';
+  type?: 'text' | 'textarea' | 'select' | 'number' | 'date';
   options?: { value: string; label: string }[];
   unit?: string;
 }
@@ -52,7 +52,7 @@ export default function EditableField({ label, value, isEditing, onChange, type 
       <p className="text-xs text-muted-foreground mb-1">{label}</p>
       <div className="flex items-center gap-2">
         <Input
-          type={type === 'number' ? 'number' : 'text'}
+          type={type === 'number' ? 'number' : type === 'date' ? 'date' : 'text'}
           value={String(value)}
           onChange={e => onChange?.(e.target.value)}
           className="text-sm"

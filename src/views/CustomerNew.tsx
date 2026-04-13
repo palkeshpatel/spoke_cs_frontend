@@ -12,7 +12,7 @@ import { createCustomer } from "@/services/customers";
 export default function CustomerNew() {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
-  const [form, setForm] = useState({ name: "", phone: "", email: "", address: "", preferences: "", notes: "" });
+  const [form, setForm] = useState({ name: "", phone: "", email: "", address: "", birthday: "", preferences: "", notes: "" });
   const update = (key: keyof typeof form, val: string) => setForm((f) => ({ ...f, [key]: val }));
 
   const createMutation = useMutation({
@@ -40,6 +40,7 @@ export default function CustomerNew() {
       phone: form.phone.trim() || null,
       email: form.email.trim() || null,
       address: form.address.trim() || null,
+      birthday: form.birthday.trim() || null,
       preferences: {
         fit_preference: form.preferences.trim() || null,
         favorite_colors: null,
@@ -61,6 +62,7 @@ export default function CustomerNew() {
               <div><label className="text-xs text-muted-foreground mb-1 block">Email</label><Input value={form.email} onChange={e => update('email', e.target.value)} placeholder="email@example.com" /></div>
             </div>
             <div><label className="text-xs text-muted-foreground mb-1 block">Address</label><Input value={form.address} onChange={e => update('address', e.target.value)} placeholder="Enter address" /></div>
+            <div><label className="text-xs text-muted-foreground mb-1 block">Birth Date</label><Input type="date" value={form.birthday} onChange={e => update('birthday', e.target.value)} /></div>
           </div>
         </SectionCard>
 

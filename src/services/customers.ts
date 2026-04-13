@@ -78,6 +78,7 @@ export async function createCustomer(payload: {
   phone?: string | null;
   email?: string | null;
   address?: string | null;
+  birthday?: string | null;
   vip_status?: boolean;
   preferences?: { fit_preference?: string | null; favorite_colors?: string | null; notes?: string | null };
 }) {
@@ -92,6 +93,7 @@ export async function updateCustomer(
     phone: string | null;
     email: string | null;
     address: string | null;
+    birthday: string | null;
     vip_status: boolean;
     preferences: { fit_preference?: string | null; favorite_colors?: string | null; notes?: string | null };
   }>,
