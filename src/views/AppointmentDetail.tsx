@@ -128,7 +128,7 @@ export default function AppointmentDetail() {
           setIsEditing(false);
         }}
         actions={
-          <Button size="sm" variant="outline" onClick={() => completeMutation.mutate()} disabled={completeMutation.isPending}>
+          <Button size="sm" variant="complete" onClick={() => completeMutation.mutate()} disabled={completeMutation.isPending}>
             <CheckCircle className="h-4 w-4 mr-1" /> Complete
           </Button>
         }

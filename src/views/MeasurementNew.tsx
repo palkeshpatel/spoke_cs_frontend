@@ -302,7 +302,7 @@ export default function MeasurementNew() {
 
       {!isEditMode ? (
         <div className="flex gap-2 justify-end">
-          <Button variant="outline" onClick={() => navigate("/measurements")}>
+          <Button variant="cancel" onClick={() => navigate("/measurements")}>
             Cancel
           </Button>
           <Button onClick={submit} disabled={createMutation.isPending}>

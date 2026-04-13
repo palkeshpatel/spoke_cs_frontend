@@ -73,7 +73,7 @@ export default function CustomerNew() {
       </div>
 
       <div className="flex gap-2 justify-end">
-        <Button variant="outline" onClick={() => navigate('/customers')}>Cancel</Button>
+        <Button variant="cancel" onClick={() => navigate('/customers')}>Cancel</Button>
         <Button onClick={submit} disabled={createMutation.isPending}>
           {createMutation.isPending ? "Creating..." : "Create Customer"}
         </Button>

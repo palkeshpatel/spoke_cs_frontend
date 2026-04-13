@@ -32,14 +32,14 @@ export default function PageHeader({ title, subtitle, backTo, isEditing, onEdit,
       <div className="flex items-center gap-2 shrink-0">
         {isEditing ? (
           <>
-            <Button variant="outline" size="sm" onClick={onCancel}><X className="h-4 w-4 mr-1" /> Cancel</Button>
+            <Button variant="cancel" size="sm" onClick={onCancel}><X className="h-4 w-4 mr-1" /> Cancel</Button>
             <Button size="sm" onClick={onSave}><Save className="h-4 w-4 mr-1" /> Save</Button>
           </>
         ) : (
           <>
             {actions}
             {onEdit && (
-              <Button variant="outline" size="sm" onClick={onEdit}><Pencil className="h-4 w-4 mr-1" /> Edit</Button>
+              <Button variant="default" size="sm" onClick={onEdit}><Pencil className="h-4 w-4 mr-1" /> Edit</Button>
             )}
           </>
         )}

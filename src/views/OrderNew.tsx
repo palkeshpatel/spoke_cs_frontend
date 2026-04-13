@@ -134,7 +134,7 @@ export default function OrderNew() {
       </div>
 
       <div className="flex gap-2 justify-end">
-        <Button variant="outline" onClick={() => navigate("/orders")}>
+        <Button variant="cancel" onClick={() => navigate("/orders")}>
           Cancel
         </Button>
         <Button onClick={submit} disabled={createMutation.isPending}>

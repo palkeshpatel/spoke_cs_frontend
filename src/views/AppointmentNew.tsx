@@ -179,7 +179,7 @@ export default function AppointmentNew() {
       </SectionCard>
 
       <div className="flex gap-2 justify-end">
-        <Button variant="outline" onClick={() => navigate('/appointments')}>Cancel</Button>
+        <Button variant="cancel" onClick={() => navigate('/appointments')}>Cancel</Button>
         <Button onClick={submit} disabled={createMutation.isPending}>
           {createMutation.isPending ? "Creating..." : "Create Appointment"}
         </Button>
