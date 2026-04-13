@@ -157,9 +157,18 @@ export default function CustomerList() {
                   filtered.map((c) => (
                     <tr key={c.id} className="border-b border-border last:border-0 hover:bg-muted/50 transition-colors">
                       <td className="px-4 py-3">
-                        <Link to={`/customers/${c.id}`} className="text-sm font-medium text-foreground hover:text-primary">
-                          {c.name}
-                        </Link>
+                        <div className="flex items-center gap-3">
+                          {c.profile_image ? (
+                            <img src={c.profile_image} alt={c.name} className="w-8 h-8 rounded-full object-cover shrink-0" />
+                          ) : (
+                            <div className="w-8 h-8 rounded-full bg-accent/10 flex items-center justify-center shrink-0">
+                              <User className="h-3.5 w-3.5 text-accent" />
+                            </div>
+                          )}
+                          <Link to={`/customers/${c.id}`} className="text-sm font-medium text-foreground hover:text-primary">
+                            {c.name}
+                          </Link>
+                        </div>
                       </td>
                       <td className="px-4 py-3 text-sm text-muted-foreground">{c.phone ?? "—"}</td>
                       <td className="px-4 py-3 text-sm text-muted-foreground">{c.email ?? "—"}</td>
@@ -188,9 +197,13 @@ export default function CustomerList() {
                     <div className="flex items-start justify-between gap-3">
                       <div className="min-w-0">
                         <div className="flex items-center gap-2">
-                          <div className="w-9 h-9 rounded-full bg-accent/10 flex items-center justify-center shrink-0">
-                            <User className="h-4 w-4 text-accent" />
-                          </div>
+                          {c.profile_image ? (
+                            <img src={c.profile_image} alt={c.name} className="w-9 h-9 rounded-full object-cover shrink-0" />
+                          ) : (
+                            <div className="w-9 h-9 rounded-full bg-accent/10 flex items-center justify-center shrink-0">
+                              <User className="h-4 w-4 text-accent" />
+                            </div>
+                          )}
                           <div className="min-w-0">
                             <p className="text-sm font-semibold truncate">{c.name}</p>
                             <p className="text-xs text-muted-foreground truncate">{c.customer_code}</p>
