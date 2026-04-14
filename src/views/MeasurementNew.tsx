@@ -10,7 +10,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { toast } from "@/hooks/use-toast";
 import { listCustomers } from "@/services/customers";
-import { createMeasurement, getMeasurement, listMeasurementFields, listStaff, updateMeasurement } from "@/services/measurements";
+import { createMeasurement, getMeasurement, listMeasurementFields, listMeasurements, listStaff, updateMeasurement } from "@/services/measurements";
 
 export default function MeasurementNew() {
   const navigate = useNavigate();
@@ -42,6 +42,12 @@ export default function MeasurementNew() {
   const customersQuery = useQuery({
     queryKey: ["customers", "list"],
     queryFn: () => listCustomers(200),
+  });
+
+  const allMeasurementsQuery = useQuery({
+    queryKey: ["measurements", "list"],
+    queryFn: () => listMeasurements(200),
+    enabled: !!customerId,
   });
 
   const staffQuery = useQuery({
@@ -228,12 +234,23 @@ export default function MeasurementNew() {
               <Tabs
                 value={garmentType}
                 onValueChange={(v) => {
-                  if (isEditMode) return;
+                  if (isEditMode) {
+                    if (!customerId) return;
+                    const existing = allMeasurementsQuery.data?.data.find(
+                      m => m.customer_id === Number(customerId) && m.garment_type.toLowerCase() === v.toLowerCase()
+                    );
+                    if (existing) {
+                      navigate(`/measurements/${existing.id}`);
+                    } else {
+                      navigate(`/measurements/new?customer_id=${customerId}&garment_type=${encodeURIComponent(v)}`);
+                    }
+                    return;
+                  }
                   setGarmentType(v);
                   setValuesDraft({});
                 }}
               >
-                <TabsList className={isEditMode ? "w-full pointer-events-none opacity-90" : "w-full"}>
+                <TabsList className="w-full">
                   <TabsTrigger value="Suit" className="flex-1">Suit</TabsTrigger>
                   <TabsTrigger value="Shirt" className="flex-1">Shirt</TabsTrigger>
                   <TabsTrigger value="Pants" className="flex-1">Pants</TabsTrigger>

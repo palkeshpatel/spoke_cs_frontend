@@ -113,6 +113,11 @@ export default function MeasurementList() {
                     </p>
                   </div>
                 </div>
+                <Button variant="ghost" size="sm" asChild className="shrink-0 h-8 w-8 p-0">
+                  <Link to={g.byGarment.Suit?.id ? `/measurements/${g.byGarment.Suit.id}` : g.byGarment.Shirt?.id ? `/measurements/${g.byGarment.Shirt.id}` : g.byGarment.Pants?.id ? `/measurements/${g.byGarment.Pants.id}` : `/measurements/new?customer_id=${g.customerId}`}>
+                    <Pencil className="h-4 w-4" />
+                  </Link>
+                </Button>
               </div>
 
               <Tabs defaultValue={(g.byGarment.Suit ? "Suit" : g.byGarment.Shirt ? "Shirt" : g.byGarment.Pants ? "Pants" : "Suit")}>
