@@ -1,11 +1,12 @@
 import { useMemo, useRef, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { CheckCircle2, Trash2, DollarSign, ShoppingBag, Award, Clock } from "lucide-react";
+import { CheckCircle2, Trash2, DollarSign, ShoppingBag, Award, Clock, Ruler } from "lucide-react";
 import { useParams } from "react-router-dom";
 import { format } from "date-fns";
 import PageHeader from "@/components/PageHeader";
 import SectionCard from "@/components/SectionCard";
 import EditableField from "@/components/EditableField";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
 import {
   AlertDialog,
@@ -197,89 +198,220 @@ export default function CustomerDetail() {
         </div>
       </div>
 
-      <div className="grid md:grid-cols-2 gap-4 sm:gap-6 mb-6">
-        <SectionCard title="Customer Information">
-          <div className="grid sm:grid-cols-2 gap-4">
-            <EditableField label="Name" value={isEditing ? form.name : customer.name} isEditing={isEditing} onChange={(v) => updateForm("name", v)} />
-            <EditableField label="Phone" value={isEditing ? form.phone : customer.phone ?? ""} isEditing={isEditing} onChange={(v) => updateForm("phone", v)} />
-            <EditableField label="Email" value={isEditing ? form.email : customer.email ?? ""} isEditing={isEditing} onChange={(v) => updateForm("email", v)} />
-            <EditableField label="Address" value={isEditing ? form.address : customer.address ?? ""} isEditing={isEditing} onChange={(v) => updateForm("address", v)} />
-            <EditableField label="Birth Date" value={isEditing ? form.birthday : (customer.birthday ? (customer.birthday.includes('T') ? customer.birthday.split('T')[0] : customer.birthday) : "")} isEditing={isEditing} type="date" onChange={(v) => updateForm("birthday", v)} />
-          </div>
-        </SectionCard>
-
-        <SectionCard title="Preferences">
-          <div className="space-y-4">
-            <EditableField
-              label="Fit Preferences"
-              value={isEditing ? form.fitPreference : customer.preference?.fit_preference ?? ""}
-              isEditing={isEditing}
-              onChange={(v) => updateForm("fitPreference", v)}
-            />
-            <EditableField
-              label="Notes"
-              value={isEditing ? form.notes : customer.preference?.notes ?? ""}
-              isEditing={isEditing}
-              type="textarea"
-              onChange={(v) => updateForm("notes", v)}
-            />
-          </div>
-        </SectionCard>
-      </div>
-
-      <SectionCard title="Body Images">
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-          {imageTypes.map((t) => {
-            const image = imagesByType.get(t.key);
-            const src = image ? `${apiBaseUrl()}${image.path}` : null;
-            return (
-              <div key={t.key} className="border border-border rounded-lg p-3">
-                <div className="flex items-center justify-between gap-2 mb-2">
-                  <div className="text-sm font-medium">{t.label}</div>
-                  {src ? <CheckCircle2 className="h-4 w-4 text-green-600" /> : null}
-                </div>
-                <div className="relative h-40 rounded-md bg-muted overflow-hidden flex items-center justify-center">
-                  {src ? <img src={src} alt={t.label} className="h-full w-full object-cover" /> : <div className="text-xs text-muted-foreground">No image</div>}
-                </div>
-                <div className="mt-3 flex gap-2">
-                  <Button
-                    type="button"
-                    size="sm"
-                    onClick={() => {
-                      setPendingType(t.key);
-                      fileInputRef.current?.click();
-                    }}
-                    disabled={uploadMutation.isPending}
-                  >
-                    Upload
-                  </Button>
-                  {image ? (
-                    <AlertDialog>
-                      <AlertDialogTrigger asChild>
-                        <Button type="button" size="sm" variant="outline" disabled={deleteMutation.isPending}>
-                          <Trash2 className="h-4 w-4 mr-1" />
-                          Delete
-                        </Button>
-                      </AlertDialogTrigger>
-                      <AlertDialogContent>
-                        <AlertDialogHeader>
-                          <AlertDialogTitle>Delete image?</AlertDialogTitle>
-                          <AlertDialogDescription>This will remove the image from server and database.</AlertDialogDescription>
-                        </AlertDialogHeader>
-                        <AlertDialogFooter>
-                          <AlertDialogCancel>Cancel</AlertDialogCancel>
-                          <AlertDialogAction onClick={() => deleteMutation.mutate({ imageId: image.id })}>Delete</AlertDialogAction>
-                        </AlertDialogFooter>
-                      </AlertDialogContent>
-                    </AlertDialog>
-                  ) : null}
-                </div>
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-6">
+        {/* Left Column - Profile & Info */}
+        <div className="space-y-6">
+          <SectionCard title="">
+            <div className="flex flex-col items-center pt-2">
+              <div className="relative w-24 h-24 rounded-full overflow-hidden bg-muted mb-4">
+                {imagesByType.get("full_body") || customer.profile_image ? (
+                  <img src={customer.profile_image ? `${apiBaseUrl()}${customer.profile_image}` : `${apiBaseUrl()}${imagesByType.get("full_body")?.path}`} alt={customer.name} className="w-full h-full object-cover" />
+                ) : (
+                  <div className="flex items-center justify-center w-full h-full text-2xl font-bold text-muted-foreground">{customer.name.substring(0, 2).toUpperCase()}</div>
+                )}
               </div>
-            );
-          })}
+              <h2 className="text-xl font-bold">{customer.name}</h2>
+              <p className="text-sm text-muted-foreground">{customer.customer_code}</p>
+              {customer.vip_status ? (
+                <div className="mt-2 bg-primary text-primary-foreground text-xs px-2 py-0.5 rounded-full font-medium">VIP</div>
+              ) : null}
+            </div>
+
+            <div className="mt-6 border-t border-border pt-4">
+              <h3 className="text-sm font-semibold mb-3">Contact Information</h3>
+              <div className="space-y-4">
+                <EditableField label="Name" value={isEditing ? form.name : customer.name} isEditing={isEditing} onChange={(v) => updateForm("name", v)} />
+                <EditableField label="Phone" value={isEditing ? form.phone : customer.phone ?? ""} isEditing={isEditing} onChange={(v) => updateForm("phone", v)} />
+                <EditableField label="Email" value={isEditing ? form.email : customer.email ?? ""} isEditing={isEditing} onChange={(v) => updateForm("email", v)} />
+                <EditableField label="Address" value={isEditing ? form.address : customer.address ?? ""} isEditing={isEditing} onChange={(v) => updateForm("address", v)} />
+                <EditableField label="Birth Date" value={isEditing ? form.birthday : (customer.birthday ? (customer.birthday.includes('T') ? customer.birthday.split('T')[0] : customer.birthday) : "")} isEditing={isEditing} type="date" onChange={(v) => updateForm("birthday", v)} />
+              </div>
+            </div>
+          </SectionCard>
+
+          <SectionCard title="Preferences">
+            <div className="space-y-4">
+              <EditableField
+                label="Fit Preferences"
+                value={isEditing ? form.fitPreference : customer.preference?.fit_preference ?? ""}
+                isEditing={isEditing}
+                onChange={(v) => updateForm("fitPreference", v)}
+              />
+              <EditableField
+                label="Notes"
+                value={isEditing ? form.notes : customer.preference?.notes ?? ""}
+                isEditing={isEditing}
+                type="textarea"
+                onChange={(v) => updateForm("notes", v)}
+              />
+            </div>
+          </SectionCard>
+
+          <SectionCard title="Body Images">
+            <div className="grid grid-cols-2 gap-3">
+              {imageTypes.map((t) => {
+                const image = imagesByType.get(t.key);
+                const src = image ? `${apiBaseUrl()}${image.path}` : null;
+                return (
+                  <div key={t.key} className="border border-border rounded-lg p-2 flex flex-col items-center">
+                    <div className="text-xs font-medium w-full truncate text-center mb-1">{t.label}</div>
+                    <div className="relative h-24 w-full rounded bg-muted overflow-hidden">
+                      {src ? <img src={src} alt={t.label} className="h-full w-full object-cover" /> : null}
+                    </div>
+                    {isEditing ? (
+                      <div className="w-full mt-2">
+                        <Button
+                          type="button"
+                          size="sm"
+                          className="w-full h-7 text-[10px]"
+                          variant="outline"
+                          onClick={() => {
+                            setPendingType(t.key);
+                            fileInputRef.current?.click();
+                          }}
+                          disabled={uploadMutation.isPending}
+                        >
+                          Upload
+                        </Button>
+                      </div>
+                    ) : null}
+                  </div>
+                );
+              })}
+            </div>
+          </SectionCard>
         </div>
 
-        <input
+        {/* Right Column - Tabs */}
+        <div className="lg:col-span-2">
+          <Tabs defaultValue="orders">
+            <TabsList className="w-full grid grid-cols-4 h-12 rounded-full overflow-hidden p-1 shadow-sm border border-border/50 bg-background mb-4">
+              <TabsTrigger value="orders" className="rounded-full data-[state=active]:bg-muted">Orders</TabsTrigger>
+              <TabsTrigger value="appointments" className="rounded-full data-[state=active]:bg-muted">Appointments</TabsTrigger>
+              <TabsTrigger value="measurements" className="rounded-full data-[state=active]:bg-muted">Measurements</TabsTrigger>
+              <TabsTrigger value="billing" className="rounded-full data-[state=active]:bg-muted">Billing</TabsTrigger>
+            </TabsList>
+
+            <TabsContent value="orders" className="focus-visible:outline-none">
+              <SectionCard title="">
+                <div className="flex justify-between items-start mb-4">
+                  <div>
+                    <div className="flex items-center gap-2">
+                      <h3 className="text-lg font-bold">ORD-045</h3>
+                      <div className="bg-primary/90 text-primary-foreground text-xs px-2 py-0.5 rounded-full font-medium">completed</div>
+                    </div>
+                    <p className="text-sm text-primary mt-1">Custom 3-Piece Suit</p>
+                  </div>
+                  <div className="text-right">
+                    <p className="text-lg font-bold">$850.00</p>
+                    <p className="text-xs text-muted-foreground">2026-03-01</p>
+                  </div>
+                </div>
+                <div className="space-y-1 text-sm text-muted-foreground pb-4 border-b border-border">
+                  <p>Fabric: Italian Wool - Navy Blue</p>
+                  <p>Delivery: 2026-03-15</p>
+                  <p>Notes: Wedding suit - priority order</p>
+                </div>
+                
+                <div className="mt-4 flex justify-between items-start mb-4 opacity-75">
+                  <div>
+                    <div className="flex items-center gap-2">
+                      <h3 className="text-lg font-bold">ORD-032</h3>
+                      <div className="bg-primary/90 text-primary-foreground text-xs px-2 py-0.5 rounded-full font-medium">completed</div>
+                    </div>
+                    <p className="text-sm text-primary mt-1">Dress Shirts (x3)</p>
+                  </div>
+                  <div className="text-right">
+                    <p className="text-lg font-bold">$120.00</p>
+                    <p className="text-xs text-muted-foreground">2025-11-20</p>
+                  </div>
+                </div>
+              </SectionCard>
+            </TabsContent>
+
+            <TabsContent value="appointments" className="focus-visible:outline-none">
+              <SectionCard title="">
+                <div className="flex items-center justify-between p-3 rounded-lg border border-border mb-3">
+                  <div className="flex items-center gap-4">
+                    <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center">
+                      <Clock className="h-5 w-5 text-primary" />
+                    </div>
+                    <div>
+                      <h4 className="font-semibold text-sm">Follow-up Fitting</h4>
+                      <p className="text-xs text-muted-foreground">2026-03-10 at 2:00 PM</p>
+                    </div>
+                  </div>
+                  <div className="bg-muted text-muted-foreground text-xs px-2 py-0.5 rounded-full font-medium">upcoming</div>
+                </div>
+
+                <div className="flex items-center justify-between p-3 rounded-lg border border-border opacity-75">
+                  <div className="flex items-center gap-4">
+                    <div className="w-10 h-10 rounded-full bg-primary/5 flex items-center justify-center">
+                      <Clock className="h-5 w-5 text-primary/70" />
+                    </div>
+                    <div>
+                      <h4 className="font-semibold text-sm">Suit Fitting</h4>
+                      <p className="text-xs text-muted-foreground">2026-03-01 at 10:00 AM</p>
+                    </div>
+                  </div>
+                  <div className="bg-primary/90 text-primary-foreground text-xs px-2 py-0.5 rounded-full font-medium">completed</div>
+                </div>
+              </SectionCard>
+            </TabsContent>
+
+            <TabsContent value="measurements" className="focus-visible:outline-none">
+              <SectionCard title="">
+                <div className="flex items-center gap-3 mb-6">
+                  <div className="w-10 h-10 rounded-lg bg-pink-50 flex items-center justify-center">
+                    <Ruler className="h-5 w-5 text-pink-500" />
+                  </div>
+                  <div>
+                    <h3 className="text-lg font-bold">Measurement Records</h3>
+                    <p className="text-xs text-muted-foreground">Last updated: 2026-03-01</p>
+                  </div>
+                </div>
+                <div className="border-t border-border pt-6 grid grid-cols-2 md:grid-cols-3 gap-6">
+                  <div>
+                    <p className="text-xs text-muted-foreground mb-1">Chest</p>
+                    <p className="font-medium text-lg">42"</p>
+                  </div>
+                  <div>
+                    <p className="text-xs text-muted-foreground mb-1">Waist</p>
+                    <p className="font-medium text-lg">36"</p>
+                  </div>
+                  <div>
+                    <p className="text-xs text-muted-foreground mb-1">Sleeve</p>
+                    <p className="font-medium text-lg">34"</p>
+                  </div>
+                  <div>
+                    <p className="text-xs text-muted-foreground mb-1">Neck</p>
+                    <p className="font-medium text-lg">15.5"</p>
+                  </div>
+                  <div>
+                    <p className="text-xs text-muted-foreground mb-1">Inseam</p>
+                    <p className="font-medium text-lg">32"</p>
+                  </div>
+                  <div>
+                     <p className="text-xs text-muted-foreground mb-1">Shoulder</p>
+                     <p className="font-medium text-lg">18"</p>
+                  </div>
+                </div>
+              </SectionCard>
+            </TabsContent>
+            
+            <TabsContent value="billing" className="focus-visible:outline-none">
+              <SectionCard title="">
+                <div className="p-8 text-center text-muted-foreground">
+                  No billing history to display.
+                </div>
+              </SectionCard>
+            </TabsContent>
+          </Tabs>
+        </div>
+      </div>
+      
+      {/* Hidden Upload Inputs */}
+      <input
           ref={fileInputRef}
           type="file"
           accept="image/*"
