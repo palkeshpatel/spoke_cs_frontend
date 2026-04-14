@@ -120,37 +120,23 @@ export default function MeasurementList() {
                 </Button>
               </div>
 
-              <Tabs defaultValue={(g.byGarment.Suit ? "Suit" : g.byGarment.Shirt ? "Shirt" : g.byGarment.Pants ? "Pants" : "Suit")}>
-                <TabsList className="mb-4">
-                  {(["Suit", "Shirt", "Pants"] as const).map((garment) => {
-                    const m = g.byGarment[garment];
-                    const to = m
-                      ? `/measurements/${m.id}`
-                      : `/measurements/new?customer_id=${g.customerId}&garment_type=${encodeURIComponent(garment)}`;
-
-                    return (
-                      <TabsTrigger
-                        key={garment}
-                        value={garment}
-                        className="flex-1 justify-between gap-2"
-                        onClick={(e) => {
-                          e.preventDefault();
-                          navigate(to);
-                        }}
-                      >
-                        <span className="w-full text-center">{garment}</span>
-                      </TabsTrigger>
-                    );
-                  })}
-                </TabsList>
-
+              <div className="flex flex-wrap items-center gap-2">
                 {(["Suit", "Shirt", "Pants"] as const).map((garment) => {
+                  const hasMeasurement = !!g.byGarment[garment];
                   return (
-                    <TabsContent key={garment} value={garment} className="hidden">
-                    </TabsContent>
+                    <span
+                      key={garment}
+                      className={`inline-flex items-center justify-center rounded-md px-3 py-1.5 text-xs font-medium border transition-colors ${
+                        hasMeasurement
+                          ? "bg-accent/10 text-accent-foreground border-accent/20"
+                          : "bg-muted/30 text-muted-foreground border-transparent"
+                      }`}
+                    >
+                      {garment}
+                    </span>
                   );
                 })}
-              </Tabs>
+              </div>
             </div>
           ))
         )}
