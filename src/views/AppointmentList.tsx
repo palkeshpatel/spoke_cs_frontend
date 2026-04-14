@@ -1,6 +1,7 @@
 import { useMemo, useState } from "react";
 import { Link } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
+import { format } from "date-fns";
 import { Calendar as CalendarIcon, Plus, Search } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -108,7 +109,7 @@ export default function AppointmentList() {
                       </div>
                       <p className="text-sm text-primary">{a.service_type}</p>
                       <p className="text-xs text-muted-foreground truncate">
-                        📅 {a.appointment_date} 🕐 {a.appointment_time ?? "—"} ({a.duration_minutes} min)
+                        📅 {a.appointment_date ? format(new Date(a.appointment_date), "dd-MMM-yyyy") : "—"} 🕐 {a.appointment_time ?? "—"} ({a.duration_minutes} min)
                       </p>
                     </div>
                   </div>

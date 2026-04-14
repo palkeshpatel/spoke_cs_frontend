@@ -192,7 +192,7 @@ export default function CustomerDetail() {
           </div>
           <div>
             <div className="text-xs text-muted-foreground font-medium">Last Visit</div>
-            <div className="text-lg font-bold">{customer.loyalty?.last_visit ? format(new Date(customer.loyalty.last_visit), "yyyy-MM-dd") : "—"}</div>
+            <div className="text-lg font-bold">{customer.loyalty?.last_visit ? format(new Date(customer.loyalty.last_visit), "dd-MMM-yyyy") : "—"}</div>
           </div>
         </div>
       </div>

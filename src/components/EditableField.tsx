@@ -1,6 +1,7 @@
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { format } from 'date-fns';
 
 interface EditableFieldProps {
   label: string;
@@ -14,11 +15,20 @@ interface EditableFieldProps {
 
 export default function EditableField({ label, value, isEditing, onChange, type = 'text', options, unit }: EditableFieldProps) {
   if (!isEditing) {
+    let displayValue = value;
+    if (type === 'date' && typeof value === 'string' && value) {
+      try {
+        displayValue = format(new Date(value), 'dd-MMM-yyyy');
+      } catch (e) {
+        // ignore
+      }
+    }
+    
     return (
       <div>
         <p className="text-xs text-muted-foreground mb-0.5">{label}</p>
         <p className="text-sm font-medium text-foreground">
-          {value}{unit ? ` ${unit}` : ''}
+          {displayValue}{unit ? ` ${unit}` : ''}
         </p>
       </div>
     );
