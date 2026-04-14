@@ -113,8 +113,8 @@ export default function CustomerList() {
         </div>
 
         <div className="bg-card rounded-xl card-shadow p-5 flex items-center gap-4">
-          <div className="w-12 h-12 rounded-lg bg-purple-50 flex items-center justify-center shrink-0">
-            <User className="h-6 w-6 text-purple-500" />
+          <div className="w-12 h-12 rounded-lg bg-primary/10 flex items-center justify-center shrink-0">
+            <User className="h-6 w-6 text-primary" />
           </div>
           <div>
             <div className="text-sm text-muted-foreground font-medium">New This Week</div>

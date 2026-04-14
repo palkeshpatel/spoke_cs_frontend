@@ -179,8 +179,8 @@ export default function CustomerDetail() {
           </div>
         </div>
         <div className="bg-card rounded-xl card-shadow p-4 flex items-center gap-4">
-          <div className="w-10 h-10 rounded-lg bg-purple-50 flex items-center justify-center shrink-0">
-            <Award className="h-5 w-5 text-purple-500" />
+          <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center shrink-0">
+            <Award className="h-5 w-5 text-primary" />
           </div>
           <div>
             <div className="text-xs text-muted-foreground font-medium">Loyalty Points</div>
