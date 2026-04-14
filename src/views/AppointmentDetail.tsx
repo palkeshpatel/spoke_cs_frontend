@@ -6,8 +6,9 @@ import SectionCard from "@/components/SectionCard";
 import EditableField from "@/components/EditableField";
 import { StatusBadge, PriorityBadge } from "@/components/StatusBadge";
 import { Button } from "@/components/ui/button";
-import { Calendar, CheckCircle, Clock, MessageSquare } from "lucide-react";
+import { CheckCircle, MessageSquare } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
+import { format } from "date-fns";
 import { getAppointment, updateAppointment } from "@/services/appointments";
 
 type AppointmentForm = {
@@ -147,12 +148,8 @@ export default function AppointmentDetail() {
             </div>
           </div>
           <div className="border-t border-border pt-4 space-y-4">
-            <div className="flex items-center gap-3">
-              <Calendar className="h-4 w-4 text-muted-foreground shrink-0" />
-              <EditableField label="Date" value={form.appointmentDate} isEditing={isEditing} onChange={(v) => updateForm("appointmentDate", v)} />
-            </div>
-            <div className="flex items-center gap-3">
-              <Clock className="h-4 w-4 text-muted-foreground shrink-0" />
+            <EditableField label="Date" value={form.appointmentDate} isEditing={isEditing} type="date" onChange={(v) => updateForm("appointmentDate", v)} />
+            <div className="grid grid-cols-2 gap-4">
               <EditableField
                 label="Time"
                 value={form.appointmentTime || "—"}
@@ -217,11 +214,11 @@ export default function AppointmentDetail() {
           <div className="border-t border-border pt-4 mt-4 space-y-2">
             <div className="flex justify-between text-sm flex-wrap gap-1">
               <span className="text-muted-foreground">Created</span>
-              <span>{form.createdAt}</span>
+              <span>{form.createdAt ? format(new Date(form.createdAt), "dd-MMM-yyyy") : "—"}</span>
             </div>
             <div className="flex justify-between text-sm flex-wrap gap-1">
               <span className="text-muted-foreground">Updated</span>
-              <span>{form.updatedAt}</span>
+              <span>{form.updatedAt ? format(new Date(form.updatedAt), "dd-MMM-yyyy") : "—"}</span>
             </div>
           </div>
         </SectionCard>
