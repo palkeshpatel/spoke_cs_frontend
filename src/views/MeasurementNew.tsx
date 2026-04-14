@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
+import { format } from "date-fns";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useLocation, useNavigate, useParams } from "react-router-dom";
 import PageHeader from "@/components/PageHeader";
@@ -175,7 +176,7 @@ export default function MeasurementNew() {
       {isEditMode ? (
         <PageHeader
           title={measurement?.customer?.name ?? "Measurement"}
-          subtitle={`${garmentType} · Updated ${measurement?.updated_at ?? ""}`}
+          subtitle={`${garmentType} · Updated ${measurement?.updated_at ? format(new Date(measurement.updated_at), "dd-MMM-yyyy") : ""}`}
           backTo="/measurements"
           isEditing={isEditing}
           onEdit={() => setIsEditing(true)}

@@ -1,4 +1,5 @@
 import { useMemo, useState } from "react";
+import { format } from "date-fns";
 import { useQuery } from "@tanstack/react-query";
 import { Link, useNavigate } from "react-router-dom";
 import { Pencil, Plus, Ruler, Search } from "lucide-react";
@@ -109,7 +110,7 @@ export default function MeasurementList() {
                   <div className="min-w-0">
                     <p className="text-sm font-semibold truncate">{g.customerName}</p>
                     <p className="text-xs text-muted-foreground truncate">
-                      {g.customerCode ? `${g.customerCode} · ` : ""}Updated {g.latestUpdatedAt}
+                      {g.customerCode ? `${g.customerCode} · ` : ""}Updated {g.latestUpdatedAt ? format(new Date(g.latestUpdatedAt), "dd-MMM-yyyy") : "—"}
                     </p>
                   </div>
                 </div>
