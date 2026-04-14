@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import PageHeader from "@/components/PageHeader";
 import SectionCard from "@/components/SectionCard";
+import CustomerSelect from "@/components/CustomerSelect";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
@@ -91,18 +92,12 @@ export default function AppointmentNew() {
           <div className="space-y-4">
             <div>
               <label className="text-xs text-muted-foreground mb-1 block">Customer *</label>
-              <Select value={customerId} onValueChange={setCustomerId}>
-                <SelectTrigger>
-                  <SelectValue placeholder={customersQuery.isLoading ? "Loading customers..." : "Select customer"} />
-                </SelectTrigger>
-                <SelectContent>
-                  {(customersQuery.data?.data ?? []).map((c) => (
-                    <SelectItem key={c.id} value={String(c.id)}>
-                      {c.name} ({c.customer_code})
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+              <CustomerSelect
+                customers={customersQuery.data?.data || []}
+                value={customerId}
+                onChange={setCustomerId}
+                isLoading={customersQuery.isLoading}
+              />
             </div>
             <div className="grid sm:grid-cols-2 gap-4">
               <div>

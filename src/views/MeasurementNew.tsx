@@ -5,6 +5,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useLocation, useNavigate, useParams } from "react-router-dom";
 import PageHeader from "@/components/PageHeader";
 import SectionCard from "@/components/SectionCard";
+import CustomerSelect from "@/components/CustomerSelect";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -241,18 +242,12 @@ export default function MeasurementNew() {
                   {measurement?.customer ? `${measurement.customer.name} (${measurement.customer.customer_code})` : "—"}
                 </div>
               ) : (
-                <Select value={customerId} onValueChange={setCustomerId}>
-                  <SelectTrigger>
-                    <SelectValue placeholder={customersQuery.isLoading ? "Loading customers..." : "Select customer"} />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {(customersQuery.data?.data ?? []).map((c) => (
-                      <SelectItem key={c.id} value={String(c.id)}>
-                        {c.name} ({c.customer_code})
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+                <CustomerSelect
+                  customers={customersQuery.data?.data || []}
+                  value={customerId}
+                  onChange={setCustomerId}
+                  isLoading={customersQuery.isLoading}
+                />
               )}
             </div>
 
