@@ -1,6 +1,7 @@
 import { useMemo, useState } from "react";
+import { format } from "date-fns";
 import { useQuery } from "@tanstack/react-query";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { Plus, Search } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -10,6 +11,7 @@ import { listOrders } from "@/services/orders";
 
 export default function OrderList() {
   const [search, setSearch] = useState("");
+  const navigate = useNavigate();
 
   const ordersQuery = useQuery({
     queryKey: ["orders", "list"],
@@ -87,16 +89,22 @@ export default function OrderList() {
                 filtered.map((o) => {
                   const total = getTotal(o);
                   return (
-                    <tr key={o.id} className="border-b border-border last:border-0 hover:bg-muted/50 transition-colors">
+                    <tr 
+                      key={o.id} 
+                      onClick={() => navigate(`/orders/${o.id}`)}
+                      className="border-b border-border last:border-0 hover:bg-muted/50 transition-colors cursor-pointer"
+                    >
                       <td className="px-4 py-3">
-                        <Link to={`/orders/${o.id}`} className="text-sm font-medium hover:text-primary">
+                        <span className="text-sm font-medium hover:text-primary">
                           {o.order_number}
-                        </Link>
+                        </span>
                       </td>
                       <td className="px-4 py-3 text-sm text-muted-foreground">{o.customer?.name ?? "—"}</td>
                       <td className="px-4 py-3 text-sm text-muted-foreground">{o.order_type ?? "—"}</td>
                       <td className="px-4 py-3 text-sm text-muted-foreground">{o.fabric ?? "—"}</td>
-                      <td className="px-4 py-3 text-sm text-muted-foreground">{o.delivery_date ?? "—"}</td>
+                      <td className="px-4 py-3 text-sm text-muted-foreground">
+                        {o.delivery_date ? format(new Date(o.delivery_date), "dd-MMM-yyyy") : "—"}
+                      </td>
                       <td className="px-4 py-3">
                         <StatusBadge status={o.status} />
                       </td>

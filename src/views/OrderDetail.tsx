@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
+import { format } from "date-fns";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useParams } from "react-router-dom";
 import PageHeader from "@/components/PageHeader";
@@ -161,7 +162,9 @@ export default function OrderDetail() {
               {isEditing ? (
                 <Input type="date" value={trialDateDraft} onChange={(e) => setTrialDateDraft(e.target.value)} className="text-sm" />
               ) : (
-                <p className="text-sm font-medium text-foreground">{order.trial_date ?? "—"}</p>
+                <p className="text-sm font-medium text-foreground">
+                  {order.trial_date ? format(new Date(order.trial_date), "dd-MMM-yyyy") : "—"}
+                </p>
               )}
             </div>
 
@@ -170,7 +173,9 @@ export default function OrderDetail() {
               {isEditing ? (
                 <Input type="date" value={deliveryDateDraft} onChange={(e) => setDeliveryDateDraft(e.target.value)} className="text-sm" />
               ) : (
-                <p className="text-sm font-medium text-foreground">{order.delivery_date ?? "—"}</p>
+                <p className="text-sm font-medium text-foreground">
+                  {order.delivery_date ? format(new Date(order.delivery_date), "dd-MMM-yyyy") : "—"}
+                </p>
               )}
             </div>
 
