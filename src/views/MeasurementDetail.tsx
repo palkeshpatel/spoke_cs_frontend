@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { useParams } from "react-router-dom";
+import { useParams, useNavigate } from "react-router-dom";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import PageHeader from "@/components/PageHeader";
 import SectionCard from "@/components/SectionCard";
@@ -12,6 +12,7 @@ import { getMeasurement, listMeasurementFields, listStaff, updateMeasurement } f
 
 export default function MeasurementDetail() {
   const { id } = useParams();
+  const navigate = useNavigate();
   const queryClient = useQueryClient();
   const measurementId = id ? Number(id) : NaN;
   const [isEditing, setIsEditing] = useState(false);
@@ -26,6 +27,12 @@ export default function MeasurementDetail() {
   });
 
   const measurement = measurementQuery.data;
+
+  const allMeasurementsQuery = useQuery({
+    queryKey: ["measurements", "list"],
+    queryFn: () => listMeasurements(200),
+    enabled: !!measurement?.customer_id,
+  });
 
   const staffQuery = useQuery({
     queryKey: ["staff", "list"],
@@ -109,6 +116,22 @@ export default function MeasurementDetail() {
   const garmentTab = measurement.garment_type.toLowerCase();
   const showValues = isEditing ? valuesDraft : Object.fromEntries(valuesByFieldId.entries());
 
+  const handleTabChange = (val: string) => {
+    if (!measurement) return;
+    if (val === garmentTab) return;
+    const targetGarment = val.charAt(0).toUpperCase() + val.slice(1);
+    
+    const existing = allMeasurementsQuery.data?.data.find(
+      m => m.customer_id === measurement.customer_id && m.garment_type.toLowerCase() === val
+    );
+
+    if (existing) {
+      navigate(`/measurements/${existing.id}`);
+    } else {
+      navigate(`/measurements/new?customer_id=${measurement.customer_id}&garment_type=${encodeURIComponent(targetGarment)}`);
+    }
+  };
+
   return (
     <div>
       <PageHeader
@@ -145,7 +168,7 @@ export default function MeasurementDetail() {
         </div>
       </SectionCard>
 
-      <Tabs defaultValue={garmentTab} className="mb-6">
+      <Tabs value={garmentTab} onValueChange={handleTabChange} className="mb-6">
         <TabsList>
           <TabsTrigger value="suit">Suit</TabsTrigger>
           <TabsTrigger value="shirt">Shirt</TabsTrigger>
@@ -154,9 +177,7 @@ export default function MeasurementDetail() {
 
         {(["suit", "shirt", "pants"] as const).map((tab) => (
           <TabsContent key={tab} value={tab}>
-            {measurement.garment_type.toLowerCase() !== tab ? (
-              <div className="text-sm text-muted-foreground py-6">No {tab} measurements in this record</div>
-            ) : (
+            {measurement.garment_type.toLowerCase() === tab && (
               <SectionCard title={`${measurement.garment_type} Measurements`}>
                 <div className="flex justify-end mb-4">
                   <Button

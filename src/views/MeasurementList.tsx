@@ -122,7 +122,6 @@ export default function MeasurementList() {
                     const to = m
                       ? `/measurements/${m.id}`
                       : `/measurements/new?customer_id=${g.customerId}&garment_type=${encodeURIComponent(garment)}`;
-                    const Icon = m ? Pencil : Plus;
 
                     return (
                       <TabsTrigger
@@ -130,42 +129,19 @@ export default function MeasurementList() {
                         value={garment}
                         className="flex-1 justify-between gap-2"
                         onClick={(e) => {
-                          const el = e.target as HTMLElement | null;
-                          if (!el) return;
-                          if (el.closest("[data-action]")) {
-                            e.preventDefault();
-                            e.stopPropagation();
-                            navigate(to);
-                          }
+                          e.preventDefault();
+                          navigate(to);
                         }}
                       >
-                        <span>{garment}</span>
-                        <span
-                          data-action
-                          className="inline-flex items-center justify-center rounded-sm px-1.5 py-1 text-muted-foreground hover:text-foreground"
-                          title={m ? "Edit" : "Add"}
-                        >
-                          <Icon className="h-3.5 w-3.5" />
-                        </span>
+                        <span className="w-full text-center">{garment}</span>
                       </TabsTrigger>
                     );
                   })}
                 </TabsList>
 
                 {(["Suit", "Shirt", "Pants"] as const).map((garment) => {
-                  const m = g.byGarment[garment];
                   return (
-                    <TabsContent key={garment} value={garment}>
-                      {m ? (
-                        <div className="flex gap-2 flex-wrap">
-                          <span className="text-xs border border-border rounded-full px-2.5 py-0.5">{m.garment_type}</span>
-                          {m.taker?.name ? (
-                            <span className="text-xs border border-border rounded-full px-2.5 py-0.5">By {m.taker.name}</span>
-                          ) : null}
-                        </div>
-                      ) : (
-                        <div className="text-sm text-muted-foreground">No {garment} measurement yet</div>
-                      )}
+                    <TabsContent key={garment} value={garment} className="hidden">
                     </TabsContent>
                   );
                 })}
