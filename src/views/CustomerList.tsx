@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Link, useNavigate } from "react-router-dom";
+import { format } from "date-fns";
 import { LayoutGrid, List, Plus, Search, User } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -178,7 +179,7 @@ export default function CustomerList() {
                       <td className="px-4 py-3 text-sm text-muted-foreground">{c.phone ?? "—"}</td>
                       <td className="px-4 py-3 text-sm text-muted-foreground">{c.email ?? "—"}</td>
                       <td className="px-4 py-3 text-sm text-muted-foreground">{c.orders_count ?? 0}</td>
-                      <td className="px-4 py-3 text-sm text-muted-foreground">{c.loyalty?.last_visit ?? "—"}</td>
+                      <td className="px-4 py-3 text-sm text-muted-foreground">{c.loyalty?.last_visit ? format(new Date(c.loyalty.last_visit), "yyyy-MM-dd") : "—"}</td>
                     </tr>
                   ))
                 )}
@@ -224,7 +225,7 @@ export default function CustomerList() {
                     <div className="mt-4 space-y-1">
                       <div className="text-xs text-muted-foreground truncate">{c.phone ?? "—"}</div>
                       <div className="text-xs text-muted-foreground truncate">{c.email ?? "—"}</div>
-                      <div className="text-xs text-muted-foreground">Last visit: {c.loyalty?.last_visit ?? "—"}</div>
+                      <div className="text-xs text-muted-foreground">Last visit: {c.loyalty?.last_visit ? format(new Date(c.loyalty.last_visit), "yyyy-MM-dd") : "—"}</div>
                     </div>
                   </Link>
                 ))}

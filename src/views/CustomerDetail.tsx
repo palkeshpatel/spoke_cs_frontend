@@ -1,7 +1,8 @@
 import { useMemo, useRef, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { CheckCircle2, Trash2 } from "lucide-react";
+import { CheckCircle2, Trash2, DollarSign, ShoppingBag, Award, Clock } from "lucide-react";
 import { useParams } from "react-router-dom";
+import { format } from "date-fns";
 import PageHeader from "@/components/PageHeader";
 import SectionCard from "@/components/SectionCard";
 import EditableField from "@/components/EditableField";
@@ -66,7 +67,7 @@ export default function CustomerDetail() {
       phone: customer.phone ?? "",
       email: customer.email ?? "",
       address: customer.address ?? "",
-      birthday: customer.birthday ?? "",
+      birthday: customer.birthday ? (customer.birthday.includes('T') ? customer.birthday.split('T')[0] : customer.birthday) : "",
       fitPreference: customer.preference?.fit_preference ?? "",
       notes: customer.preference?.notes ?? "",
     });
@@ -157,6 +158,45 @@ export default function CustomerDetail() {
         }}
       />
 
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
+        <div className="bg-card rounded-xl card-shadow p-4 flex items-center gap-4">
+          <div className="w-10 h-10 rounded-lg bg-green-50 flex items-center justify-center shrink-0">
+            <DollarSign className="h-5 w-5 text-green-500" />
+          </div>
+          <div>
+            <div className="text-xs text-muted-foreground font-medium">Total Spent</div>
+            <div className="text-lg font-bold">${customer.loyalty?.total_spent ?? '0.00'}</div>
+          </div>
+        </div>
+        <div className="bg-card rounded-xl card-shadow p-4 flex items-center gap-4">
+          <div className="w-10 h-10 rounded-lg bg-blue-50 flex items-center justify-center shrink-0">
+            <ShoppingBag className="h-5 w-5 text-blue-500" />
+          </div>
+          <div>
+            <div className="text-xs text-muted-foreground font-medium">Total Orders</div>
+            <div className="text-lg font-bold">{customer.orders_count ?? 0}</div>
+          </div>
+        </div>
+        <div className="bg-card rounded-xl card-shadow p-4 flex items-center gap-4">
+          <div className="w-10 h-10 rounded-lg bg-purple-50 flex items-center justify-center shrink-0">
+            <Award className="h-5 w-5 text-purple-500" />
+          </div>
+          <div>
+            <div className="text-xs text-muted-foreground font-medium">Loyalty Points</div>
+            <div className="text-lg font-bold">{customer.loyalty?.points ?? 0}</div>
+          </div>
+        </div>
+        <div className="bg-card rounded-xl card-shadow p-4 flex items-center gap-4">
+          <div className="w-10 h-10 rounded-lg bg-orange-50 flex items-center justify-center shrink-0">
+            <Clock className="h-5 w-5 text-orange-500" />
+          </div>
+          <div>
+            <div className="text-xs text-muted-foreground font-medium">Last Visit</div>
+            <div className="text-lg font-bold">{customer.loyalty?.last_visit ? format(new Date(customer.loyalty.last_visit), "yyyy-MM-dd") : "—"}</div>
+          </div>
+        </div>
+      </div>
+
       <div className="grid md:grid-cols-2 gap-4 sm:gap-6 mb-6">
         <SectionCard title="Customer Information">
           <div className="grid sm:grid-cols-2 gap-4">
@@ -164,7 +204,7 @@ export default function CustomerDetail() {
             <EditableField label="Phone" value={isEditing ? form.phone : customer.phone ?? ""} isEditing={isEditing} onChange={(v) => updateForm("phone", v)} />
             <EditableField label="Email" value={isEditing ? form.email : customer.email ?? ""} isEditing={isEditing} onChange={(v) => updateForm("email", v)} />
             <EditableField label="Address" value={isEditing ? form.address : customer.address ?? ""} isEditing={isEditing} onChange={(v) => updateForm("address", v)} />
-            <EditableField label="Birth Date" value={isEditing ? form.birthday : customer.birthday ?? ""} isEditing={isEditing} type="date" onChange={(v) => updateForm("birthday", v)} />
+            <EditableField label="Birth Date" value={isEditing ? form.birthday : (customer.birthday ? (customer.birthday.includes('T') ? customer.birthday.split('T')[0] : customer.birthday) : "")} isEditing={isEditing} type="date" onChange={(v) => updateForm("birthday", v)} />
           </div>
         </SectionCard>
 
