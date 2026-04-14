@@ -163,8 +163,8 @@ export default function CustomerList() {
                     >
                       <td className="px-4 py-3">
                         <div className="flex items-center gap-3">
-                          {c.profile_image ? (
-                            <img src={c.profile_image} alt={c.name} className="w-8 h-8 rounded-full object-cover shrink-0" />
+                          {(c.profile_image || c.bodyImages?.[0]?.image_path) ? (
+                            <img src={c.profile_image || c.bodyImages![0].image_path} alt={c.name} className="w-8 h-8 rounded-full object-cover shrink-0" />
                           ) : (
                             <div className="w-8 h-8 rounded-full bg-accent/10 flex items-center justify-center shrink-0">
                               <User className="h-3.5 w-3.5 text-accent" />
@@ -202,8 +202,8 @@ export default function CustomerList() {
                     <div className="flex items-start justify-between gap-3">
                       <div className="min-w-0">
                         <div className="flex items-center gap-2">
-                          {c.profile_image ? (
-                            <img src={c.profile_image} alt={c.name} className="w-9 h-9 rounded-full object-cover shrink-0" />
+                          {(c.profile_image || c.bodyImages?.[0]?.image_path) ? (
+                            <img src={c.profile_image || c.bodyImages![0].image_path} alt={c.name} className="w-9 h-9 rounded-full object-cover shrink-0" />
                           ) : (
                             <div className="w-9 h-9 rounded-full bg-accent/10 flex items-center justify-center shrink-0">
                               <User className="h-4 w-4 text-accent" />
