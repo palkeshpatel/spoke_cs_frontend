@@ -2,6 +2,7 @@ import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { format } from 'date-fns';
+import { User, Phone, Mail, MapPin, Calendar, FileText, Heart, Shield, Hash, Type } from 'lucide-react';
 
 interface EditableFieldProps {
   label: string;
@@ -13,7 +14,29 @@ interface EditableFieldProps {
   unit?: string;
 }
 
+const getIconForLabel = (label: string) => {
+  const l = label.toLowerCase();
+  const className = "h-3.5 w-3.5 text-muted-foreground shrink-0";
+  if (l.includes("name") || l.includes("person") || l.includes("customer")) return <User className={className} />;
+  if (l.includes("phone") || l.includes("mobile") || l.includes("contact")) return <Phone className={className} />;
+  if (l.includes("email") || l.includes("mail")) return <Mail className={className} />;
+  if (l.includes("address") || l.includes("location") || l.includes("city")) return <MapPin className={className} />;
+  if (l.includes("date") || l.includes("birthday") || l.includes("time") || l.includes("visit")) return <Calendar className={className} />;
+  if (l.includes("note") || l.includes("remark") || l.includes("comment")) return <FileText className={className} />;
+  if (l.includes("preference") || l.includes("favorite") || l.includes("fit")) return <Heart className={className} />;
+  if (l.includes("status")) return <Shield className={className} />;
+  if (l.includes("id") || l.includes("code") || l.includes("number")) return <Hash className={className} />;
+  return <Type className={className} />;
+};
+
 export default function EditableField({ label, value, isEditing, onChange, type = 'text', options, unit }: EditableFieldProps) {
+  const renderLabel = (mb: string = "mb-1") => (
+    <div className={`flex items-center gap-1.5 ${mb}`}>
+      {getIconForLabel(label)}
+      <p className="text-xs text-muted-foreground leading-none">{label}</p>
+    </div>
+  );
+
   if (!isEditing) {
     let displayValue = value;
     if (type === 'date' && typeof value === 'string' && value) {
@@ -26,7 +49,7 @@ export default function EditableField({ label, value, isEditing, onChange, type 
     
     return (
       <div>
-        <p className="text-xs text-muted-foreground mb-0.5">{label}</p>
+        {renderLabel("mb-1")}
         <p className="text-sm font-medium text-foreground">
           {displayValue}{unit ? ` ${unit}` : ''}
         </p>
@@ -37,7 +60,7 @@ export default function EditableField({ label, value, isEditing, onChange, type 
   if (type === 'textarea') {
     return (
       <div>
-        <p className="text-xs text-muted-foreground mb-1">{label}</p>
+        {renderLabel()}
         <Textarea value={String(value)} onChange={e => onChange?.(e.target.value)} className="text-sm" rows={3} />
       </div>
     );
@@ -46,7 +69,7 @@ export default function EditableField({ label, value, isEditing, onChange, type 
   if (type === 'select' && options) {
     return (
       <div>
-        <p className="text-xs text-muted-foreground mb-1">{label}</p>
+        {renderLabel()}
         <Select value={String(value)} onValueChange={v => onChange?.(v)}>
           <SelectTrigger className="text-sm"><SelectValue /></SelectTrigger>
           <SelectContent>
@@ -59,7 +82,7 @@ export default function EditableField({ label, value, isEditing, onChange, type 
 
   return (
     <div>
-      <p className="text-xs text-muted-foreground mb-1">{label}</p>
+      {renderLabel()}
       <div className="flex items-center gap-2">
         <Input
           type={type === 'number' ? 'number' : type === 'date' ? 'date' : 'text'}
