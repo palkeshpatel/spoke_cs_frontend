@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { LayoutGrid, List, Plus, Search, User } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -9,6 +9,7 @@ import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 import { listCustomers } from "@/services/customers";
 
 export default function CustomerList() {
+  const navigate = useNavigate();
   const [search, setSearch] = useState("");
   const [view, setView] = useState<"list" | "grid">("list");
 
@@ -155,7 +156,11 @@ export default function CustomerList() {
                   </tr>
                 ) : (
                   filtered.map((c) => (
-                    <tr key={c.id} className="border-b border-border last:border-0 hover:bg-muted/50 transition-colors">
+                    <tr 
+                      key={c.id} 
+                      onClick={() => navigate(`/customers/${c.id}`)}
+                      className="border-b border-border last:border-0 hover:bg-muted/50 transition-colors cursor-pointer"
+                    >
                       <td className="px-4 py-3">
                         <div className="flex items-center gap-3">
                           {c.profile_image ? (
@@ -165,9 +170,9 @@ export default function CustomerList() {
                               <User className="h-3.5 w-3.5 text-accent" />
                             </div>
                           )}
-                          <Link to={`/customers/${c.id}`} className="text-sm font-medium text-foreground hover:text-primary">
+                          <span className="text-sm font-medium text-foreground hover:text-primary">
                             {c.name}
-                          </Link>
+                          </span>
                         </div>
                       </td>
                       <td className="px-4 py-3 text-sm text-muted-foreground">{c.phone ?? "—"}</td>
