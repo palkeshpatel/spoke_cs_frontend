@@ -436,7 +436,6 @@ export default function CustomerDetail() {
             await uploadMutation.mutateAsync({ type: pendingType, blob, fileName: name });
           }}
         />
-      </SectionCard>
     </div>
   );
 }
