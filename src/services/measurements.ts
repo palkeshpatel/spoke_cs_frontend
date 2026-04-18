@@ -69,8 +69,12 @@ const normalizePaginatedMeasurements = (raw: Raw): Paginated<MeasurementDto> => 
   };
 };
 
-export async function listMeasurements(perPage = 50) {
-  const res = await apiRequest<Raw>(`/api/measurements?per_page=${perPage}`);
+export async function listMeasurements(perPage = 50, customerId?: number) {
+  const q = new URLSearchParams({ per_page: String(perPage) });
+  if (customerId !== undefined && Number.isFinite(customerId)) {
+    q.set("customer_id", String(customerId));
+  }
+  const res = await apiRequest<Raw>(`/api/measurements?${q.toString()}`);
   return normalizePaginatedMeasurements(res);
 }
 

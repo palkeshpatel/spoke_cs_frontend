@@ -6,7 +6,6 @@ import { Plus, Ruler, Search } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import PageHeader from "@/components/PageHeader";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { listMeasurements } from "@/services/measurements";
 
 function measurementEntryPath(g: {
@@ -115,32 +114,34 @@ export default function MeasurementList() {
             <Link
               key={g.customerId}
               to={measurementEntryPath(g)}
-              className="block bg-card rounded-xl card-shadow p-5 transition-shadow hover:card-shadow-hover focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+              title={`Open measurements for ${g.customerName}`}
+              className="block bg-card rounded-xl card-shadow p-5 transition-shadow hover:card-shadow-hover focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 ring-offset-background"
             >
-              <div className="flex items-center justify-between mb-4">
-                <div className="flex items-center gap-3 min-w-0">
-                  <div className="w-10 h-10 rounded-full bg-accent/10 flex items-center justify-center shrink-0">
-                    <Ruler className="h-4 w-4 text-accent" />
-                  </div>
-                  <div className="min-w-0">
-                    <p className="text-sm font-semibold truncate">{g.customerName}</p>
-                    <p className="text-xs text-muted-foreground truncate">
-                      {g.customerCode ? `${g.customerCode} · ` : ""}Updated {g.latestUpdatedAt ? format(new Date(g.latestUpdatedAt), "dd-MMM-yyyy") : "—"}
-                    </p>
-                  </div>
+              <div className="flex items-center gap-3 min-w-0 mb-4">
+                <div className="w-10 h-10 rounded-full bg-accent/10 flex items-center justify-center shrink-0">
+                  <Ruler className="h-4 w-4 text-accent" />
+                </div>
+                <div className="min-w-0">
+                  <p className="text-sm font-semibold truncate">{g.customerName}</p>
+                  <p className="text-xs text-muted-foreground truncate">
+                    {g.customerCode ? `${g.customerCode} · ` : ""}Updated {g.latestUpdatedAt ? format(new Date(g.latestUpdatedAt), "dd-MMM-yyyy") : "—"}
+                  </p>
                 </div>
               </div>
 
-              <div className="flex flex-wrap items-center gap-2">
+              <div
+                className="flex flex-wrap items-center gap-2"
+                aria-label="Which garment types have measurements (indicators only; click the card to open)"
+              >
                 {(["Suit", "Shirt", "Pants"] as const).map((garment) => {
-                  const hasMeasurement = !!g.byGarment[garment];
+                  const has = !!g.byGarment[garment];
                   return (
                     <span
                       key={garment}
-                      className={`inline-flex items-center justify-center rounded-md px-3 py-1.5 text-xs font-medium border transition-colors ${
-                        hasMeasurement
-                          ? "bg-accent/10 text-accent-foreground border-accent/20"
-                          : "bg-muted/30 text-muted-foreground border-transparent"
+                      className={`inline-flex h-9 min-w-[4.25rem] items-center justify-center rounded-md border px-3 text-xs font-medium select-none ${
+                        has
+                          ? "border-primary/30 bg-primary text-primary-foreground shadow-sm"
+                          : "border-border/80 bg-muted/50 text-muted-foreground opacity-80"
                       }`}
                     >
                       {garment}

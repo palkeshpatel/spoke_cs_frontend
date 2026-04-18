@@ -37,8 +37,12 @@ export type AppointmentServiceDto = {
   price: string;
 };
 
-export async function listAppointments(perPage = 100) {
-  return apiRequest<Paginated<AppointmentDto>>(`/api/appointments?per_page=${perPage}`);
+export async function listAppointments(perPage = 100, customerId?: number) {
+  const q = new URLSearchParams({ per_page: String(perPage) });
+  if (customerId !== undefined && Number.isFinite(customerId)) {
+    q.set("customer_id", String(customerId));
+  }
+  return apiRequest<Paginated<AppointmentDto>>(`/api/appointments?${q.toString()}`);
 }
 
 export async function getAppointment(id: string | number) {

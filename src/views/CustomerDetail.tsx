@@ -1,27 +1,18 @@
 import { useMemo, useRef, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { CheckCircle2, Trash2, DollarSign, ShoppingBag, Award, Clock, Ruler } from "lucide-react";
-import { useParams } from "react-router-dom";
+import { DollarSign, ShoppingBag, Award, Clock, Ruler } from "lucide-react";
+import { Link, useParams } from "react-router-dom";
 import { format } from "date-fns";
 import PageHeader from "@/components/PageHeader";
 import SectionCard from "@/components/SectionCard";
 import EditableField from "@/components/EditableField";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-  AlertDialogTrigger,
-} from "@/components/ui/alert-dialog";
+import { PriorityBadge, StatusBadge } from "@/components/StatusBadge";
 import { toast } from "@/hooks/use-toast";
 import { CustomerImageCropDialog } from "@/components/CustomerImageCropDialog";
 import { resolvePublicUrl } from "@/services/api";
+import { listAppointments } from "@/services/appointments";
 import {
   deleteCustomerBodyImage,
   getCustomer,
@@ -29,6 +20,43 @@ import {
   uploadCustomerBodyImage,
   uploadCustomerProfileImage,
 } from "@/services/customers";
+import { listInvoices } from "@/services/invoices";
+import { listMeasurements, type MeasurementDto } from "@/services/measurements";
+import { listOrders, type OrderDto } from "@/services/orders";
+
+function sumOrderItems(order: OrderDto): number {
+  const items = order.items ?? [];
+  return items.reduce((sum, it) => {
+    const priceNum = typeof it.price === "string" ? Number(it.price) : Number(it.price);
+    const qty = Number(it.quantity ?? 0);
+    return sum + (Number.isFinite(priceNum) ? priceNum : 0) * (Number.isFinite(qty) ? qty : 0);
+  }, 0);
+}
+
+function formatAppointmentTime(t: string | null | undefined): string {
+  if (!t) return "—";
+  const parts = t.split(":");
+  if (parts.length >= 2) return `${parts[0]}:${parts[1]}`;
+  return t;
+}
+
+function priorityLabel(p: string): "HIGH" | "NORMAL" | "LOW" {
+  if (p === "high") return "HIGH";
+  if (p === "low") return "LOW";
+  return "NORMAL";
+}
+
+const customerDetailTabTriggerClass =
+  "rounded-full text-sm font-medium text-muted-foreground transition-colors data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:shadow-sm data-[state=inactive]:hover:text-foreground";
+
+function measurementPreview(m: MeasurementDto, maxFields: number) {
+  const vals = m.values ?? [];
+  return vals.slice(0, maxFields).map((v) => ({
+    label: v.field?.field_name ?? `Field ${v.field_id}`,
+    value: v.value === null || v.value === undefined || v.value === "" ? "—" : String(v.value),
+    unit: v.field?.unit ? ` ${v.field.unit}` : "",
+  }));
+}
 
 export default function CustomerDetail() {
   const { id } = useParams();
@@ -60,7 +88,38 @@ export default function CustomerDetail() {
     enabled: Number.isFinite(customerId),
   });
 
+  const customerOrdersQuery = useQuery({
+    queryKey: ["orders", "customer", customerId],
+    queryFn: () => listOrders(200, customerId),
+    enabled: Number.isFinite(customerId),
+  });
+
+  const customerAppointmentsQuery = useQuery({
+    queryKey: ["appointments", "customer", customerId],
+    queryFn: () => listAppointments(200, customerId),
+    enabled: Number.isFinite(customerId),
+  });
+
+  const customerMeasurementsQuery = useQuery({
+    queryKey: ["measurements", "customer", customerId],
+    queryFn: () => listMeasurements(200, customerId),
+    enabled: Number.isFinite(customerId),
+  });
+
+  const customerInvoicesQuery = useQuery({
+    queryKey: ["invoices", "customer", customerId],
+    queryFn: () => listInvoices(200, customerId),
+    enabled: Number.isFinite(customerId),
+  });
+
   const customer = customerQuery.data;
+
+  const orderStats = useMemo(() => {
+    const rows = customerOrdersQuery.data?.data ?? [];
+    const count = customerOrdersQuery.data?.total ?? rows.length;
+    const spent = rows.reduce((s, o) => s + sumOrderItems(o), 0);
+    return { count, spent };
+  }, [customerOrdersQuery.data]);
 
   const imagesByType = useMemo(() => {
     const map = new Map<string, { id: number; path: string }>();
@@ -195,7 +254,12 @@ export default function CustomerDetail() {
           </div>
           <div>
             <div className="text-xs text-muted-foreground font-medium">Total Spent</div>
-            <div className="text-lg font-bold">${customer.loyalty?.total_spent ?? '0.00'}</div>
+            <div className="text-lg font-bold">
+              $
+              {customerOrdersQuery.isSuccess
+                ? orderStats.spent.toFixed(2)
+                : Number(customer.loyalty?.total_spent ?? 0).toFixed(2)}
+            </div>
           </div>
         </div>
         <div className="bg-card rounded-xl card-shadow p-4 flex items-center gap-4">
@@ -204,7 +268,9 @@ export default function CustomerDetail() {
           </div>
           <div>
             <div className="text-xs text-muted-foreground font-medium">Total Orders</div>
-            <div className="text-lg font-bold">{customer.orders_count ?? 0}</div>
+            <div className="text-lg font-bold">
+              {customerOrdersQuery.isSuccess ? orderStats.count : customer.orders_count ?? 0}
+            </div>
           </div>
         </div>
         <div className="bg-card rounded-xl card-shadow p-4 flex items-center gap-4">
@@ -341,125 +407,188 @@ export default function CustomerDetail() {
         {/* Right Column - Tabs */}
         <div className="lg:col-span-2">
           <Tabs defaultValue="orders">
-            <TabsList className="w-full grid grid-cols-4 h-12 rounded-full overflow-hidden p-1 shadow-sm border border-border/50 bg-background mb-4">
-              <TabsTrigger value="orders" className="rounded-full data-[state=active]:bg-muted">Orders</TabsTrigger>
-              <TabsTrigger value="appointments" className="rounded-full data-[state=active]:bg-muted">Appointments</TabsTrigger>
-              <TabsTrigger value="measurements" className="rounded-full data-[state=active]:bg-muted">Measurements</TabsTrigger>
-              <TabsTrigger value="billing" className="rounded-full data-[state=active]:bg-muted">Billing</TabsTrigger>
+            <TabsList className="w-full grid grid-cols-4 h-12 gap-1 rounded-full border border-border/60 bg-muted/50 p-1 shadow-sm mb-4">
+              <TabsTrigger value="orders" className={customerDetailTabTriggerClass}>
+                Orders
+              </TabsTrigger>
+              <TabsTrigger value="appointments" className={customerDetailTabTriggerClass}>
+                Appointments
+              </TabsTrigger>
+              <TabsTrigger value="measurements" className={customerDetailTabTriggerClass}>
+                Measurements
+              </TabsTrigger>
+              <TabsTrigger value="billing" className={customerDetailTabTriggerClass}>
+                Billing
+              </TabsTrigger>
             </TabsList>
 
             <TabsContent value="orders" className="focus-visible:outline-none">
-              <SectionCard title="">
-                <div className="flex justify-between items-start mb-4">
-                  <div>
-                    <div className="flex items-center gap-2">
-                      <h3 className="text-lg font-bold">ORD-045</h3>
-                      <div className="bg-primary/90 text-primary-foreground text-xs px-2 py-0.5 rounded-full font-medium">completed</div>
-                    </div>
-                    <p className="text-sm text-primary mt-1">Custom 3-Piece Suit</p>
+              <SectionCard title="Orders for this customer">
+                {customerOrdersQuery.isLoading ? (
+                  <p className="text-sm text-muted-foreground py-4">Loading orders…</p>
+                ) : (customerOrdersQuery.data?.data ?? []).length === 0 ? (
+                  <p className="text-sm text-muted-foreground py-4">No orders yet for this customer.</p>
+                ) : (
+                  <div className="divide-y divide-border">
+                    {(customerOrdersQuery.data?.data ?? []).map((o) => {
+                      const lineTotal = sumOrderItems(o);
+                      return (
+                        <Link
+                          key={o.id}
+                          to={`/orders/${o.id}`}
+                          className="flex flex-col gap-2 py-4 first:pt-0 last:pb-0 hover:bg-muted/30 -mx-2 px-2 rounded-lg transition-colors"
+                        >
+                          <div className="flex flex-wrap items-start justify-between gap-2">
+                            <div>
+                              <div className="flex flex-wrap items-center gap-2">
+                                <span className="text-sm font-semibold">{o.order_number}</span>
+                                <StatusBadge status={o.status} />
+                              </div>
+                              <p className="text-sm text-primary mt-0.5">{o.order_type ?? "—"}</p>
+                            </div>
+                            <div className="text-right">
+                              <p className="text-sm font-bold">${lineTotal.toFixed(2)}</p>
+                              <p className="text-xs text-muted-foreground">
+                                {o.created_at ? format(new Date(o.created_at), "dd MMM yyyy") : "—"}
+                              </p>
+                            </div>
+                          </div>
+                          <div className="text-xs text-muted-foreground space-y-0.5">
+                            {o.fabric ? <p>Fabric: {o.fabric}</p> : null}
+                            {o.delivery_date ? (
+                              <p>Delivery: {format(new Date(o.delivery_date), "dd MMM yyyy")}</p>
+                            ) : null}
+                            {o.notes ? <p>Notes: {o.notes}</p> : null}
+                          </div>
+                        </Link>
+                      );
+                    })}
                   </div>
-                  <div className="text-right">
-                    <p className="text-lg font-bold">$850.00</p>
-                    <p className="text-xs text-muted-foreground">2026-03-01</p>
-                  </div>
-                </div>
-                <div className="space-y-1 text-sm text-muted-foreground pb-4 border-b border-border">
-                  <p>Fabric: Italian Wool - Navy Blue</p>
-                  <p>Delivery: 2026-03-15</p>
-                  <p>Notes: Wedding suit - priority order</p>
-                </div>
-                
-                <div className="mt-4 flex justify-between items-start mb-4 opacity-75">
-                  <div>
-                    <div className="flex items-center gap-2">
-                      <h3 className="text-lg font-bold">ORD-032</h3>
-                      <div className="bg-primary/90 text-primary-foreground text-xs px-2 py-0.5 rounded-full font-medium">completed</div>
-                    </div>
-                    <p className="text-sm text-primary mt-1">Dress Shirts (x3)</p>
-                  </div>
-                  <div className="text-right">
-                    <p className="text-lg font-bold">$120.00</p>
-                    <p className="text-xs text-muted-foreground">2025-11-20</p>
-                  </div>
-                </div>
+                )}
               </SectionCard>
             </TabsContent>
 
             <TabsContent value="appointments" className="focus-visible:outline-none">
-              <SectionCard title="">
-                <div className="flex items-center justify-between p-3 rounded-lg border border-border mb-3">
-                  <div className="flex items-center gap-4">
-                    <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center">
-                      <Clock className="h-5 w-5 text-primary" />
-                    </div>
-                    <div>
-                      <h4 className="font-semibold text-sm">Follow-up Fitting</h4>
-                      <p className="text-xs text-muted-foreground">2026-03-10 at 2:00 PM</p>
-                    </div>
+              <SectionCard title="Appointments for this customer">
+                {customerAppointmentsQuery.isLoading ? (
+                  <p className="text-sm text-muted-foreground py-4">Loading appointments…</p>
+                ) : (customerAppointmentsQuery.data?.data ?? []).length === 0 ? (
+                  <p className="text-sm text-muted-foreground py-4">No appointments scheduled for this customer.</p>
+                ) : (
+                  <div className="divide-y divide-border">
+                    {(customerAppointmentsQuery.data?.data ?? []).map((a) => (
+                      <Link
+                        key={a.id}
+                        to={`/appointments/${a.id}`}
+                        className="flex items-center justify-between gap-3 py-4 first:pt-0 last:pb-0 hover:bg-muted/30 -mx-2 px-2 rounded-lg transition-colors"
+                      >
+                        <div className="flex items-center gap-3 min-w-0">
+                          <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center shrink-0">
+                            <Clock className="h-5 w-5 text-primary" />
+                          </div>
+                          <div className="min-w-0">
+                            <p className="font-semibold text-sm truncate">{a.service_type}</p>
+                            <p className="text-xs text-muted-foreground">
+                              {a.appointment_date ? format(new Date(a.appointment_date), "dd MMM yyyy") : "—"}
+                              {a.appointment_time ? ` · ${formatAppointmentTime(a.appointment_time)}` : ""}
+                              {a.duration_minutes ? ` · ${a.duration_minutes} min` : ""}
+                            </p>
+                          </div>
+                        </div>
+                        <div className="flex flex-col items-end gap-1 shrink-0">
+                          <StatusBadge status={a.status} />
+                          <PriorityBadge priority={priorityLabel(a.priority)} />
+                        </div>
+                      </Link>
+                    ))}
                   </div>
-                  <div className="bg-muted text-muted-foreground text-xs px-2 py-0.5 rounded-full font-medium">upcoming</div>
-                </div>
-
-                <div className="flex items-center justify-between p-3 rounded-lg border border-border opacity-75">
-                  <div className="flex items-center gap-4">
-                    <div className="w-10 h-10 rounded-full bg-primary/5 flex items-center justify-center">
-                      <Clock className="h-5 w-5 text-primary/70" />
-                    </div>
-                    <div>
-                      <h4 className="font-semibold text-sm">Suit Fitting</h4>
-                      <p className="text-xs text-muted-foreground">2026-03-01 at 10:00 AM</p>
-                    </div>
-                  </div>
-                  <div className="bg-primary/90 text-primary-foreground text-xs px-2 py-0.5 rounded-full font-medium">completed</div>
-                </div>
+                )}
               </SectionCard>
             </TabsContent>
 
             <TabsContent value="measurements" className="focus-visible:outline-none">
-              <SectionCard title="">
-                <div className="flex items-center gap-3 mb-6">
-                  <div className="w-10 h-10 rounded-lg bg-pink-50 flex items-center justify-center">
-                    <Ruler className="h-5 w-5 text-pink-500" />
+              <SectionCard title="Measurements for this customer">
+                {customerMeasurementsQuery.isLoading ? (
+                  <p className="text-sm text-muted-foreground py-4">Loading measurements…</p>
+                ) : (customerMeasurementsQuery.data?.data ?? []).length === 0 ? (
+                  <p className="text-sm text-muted-foreground py-4">No measurement sheets on file for this customer.</p>
+                ) : (
+                  <div className="space-y-4">
+                    {(customerMeasurementsQuery.data?.data ?? []).map((m) => {
+                      const preview = measurementPreview(m, 8);
+                      return (
+                        <Link
+                          key={m.id}
+                          to={`/measurements/${m.id}`}
+                          className="block rounded-lg border border-border p-4 hover:bg-muted/30 transition-colors"
+                        >
+                          <div className="flex items-start gap-3">
+                            <div className="w-10 h-10 rounded-lg bg-pink-50 flex items-center justify-center shrink-0">
+                              <Ruler className="h-5 w-5 text-pink-500" />
+                            </div>
+                            <div className="min-w-0 flex-1">
+                              <p className="text-sm font-semibold">{m.garment_type}</p>
+                              <p className="text-xs text-muted-foreground">
+                                Updated {m.updated_at ? format(new Date(m.updated_at), "dd MMM yyyy, HH:mm") : "—"}
+                                {m.taker?.name ? ` · ${m.taker.name}` : ""}
+                              </p>
+                              {preview.length > 0 ? (
+                                <div className="mt-3 grid grid-cols-2 sm:grid-cols-3 gap-x-4 gap-y-2 text-xs">
+                                  {preview.map((row, idx) => (
+                                    <div key={`${m.id}-${idx}`}>
+                                      <p className="text-muted-foreground truncate">{row.label}</p>
+                                      <p className="font-medium truncate">
+                                        {row.value}
+                                        {row.unit}
+                                      </p>
+                                    </div>
+                                  ))}
+                                </div>
+                              ) : (
+                                <p className="text-xs text-muted-foreground mt-2">No field values recorded yet.</p>
+                              )}
+                            </div>
+                          </div>
+                        </Link>
+                      );
+                    })}
                   </div>
-                  <div>
-                    <h3 className="text-lg font-bold">Measurement Records</h3>
-                    <p className="text-xs text-muted-foreground">Last updated: 2026-03-01</p>
-                  </div>
-                </div>
-                <div className="border-t border-border pt-6 grid grid-cols-2 md:grid-cols-3 gap-6">
-                  <div>
-                    <p className="text-xs text-muted-foreground mb-1">Chest</p>
-                    <p className="font-medium text-lg">42"</p>
-                  </div>
-                  <div>
-                    <p className="text-xs text-muted-foreground mb-1">Waist</p>
-                    <p className="font-medium text-lg">36"</p>
-                  </div>
-                  <div>
-                    <p className="text-xs text-muted-foreground mb-1">Sleeve</p>
-                    <p className="font-medium text-lg">34"</p>
-                  </div>
-                  <div>
-                    <p className="text-xs text-muted-foreground mb-1">Neck</p>
-                    <p className="font-medium text-lg">15.5"</p>
-                  </div>
-                  <div>
-                    <p className="text-xs text-muted-foreground mb-1">Inseam</p>
-                    <p className="font-medium text-lg">32"</p>
-                  </div>
-                  <div>
-                     <p className="text-xs text-muted-foreground mb-1">Shoulder</p>
-                     <p className="font-medium text-lg">18"</p>
-                  </div>
-                </div>
+                )}
               </SectionCard>
             </TabsContent>
-            
+
             <TabsContent value="billing" className="focus-visible:outline-none">
-              <SectionCard title="">
-                <div className="p-8 text-center text-muted-foreground">
-                  No billing history to display.
-                </div>
+              <SectionCard title="Invoices for this customer">
+                {customerInvoicesQuery.isLoading ? (
+                  <p className="text-sm text-muted-foreground py-4">Loading invoices…</p>
+                ) : (customerInvoicesQuery.data?.data ?? []).length === 0 ? (
+                  <p className="text-sm text-muted-foreground py-4">No invoices found for this customer.</p>
+                ) : (
+                  <div className="divide-y divide-border">
+                    {(customerInvoicesQuery.data?.data ?? []).map((inv) => {
+                      const total = typeof inv.grand_total === "string" ? Number(inv.grand_total) : Number(inv.grand_total);
+                      return (
+                        <Link
+                          key={inv.id}
+                          to={`/billing/${inv.id}`}
+                          className="flex items-center justify-between gap-3 py-4 first:pt-0 last:pb-0 hover:bg-muted/30 -mx-2 px-2 rounded-lg transition-colors"
+                        >
+                          <div className="min-w-0">
+                            <div className="flex flex-wrap items-center gap-2">
+                              <span className="text-sm font-semibold">{inv.invoice_number}</span>
+                              <StatusBadge status={inv.status} />
+                            </div>
+                            <p className="text-xs text-muted-foreground mt-0.5">
+                              {inv.invoice_date ? format(new Date(inv.invoice_date), "dd MMM yyyy") : "—"}
+                              {inv.order?.order_number ? ` · ${inv.order.order_number}` : ""}
+                            </p>
+                          </div>
+                          <p className="text-sm font-bold shrink-0">${Number.isFinite(total) ? total.toFixed(2) : "0.00"}</p>
+                        </Link>
+                      );
+                    })}
+                  </div>
+                )}
               </SectionCard>
             </TabsContent>
           </Tabs>

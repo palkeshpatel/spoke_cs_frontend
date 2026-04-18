@@ -53,8 +53,12 @@ export type Paginated<T> = {
   total: number;
 };
 
-export async function listOrders(perPage = 100) {
-  return apiRequest<Paginated<OrderDto>>(`/api/orders?per_page=${perPage}`);
+export async function listOrders(perPage = 100, customerId?: number) {
+  const q = new URLSearchParams({ per_page: String(perPage) });
+  if (customerId !== undefined && Number.isFinite(customerId)) {
+    q.set("customer_id", String(customerId));
+  }
+  return apiRequest<Paginated<OrderDto>>(`/api/orders?${q.toString()}`);
 }
 
 export async function getOrder(id: string | number) {
