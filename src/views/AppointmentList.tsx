@@ -2,7 +2,7 @@ import { useMemo, useState } from "react";
 import { Link } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { format } from "date-fns";
-import { Calendar as CalendarIcon, Plus, Search } from "lucide-react";
+import { Calendar as CalendarIcon, Clock, Plus, Search } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -10,7 +10,15 @@ import PageHeader from "@/components/PageHeader";
 import { StatusBadge, PriorityBadge } from "@/components/StatusBadge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Calendar } from "@/components/ui/calendar";
+import { AppointmentCalendarDayCell, AppointmentCalendarProvider } from "@/components/AppointmentCalendarDay";
 import { listAppointments } from "@/services/appointments";
+
+function formatAppointmentTime(t: string | null | undefined): string {
+  if (!t) return "—";
+  const parts = t.split(":");
+  if (parts.length >= 2) return parts.slice(0, 3).join(":");
+  return t;
+}
 
 export default function AppointmentList() {
   const [search, setSearch] = useState("");
@@ -34,9 +42,8 @@ export default function AppointmentList() {
     return matchSearch && matchStatus && matchService;
   });
 
-  const dateAppointments = selectedDate
-    ? appointments.filter((a) => a.appointment_date === selectedDate.toISOString().split("T")[0])
-    : [];
+  const appointmentTabTriggerClass =
+    "rounded-md px-4 py-2 text-sm font-medium text-muted-foreground transition-colors data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:shadow-sm data-[state=inactive]:hover:text-foreground";
 
   return (
     <div>
@@ -53,9 +60,13 @@ export default function AppointmentList() {
       />
 
       <Tabs defaultValue="list">
-        <TabsList className="mb-4">
-          <TabsTrigger value="list">List View</TabsTrigger>
-          <TabsTrigger value="calendar">Calendar View</TabsTrigger>
+        <TabsList className="mb-4 flex h-auto w-full gap-1 rounded-lg border border-border/60 bg-muted/50 p-1 sm:w-fit">
+          <TabsTrigger value="list" className={appointmentTabTriggerClass}>
+            List View
+          </TabsTrigger>
+          <TabsTrigger value="calendar" className={appointmentTabTriggerClass}>
+            Calendar View
+          </TabsTrigger>
         </TabsList>
 
         <TabsContent value="list">
@@ -108,9 +119,20 @@ export default function AppointmentList() {
                         </span>
                       </div>
                       <p className="text-sm text-primary">{a.service_type}</p>
-                      <p className="text-xs text-muted-foreground truncate">
-                        📅 {a.appointment_date ? format(new Date(a.appointment_date), "dd-MMM-yyyy") : "—"} 🕐 {a.appointment_time ?? "—"} ({a.duration_minutes} min)
-                      </p>
+                      <div className="flex items-center gap-3 text-xs text-muted-foreground min-w-0 flex-wrap">
+                        <span className="inline-flex items-center gap-1 min-w-0">
+                          <CalendarIcon className="h-3.5 w-3.5 shrink-0 text-muted-foreground" aria-hidden />
+                          <span className="truncate">
+                            {a.appointment_date ? format(new Date(a.appointment_date), "dd-MMM-yyyy") : "—"}
+                          </span>
+                        </span>
+                        <span className="inline-flex items-center gap-1 min-w-0">
+                          <Clock className="h-3.5 w-3.5 shrink-0 text-muted-foreground" aria-hidden />
+                          <span className="truncate">
+                            {formatAppointmentTime(a.appointment_time)} ({a.duration_minutes} min)
+                          </span>
+                        </span>
+                      </div>
                     </div>
                   </div>
                   <div className="text-right shrink-0 ml-2">
@@ -127,42 +149,49 @@ export default function AppointmentList() {
         </TabsContent>
 
         <TabsContent value="calendar">
-          <div className="grid md:grid-cols-2 gap-4 sm:gap-6">
-            <div className="bg-card rounded-xl card-shadow p-4 sm:p-5">
-              <Calendar mode="single" selected={selectedDate} onSelect={setSelectedDate} className="pointer-events-auto" />
-              <div className="mt-4 border-t border-border pt-4">
-                <p className="text-sm font-semibold mb-2">Legend</p>
-                <div className="space-y-1.5">
-                  <div className="flex items-center gap-2 text-xs"><div className="w-2.5 h-2.5 rounded-full bg-primary" /> Confirmed</div>
-                  <div className="flex items-center gap-2 text-xs"><div className="w-2.5 h-2.5 rounded-full bg-muted-foreground" /> Pending</div>
-                  <div className="flex items-center gap-2 text-xs"><div className="w-2.5 h-2.5 rounded-full bg-destructive" /> High Priority</div>
-                </div>
+          <div className="w-full max-w-full">
+            <div className="rounded-xl border border-border/60 bg-muted/15 p-3 shadow-sm sm:p-4">
+              <div className="mb-3 flex flex-wrap items-center justify-between gap-2 border-b border-border/40 pb-3">
+                <p className="text-sm text-muted-foreground">
+                  {isLoading ? "Loading…" : `${appointments.length} scheduled`}
+                </p>
+                <Link to="/appointments/new">
+                  <Button size="sm" className="shrink-0">
+                    <Plus className="h-4 w-4 mr-1" />
+                    Add Appointment
+                  </Button>
+                </Link>
               </div>
-            </div>
-
-            <div className="bg-card rounded-xl card-shadow p-4 sm:p-5">
-              <div className="flex items-center gap-2 mb-4">
-                <CalendarIcon className="h-5 w-5 text-muted-foreground" />
-                <h3 className="text-sm sm:text-base font-semibold">
-                  Appointments for {selectedDate?.toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })}
-                </h3>
-              </div>
-              {dateAppointments.length === 0 ? (
-                <div className="flex flex-col items-center justify-center py-12 sm:py-16 text-muted-foreground">
-                  <CalendarIcon className="h-12 w-12 mb-3 opacity-30" />
-                  <p className="text-sm">No appointments scheduled</p>
-                  <Link to="/appointments/new"><Button variant="outline" size="sm" className="mt-3"><Plus className="h-4 w-4 mr-1" /> Schedule Appointment</Button></Link>
-                </div>
-              ) : (
-                <div className="space-y-3">
-                  {dateAppointments.map((a) => (
-                    <Link to={`/appointments/${a.id}`} key={a.id} className="block p-3 rounded-lg hover:bg-muted transition-colors">
-                      <p className="text-sm font-medium">{a.customer?.name ?? "—"} - {a.service_type}</p>
-                      <p className="text-xs text-muted-foreground">{a.appointment_time ?? "—"} ({a.duration_minutes} min)</p>
-                    </Link>
-                  ))}
-                </div>
-              )}
+              <AppointmentCalendarProvider appointments={appointments}>
+                <Calendar
+                  mode="single"
+                  selected={selectedDate}
+                  onSelect={setSelectedDate}
+                  className="pointer-events-auto w-full max-w-full border-0 bg-transparent p-0 shadow-none [--rdp-day-width:100%] [--rdp-day-height:auto] [--rdp-day_button-width:auto] [--rdp-day_button-height:auto] [&_.rdp-day]:!h-auto [&_.rdp-day]:min-h-[5.5rem] [&_.rdp-day]:overflow-visible"
+                  components={{ Day: AppointmentCalendarDayCell }}
+                  classNames={{
+                    root: "w-full",
+                    months: "w-full",
+                    month: "relative w-full space-y-2",
+                    month_caption: "flex h-9 items-center justify-center",
+                    caption_label: "text-sm font-semibold text-foreground",
+                    nav: "absolute inset-x-0 top-0 z-[1] flex items-center justify-between px-1",
+                    button_previous:
+                      "relative h-8 w-8 rounded-md border border-border/60 bg-card text-foreground shadow-sm hover:bg-muted aria-disabled:opacity-40",
+                    button_next:
+                      "relative h-8 w-8 rounded-md border border-border/60 bg-card text-foreground shadow-sm hover:bg-muted aria-disabled:opacity-40",
+                    month_grid: "w-full table-fixed border-collapse",
+                    weekdays: "border-b border-border/40",
+                    weekday: "w-[14.28%] p-1 text-center text-[0.65rem] font-medium uppercase tracking-wide text-muted-foreground",
+                    day: "box-border !h-auto min-h-[5.5rem] w-[14.28%] overflow-visible align-top p-0.5",
+                    day_button:
+                      "mx-auto flex h-7 min-h-7 w-8 min-w-8 shrink-0 items-center justify-center rounded-md p-0 text-xs font-semibold text-muted-foreground hover:bg-muted/80 hover:text-foreground data-[selected-single=true]:bg-primary data-[selected-single=true]:text-primary-foreground data-[selected-single=true]:shadow-sm",
+                  }}
+                />
+              </AppointmentCalendarProvider>
+              <p className="mt-3 text-xs text-muted-foreground">
+                Tap a <span className="font-medium text-foreground">brown bar</span> to open that appointment. Day number selects the day for highlighting.
+              </p>
             </div>
           </div>
         </TabsContent>

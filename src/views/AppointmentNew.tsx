@@ -22,6 +22,8 @@ export default function AppointmentNew() {
     const params = new URLSearchParams(location.search);
     const cid = params.get("customer_id");
     if (cid) setCustomerId(cid);
+    const ad = params.get("appointment_date");
+    if (ad && /^\d{4}-\d{2}-\d{2}$/.test(ad)) setAppointmentDate(ad);
   }, [location.search]);
   const [serviceType, setServiceType] = useState<string>("");
   const [appointmentDate, setAppointmentDate] = useState<string>("");
