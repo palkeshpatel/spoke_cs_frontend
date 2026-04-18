@@ -21,14 +21,21 @@ import {
 } from "@/components/ui/alert-dialog";
 import { toast } from "@/hooks/use-toast";
 import { CustomerImageCropDialog } from "@/components/CustomerImageCropDialog";
-import { apiBaseUrl } from "@/services/api";
-import { deleteCustomerBodyImage, getCustomer, updateCustomer, uploadCustomerBodyImage } from "@/services/customers";
+import { resolvePublicUrl } from "@/services/api";
+import {
+  deleteCustomerBodyImage,
+  getCustomer,
+  updateCustomer,
+  uploadCustomerBodyImage,
+  uploadCustomerProfileImage,
+} from "@/services/customers";
 
 export default function CustomerDetail() {
   const { id } = useParams();
   const queryClient = useQueryClient();
   const customerId = id ? Number(id) : NaN;
   const fileInputRef = useRef<HTMLInputElement | null>(null);
+  const profileAvatarInputRef = useRef<HTMLInputElement | null>(null);
 
   const [isEditing, setIsEditing] = useState(false);
   const [form, setForm] = useState({
@@ -44,6 +51,8 @@ export default function CustomerDetail() {
   const [cropOpen, setCropOpen] = useState(false);
   const [pendingType, setPendingType] = useState<string>("full_body");
   const [pendingFile, setPendingFile] = useState<File | null>(null);
+  const [profileCropOpen, setProfileCropOpen] = useState(false);
+  const [profilePickFile, setProfilePickFile] = useState<File | null>(null);
 
   const customerQuery = useQuery({
     queryKey: ["customers", "detail", customerId],
@@ -60,6 +69,11 @@ export default function CustomerDetail() {
     }
     return map;
   }, [customer?.bodyImages]);
+
+  const profilePhotoUrl = useMemo(() => {
+    if (!customer) return null;
+    return resolvePublicUrl(customer.profile_image) ?? resolvePublicUrl(imagesByType.get("full_body")?.path ?? null);
+  }, [customer, imagesByType]);
 
   const syncFormFromCustomer = () => {
     if (!customer) return;
@@ -112,6 +126,21 @@ export default function CustomerDetail() {
       const message =
         typeof err === "object" && err !== null && "message" in err ? String((err as { message?: unknown }).message ?? "") : "";
       toast({ title: "Upload failed", description: message || "Unable to upload image.", variant: "destructive" });
+    },
+  });
+
+  const profileUploadMutation = useMutation({
+    mutationFn: async (params: { blob: Blob; fileName: string }) =>
+      uploadCustomerProfileImage({ customerId, blob: params.blob, fileName: params.fileName }),
+    onSuccess: async () => {
+      await queryClient.invalidateQueries({ queryKey: ["customers"] });
+      await queryClient.invalidateQueries({ queryKey: ["customers", "detail", customerId] });
+      toast({ title: "Profile photo updated", description: "The profile image was saved." });
+    },
+    onError: (err: unknown) => {
+      const message =
+        typeof err === "object" && err !== null && "message" in err ? String((err as { message?: unknown }).message ?? "") : "";
+      toast({ title: "Upload failed", description: message || "Unable to upload profile image.", variant: "destructive" });
     },
   });
 
@@ -203,12 +232,39 @@ export default function CustomerDetail() {
         <div className="space-y-6">
           <SectionCard title="">
             <div className="flex flex-col items-center pt-2">
-              <div className="relative w-24 h-24 rounded-full overflow-hidden bg-muted mb-4">
-                {imagesByType.get("full_body") || customer.profile_image ? (
-                  <img src={customer.profile_image ? `${apiBaseUrl()}${customer.profile_image}` : `${apiBaseUrl()}${imagesByType.get("full_body")?.path}`} alt={customer.name} className="w-full h-full object-cover" />
+              <div className="relative w-24 h-24 rounded-full overflow-hidden bg-muted mb-3">
+                {profilePhotoUrl ? (
+                  <img src={profilePhotoUrl} alt={customer.name} className="w-full h-full object-cover" />
                 ) : (
                   <div className="flex items-center justify-center w-full h-full text-2xl font-bold text-muted-foreground">{customer.name.substring(0, 2).toUpperCase()}</div>
                 )}
+              </div>
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                className="mb-3 h-8 text-xs"
+                disabled={profileUploadMutation.isPending}
+                onClick={() => profileAvatarInputRef.current?.click()}
+              >
+                {profileUploadMutation.isPending ? "Uploading…" : "Change profile photo"}
+              </Button>
+              <input
+                ref={profileAvatarInputRef}
+                type="file"
+                accept="image/*"
+                className="hidden"
+                onChange={(e) => {
+                  const file = e.target.files?.[0] ?? null;
+                  e.target.value = "";
+                  if (!file) return;
+                  setProfilePickFile(file);
+                  setProfileCropOpen(true);
+                }}
+              />
+              <div className="text-[11px] text-muted-foreground text-center space-y-0.5 mb-2 w-full max-w-[220px]">
+                <p>Added {customer.created_at ? format(new Date(customer.created_at), "dd MMM yyyy, HH:mm") : "—"}</p>
+                <p>Last updated {customer.updated_at ? format(new Date(customer.updated_at), "dd MMM yyyy, HH:mm") : "—"}</p>
               </div>
               <h2 className="text-xl font-bold">{customer.name}</h2>
               <p className="text-sm text-muted-foreground">{customer.customer_code}</p>
@@ -251,7 +307,7 @@ export default function CustomerDetail() {
             <div className="grid grid-cols-2 gap-3">
               {imageTypes.map((t) => {
                 const image = imagesByType.get(t.key);
-                const src = image ? `${apiBaseUrl()}${image.path}` : null;
+                const src = image ? resolvePublicUrl(image.path) : null;
                 return (
                   <div key={t.key} className="border border-border rounded-lg p-2 flex flex-col items-center">
                     <div className="text-xs font-medium w-full truncate text-center mb-1">{t.label}</div>
@@ -434,6 +490,18 @@ export default function CustomerDetail() {
           onConfirm={async (blob) => {
             const name = pendingFile?.name ?? "image.jpg";
             await uploadMutation.mutateAsync({ type: pendingType, blob, fileName: name });
+          }}
+        />
+
+        <CustomerImageCropDialog
+          open={profileCropOpen}
+          onOpenChange={setProfileCropOpen}
+          file={profilePickFile}
+          title="Crop profile photo"
+          aspect={1}
+          onConfirm={async (blob) => {
+            const name = profilePickFile?.name ?? "profile.jpg";
+            await profileUploadMutation.mutateAsync({ blob, fileName: name });
           }}
         />
     </div>

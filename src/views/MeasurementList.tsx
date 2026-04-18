@@ -1,17 +1,28 @@
 import { useMemo, useState } from "react";
 import { format } from "date-fns";
 import { useQuery } from "@tanstack/react-query";
-import { Link, useNavigate } from "react-router-dom";
-import { Pencil, Plus, Ruler, Search } from "lucide-react";
+import { Link } from "react-router-dom";
+import { Plus, Ruler, Search } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import PageHeader from "@/components/PageHeader";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { listMeasurements } from "@/services/measurements";
 
+function measurementEntryPath(g: {
+  customerId: number;
+  byGarment: Partial<Record<"Suit" | "Shirt" | "Pants", { id: number } | undefined>>;
+}): string {
+  const suit = g.byGarment.Suit;
+  const shirt = g.byGarment.Shirt;
+  const pants = g.byGarment.Pants;
+  const first = suit ?? shirt ?? pants;
+  if (first?.id) return `/measurements/${first.id}`;
+  return `/measurements/new?customer_id=${g.customerId}`;
+}
+
 export default function MeasurementList() {
   const [search, setSearch] = useState("");
-  const navigate = useNavigate();
 
   const measurementsQuery = useQuery({
     queryKey: ["measurements", "list"],
@@ -101,7 +112,11 @@ export default function MeasurementList() {
           </div>
         ) : (
           filtered.map((g) => (
-            <div key={g.customerId} className="bg-card rounded-xl card-shadow p-5">
+            <Link
+              key={g.customerId}
+              to={measurementEntryPath(g)}
+              className="block bg-card rounded-xl card-shadow p-5 transition-shadow hover:card-shadow-hover focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+            >
               <div className="flex items-center justify-between mb-4">
                 <div className="flex items-center gap-3 min-w-0">
                   <div className="w-10 h-10 rounded-full bg-accent/10 flex items-center justify-center shrink-0">
@@ -114,11 +129,6 @@ export default function MeasurementList() {
                     </p>
                   </div>
                 </div>
-                <Button variant="ghost" size="sm" asChild className="shrink-0 h-8 w-8 p-0">
-                  <Link to={g.byGarment.Suit?.id ? `/measurements/${g.byGarment.Suit.id}` : g.byGarment.Shirt?.id ? `/measurements/${g.byGarment.Shirt.id}` : g.byGarment.Pants?.id ? `/measurements/${g.byGarment.Pants.id}` : `/measurements/new?customer_id=${g.customerId}`}>
-                    <Pencil className="h-4 w-4" />
-                  </Link>
-                </Button>
               </div>
 
               <div className="flex flex-wrap items-center gap-2">
@@ -138,7 +148,7 @@ export default function MeasurementList() {
                   );
                 })}
               </div>
-            </div>
+            </Link>
           ))
         )}
       </div>

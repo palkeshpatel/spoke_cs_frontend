@@ -43,6 +43,15 @@ export const clearAuthToken = () => {
   window.sessionStorage.removeItem(tokenStorageKey);
 };
 
+/** Full URL for public paths returned by the API (e.g. `/uploads/...`) or absolute URLs. */
+export function resolvePublicUrl(path: string | null | undefined): string | null {
+  if (path == null || path === "") return null;
+  if (path.startsWith("http://") || path.startsWith("https://")) return path;
+  const base = apiBaseUrl().replace(/\/$/, "");
+  const p = path.startsWith("/") ? path : `/${path}`;
+  return `${base}${p}`;
+}
+
 export async function apiRequest<TResponse>(
   path: string,
   options?: {
@@ -79,6 +88,12 @@ export async function apiRequest<TResponse>(
   const data = isJson ? await res.json().catch(() => null) : await res.text().catch(() => null);
 
   if (!res.ok) {
+    if (res.status === 401 && options?.auth !== false && getAuthToken()) {
+      clearAuthToken();
+      if (typeof window !== "undefined" && !window.location.pathname.startsWith("/login")) {
+        window.location.assign("/login");
+      }
+    }
     const errorMessage =
       typeof data === "object" && data !== null && "message" in data
         ? String((data as { message?: unknown }).message ?? "Request failed")

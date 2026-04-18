@@ -7,7 +7,12 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import PageHeader from "@/components/PageHeader";
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
-import { listCustomers } from "@/services/customers";
+import { resolvePublicUrl } from "@/services/api";
+import { listCustomers, type CustomerDto } from "@/services/customers";
+
+function customerAvatarUrl(c: CustomerDto): string | null {
+  return resolvePublicUrl(c.profile_image) ?? resolvePublicUrl(c.bodyImages?.[0]?.image_path ?? null);
+}
 
 export default function CustomerList() {
   const navigate = useNavigate();
@@ -135,6 +140,7 @@ export default function CustomerList() {
             <table className="w-full">
               <thead>
                 <tr className="border-b border-border">
+                  <th className="text-left text-xs font-medium text-muted-foreground px-4 py-3">Photo</th>
                   <th className="text-left text-xs font-medium text-muted-foreground px-4 py-3">Customer Name</th>
                   <th className="text-left text-xs font-medium text-muted-foreground px-4 py-3">Phone</th>
                   <th className="text-left text-xs font-medium text-muted-foreground px-4 py-3">Email</th>
@@ -145,13 +151,13 @@ export default function CustomerList() {
               <tbody>
                 {customersQuery.isLoading ? (
                   <tr>
-                    <td className="px-4 py-6 text-sm text-muted-foreground" colSpan={5}>
+                    <td className="px-4 py-6 text-sm text-muted-foreground" colSpan={6}>
                       Loading...
                     </td>
                   </tr>
                 ) : filtered.length === 0 ? (
                   <tr>
-                    <td className="px-4 py-6 text-sm text-muted-foreground" colSpan={5}>
+                    <td className="px-4 py-6 text-sm text-muted-foreground" colSpan={6}>
                       No customers found
                     </td>
                   </tr>
@@ -162,19 +168,17 @@ export default function CustomerList() {
                       onClick={() => navigate(`/customers/${c.id}`)}
                       className="border-b border-border last:border-0 hover:bg-muted/50 transition-colors cursor-pointer"
                     >
+                      <td className="px-4 py-3 w-14">
+                        {customerAvatarUrl(c) ? (
+                          <img src={customerAvatarUrl(c)!} alt="" className="w-9 h-9 rounded-full object-cover shrink-0" />
+                        ) : (
+                          <div className="w-9 h-9 rounded-full bg-accent/10 flex items-center justify-center shrink-0">
+                            <User className="h-3.5 w-3.5 text-accent" />
+                          </div>
+                        )}
+                      </td>
                       <td className="px-4 py-3">
-                        <div className="flex items-center gap-3">
-                          {(c.profile_image || c.bodyImages?.[0]?.image_path) ? (
-                            <img src={c.profile_image || c.bodyImages![0].image_path} alt={c.name} className="w-8 h-8 rounded-full object-cover shrink-0" />
-                          ) : (
-                            <div className="w-8 h-8 rounded-full bg-accent/10 flex items-center justify-center shrink-0">
-                              <User className="h-3.5 w-3.5 text-accent" />
-                            </div>
-                          )}
-                          <span className="text-sm font-medium text-foreground hover:text-primary">
-                            {c.name}
-                          </span>
-                        </div>
+                        <span className="text-sm font-medium text-foreground hover:text-primary">{c.name}</span>
                       </td>
                       <td className="px-4 py-3 text-sm text-muted-foreground">{c.phone ?? "—"}</td>
                       <td className="px-4 py-3 text-sm text-muted-foreground">{c.email ?? "—"}</td>
@@ -203,8 +207,8 @@ export default function CustomerList() {
                     <div className="flex items-start justify-between gap-3">
                       <div className="min-w-0">
                         <div className="flex items-center gap-2">
-                          {(c.profile_image || c.bodyImages?.[0]?.image_path) ? (
-                            <img src={c.profile_image || c.bodyImages![0].image_path} alt={c.name} className="w-9 h-9 rounded-full object-cover shrink-0" />
+                          {customerAvatarUrl(c) ? (
+                            <img src={customerAvatarUrl(c)!} alt="" className="w-9 h-9 rounded-full object-cover shrink-0" />
                           ) : (
                             <div className="w-9 h-9 rounded-full bg-accent/10 flex items-center justify-center shrink-0">
                               <User className="h-4 w-4 text-accent" />

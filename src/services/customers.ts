@@ -1,4 +1,4 @@
-import { apiBaseUrl, apiRequest, getAuthToken } from "@/services/api";
+import { apiBaseUrl, apiRequest, clearAuthToken, getAuthToken } from "@/services/api";
 
 type CustomerApiResponse = Record<string, unknown>;
 
@@ -43,7 +43,7 @@ export type Paginated<T> = {
   total: number;
 };
 
-const normalizeCustomer = (raw: CustomerApiResponse): CustomerDto => {
+export const normalizeCustomer = (raw: CustomerApiResponse): CustomerDto => {
   const bodyImages =
     (raw.bodyImages as CustomerBodyImageDto[] | undefined) ??
     (raw.body_images as CustomerBodyImageDto[] | undefined) ??
@@ -176,4 +176,34 @@ export async function uploadCustomerBodyImage(params: { customerId: number; imag
 
 export async function deleteCustomerBodyImage(params: { customerId: number; imageId: number }) {
   return apiRequest<{ message: string }>(`/api/customers/${params.customerId}/body-images/${params.imageId}`, { method: "DELETE" });
+}
+
+export async function uploadCustomerProfileImage(params: { customerId: number; blob: Blob; fileName?: string }) {
+  const form = new FormData();
+  form.append("image", params.blob, params.fileName ?? "profile.jpg");
+  const url = `${apiBaseUrl()}/api/customers/${params.customerId}/profile-image`;
+  const token = getAuthToken();
+  const res = await fetch(url, {
+    method: "POST",
+    headers: token ? { Authorization: `Bearer ${token}`, Accept: "application/json" } : { Accept: "application/json" },
+    body: form,
+  });
+
+  const contentType = res.headers.get("content-type") ?? "";
+  const isJson = contentType.includes("application/json");
+  const data = isJson ? await res.json().catch(() => null) : await res.text().catch(() => null);
+
+  if (!res.ok) {
+    if (res.status === 401 && getAuthToken()) {
+      clearAuthToken();
+      if (typeof window !== "undefined" && !window.location.pathname.startsWith("/login")) {
+        window.location.assign("/login");
+      }
+    }
+    const message =
+      typeof data === "object" && data !== null && "message" in data ? String((data as { message?: unknown }).message ?? "") : "";
+    throw { message: message || "Profile image upload failed", status: res.status, details: data } as const;
+  }
+
+  return normalizeCustomer(data as CustomerApiResponse);
 }

@@ -8,7 +8,8 @@ import { Label } from "@/components/ui/label";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { InputOTP, InputOTPGroup, InputOTPSlot } from "@/components/ui/input-otp";
 import { toast } from "@/hooks/use-toast";
-import { loginWithPassword, requestOtp, verifyOtp as verifyOtpApi } from "@/services/auth";
+import { clearAuthToken, getAuthToken } from "@/services/api";
+import { getMe, loginWithPassword, requestOtp, verifyOtp as verifyOtpApi } from "@/services/auth";
 import tailorBg from "@/assets/tailor-bg.jpg";
 
 export default function Login() {
@@ -25,6 +26,22 @@ export default function Login() {
   const isEmailValid = useMemo(() => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim()), [email]);
   const getErrorMessage = (err: unknown) =>
     typeof err === "object" && err !== null && "message" in err ? String((err as { message?: unknown }).message ?? "") : "";
+
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      if (!getAuthToken()) return;
+      try {
+        await getMe();
+        if (!cancelled) navigate("/", { replace: true });
+      } catch {
+        clearAuthToken();
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [navigate]);
 
   useEffect(() => {
     if (otpCooldown <= 0) return;

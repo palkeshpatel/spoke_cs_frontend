@@ -1,9 +1,10 @@
 import { useState, useEffect } from 'react';
-import { Link, useLocation } from 'react-router-dom';
+import { Link, Outlet, useLocation, useNavigate } from 'react-router-dom';
 import {
   LayoutDashboard, Users, Calendar, Ruler, Package, Receipt,
-  BarChart3, Settings, ChevronLeft, ChevronRight, Scissors, Menu, X
+  BarChart3, Settings, ChevronLeft, ChevronRight, Scissors, Menu, X, LogOut
 } from 'lucide-react';
+import { logout as logoutApi } from '@/services/auth';
 
 const navItems = [
   { path: '/', label: 'Dashboard', icon: LayoutDashboard },
@@ -16,10 +17,24 @@ const navItems = [
   { path: '/settings', label: 'Settings', icon: Settings },
 ];
 
-export default function Layout({ children }: { children: React.ReactNode }) {
+export default function Layout() {
   const [collapsed, setCollapsed] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
+  const [loggingOut, setLoggingOut] = useState(false);
   const location = useLocation();
+  const navigate = useNavigate();
+
+  const handleLogout = async () => {
+    setLoggingOut(true);
+    try {
+      await logoutApi();
+    } catch {
+      // logout() clears token in finally even if the request fails
+    } finally {
+      setLoggingOut(false);
+      navigate('/login', { replace: true });
+    }
+  };
 
   // Close mobile menu on route change
   useEffect(() => {
@@ -78,6 +93,17 @@ export default function Layout({ children }: { children: React.ReactNode }) {
         </nav>
 
         <button
+          type="button"
+          onClick={handleLogout}
+          disabled={loggingOut}
+          className="flex items-center gap-3 px-3 py-2 mx-2 mb-1 rounded-lg text-sm font-medium text-sidebar-muted hover:bg-sidebar-hover hover:text-sidebar-fg transition-colors disabled:opacity-50"
+        >
+          <LogOut className="h-4.5 w-4.5 shrink-0" />
+          {!collapsed && <span>{loggingOut ? 'Signing out…' : 'Log out'}</span>}
+        </button>
+
+        <button
+          type="button"
           onClick={() => setCollapsed(!collapsed)}
           className="hidden lg:flex items-center justify-center h-10 mx-2 mb-2 rounded-lg text-sidebar-muted hover:bg-sidebar-hover hover:text-sidebar-fg transition-colors"
         >
@@ -89,16 +115,25 @@ export default function Layout({ children }: { children: React.ReactNode }) {
       <div className="flex-1 flex flex-col overflow-hidden">
         {/* Mobile top bar */}
         <div className="lg:hidden flex items-center gap-3 h-14 px-4 border-b border-border bg-card shrink-0">
-          <button onClick={() => setMobileOpen(true)} className="p-1.5 rounded-lg hover:bg-muted transition-colors">
+          <button type="button" onClick={() => setMobileOpen(true)} className="p-1.5 rounded-lg hover:bg-muted transition-colors">
             <Menu className="h-5 w-5 text-foreground" />
           </button>
           <Scissors className="h-5 w-5 text-primary" />
-          <span className="font-bold text-foreground tracking-tight">SPOKE</span>
+          <span className="font-bold text-foreground tracking-tight flex-1">SPOKE</span>
+          <button
+            type="button"
+            onClick={handleLogout}
+            disabled={loggingOut}
+            className="p-2 rounded-lg text-muted-foreground hover:bg-muted hover:text-foreground disabled:opacity-50"
+            aria-label="Log out"
+          >
+            <LogOut className="h-5 w-5" />
+          </button>
         </div>
 
         <main className="flex-1 overflow-y-auto">
           <div className="p-4 sm:p-6 max-w-7xl mx-auto">
-            {children}
+            <Outlet />
           </div>
         </main>
       </div>

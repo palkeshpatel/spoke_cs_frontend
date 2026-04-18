@@ -1,17 +1,18 @@
 import { useMemo, useState } from "react";
 import { format } from "date-fns";
 import { useQuery } from "@tanstack/react-query";
-import { Link, useNavigate } from "react-router-dom";
-import { Plus, Search } from "lucide-react";
+import { Link } from "react-router-dom";
+import { LayoutGrid, List, Plus, Search } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import PageHeader from "@/components/PageHeader";
 import { StatusBadge } from "@/components/StatusBadge";
+import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 import { listOrders } from "@/services/orders";
 
 export default function OrderList() {
   const [search, setSearch] = useState("");
-  const navigate = useNavigate();
+  const [view, setView] = useState<"list" | "grid">("list");
 
   const ordersQuery = useQuery({
     queryKey: ["orders", "list"],
@@ -48,11 +49,30 @@ export default function OrderList() {
         title="Orders"
         subtitle={`${totalCount} orders`}
         actions={
-          <Button asChild size="sm">
-            <Link to="/orders/new">
-              <Plus className="h-4 w-4 mr-1" /> Add Order
-            </Link>
-          </Button>
+          <div className="flex items-center gap-2">
+            <ToggleGroup
+              type="single"
+              value={view}
+              onValueChange={(v) => {
+                if (v === "grid" || v === "list") setView(v);
+              }}
+              variant="outline"
+              size="sm"
+              className="hidden sm:flex"
+            >
+              <ToggleGroupItem value="list" aria-label="List view">
+                <List className="h-4 w-4" />
+              </ToggleGroupItem>
+              <ToggleGroupItem value="grid" aria-label="Grid view">
+                <LayoutGrid className="h-4 w-4" />
+              </ToggleGroupItem>
+            </ToggleGroup>
+            <Button asChild size="sm">
+              <Link to="/orders/new">
+                <Plus className="h-4 w-4 mr-1" /> Add Order
+              </Link>
+            </Button>
+          </div>
         }
       />
 
@@ -63,59 +83,65 @@ export default function OrderList() {
             <Input placeholder="Search orders..." value={search} onChange={(e) => setSearch(e.target.value)} className="pl-9" />
           </div>
         </div>
-        <div className="overflow-x-auto">
-          <table className="w-full">
-            <thead>
-              <tr className="border-b border-border">
-                {['Order #', 'Customer', 'Garment', 'Fabric', 'Delivery', 'Status', 'Total'].map(h => (
-                  <th key={h} className="text-left text-xs font-medium text-muted-foreground px-4 py-3">{h}</th>
-                ))}
-              </tr>
-            </thead>
-            <tbody>
-              {ordersQuery.isLoading ? (
-                <tr>
-                  <td className="px-4 py-6 text-sm text-muted-foreground" colSpan={7}>
-                    Loading...
-                  </td>
-                </tr>
-              ) : filtered.length === 0 ? (
-                <tr>
-                  <td className="px-4 py-6 text-sm text-muted-foreground" colSpan={7}>
-                    No orders found
-                  </td>
-                </tr>
-              ) : (
-                filtered.map((o) => {
-                  const total = getTotal(o);
-                  return (
-                    <tr 
-                      key={o.id} 
-                      onClick={() => navigate(`/orders/${o.id}`)}
-                      className="border-b border-border last:border-0 hover:bg-muted/50 transition-colors cursor-pointer"
-                    >
-                      <td className="px-4 py-3">
-                        <span className="text-sm font-medium hover:text-primary">
-                          {o.order_number}
-                        </span>
-                      </td>
-                      <td className="px-4 py-3 text-sm text-muted-foreground">{o.customer?.name ?? "—"}</td>
-                      <td className="px-4 py-3 text-sm text-muted-foreground">{o.order_type ?? "—"}</td>
-                      <td className="px-4 py-3 text-sm text-muted-foreground">{o.fabric ?? "—"}</td>
-                      <td className="px-4 py-3 text-sm text-muted-foreground">
-                        {o.delivery_date ? format(new Date(o.delivery_date), "dd-MMM-yyyy") : "—"}
-                      </td>
-                      <td className="px-4 py-3">
-                        <StatusBadge status={o.status} />
-                      </td>
-                      <td className="px-4 py-3 text-sm font-semibold">${total.toFixed(2)}</td>
-                    </tr>
-                  );
-                })
-              )}
-            </tbody>
-          </table>
-        </div>
+        {ordersQuery.isLoading ? (
+          <div className="p-6 text-center text-sm text-muted-foreground">Loading...</div>
+        ) : filtered.length === 0 ? (
+          <div className="p-6 text-center text-sm text-muted-foreground">No orders found</div>
+        ) : view === "list" ? (
+          <div className="divide-y divide-border">
+            {filtered.map((o) => {
+              const total = getTotal(o);
+              return (
+                <Link
+                  key={o.id}
+                  to={`/orders/${o.id}`}
+                  className="flex flex-col gap-3 p-4 sm:flex-row sm:items-center sm:justify-between sm:gap-4 hover:bg-muted/50 transition-colors"
+                >
+                  <div className="min-w-0 space-y-1">
+                    <p className="text-sm font-semibold">{o.order_number}</p>
+                    <p className="text-sm text-muted-foreground">{o.customer?.name ?? "—"}</p>
+                    <p className="text-sm text-primary">{o.order_type ?? "—"}</p>
+                    <p className="text-xs text-muted-foreground">
+                      Fabric: {o.fabric ?? "—"} · Delivery:{" "}
+                      {o.delivery_date ? format(new Date(o.delivery_date), "dd-MMM-yyyy") : "—"}
+                    </p>
+                  </div>
+                  <div className="flex shrink-0 flex-row items-center justify-between gap-4 border-t border-border pt-3 sm:border-t-0 sm:pt-0 sm:text-right">
+                    <StatusBadge status={o.status} />
+                    <p className="text-sm font-semibold">${total.toFixed(2)}</p>
+                  </div>
+                </Link>
+              );
+            })}
+          </div>
+        ) : (
+          <div className="p-4">
+            <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
+              {filtered.map((o) => {
+                const total = getTotal(o);
+                return (
+                  <Link
+                    key={o.id}
+                    to={`/orders/${o.id}`}
+                    className="bg-card rounded-xl border border-border p-5 hover:bg-muted/40 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                  >
+                    <p className="text-sm font-semibold">{o.order_number}</p>
+                    <p className="text-sm text-muted-foreground truncate">{o.customer?.name ?? "—"}</p>
+                    <p className="text-sm text-primary truncate mt-1">{o.order_type ?? "—"}</p>
+                    <p className="text-xs text-muted-foreground mt-2 line-clamp-2">Fabric: {o.fabric ?? "—"}</p>
+                    <p className="text-xs text-muted-foreground mt-1">
+                      Delivery: {o.delivery_date ? format(new Date(o.delivery_date), "dd-MMM-yyyy") : "—"}
+                    </p>
+                    <div className="mt-3 flex items-center justify-between gap-2">
+                      <StatusBadge status={o.status} />
+                      <p className="text-sm font-semibold">${total.toFixed(2)}</p>
+                    </div>
+                  </Link>
+                );
+              })}
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );

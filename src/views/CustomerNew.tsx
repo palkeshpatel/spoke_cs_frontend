@@ -1,52 +1,67 @@
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useNavigate } from "react-router-dom";
+import { Camera } from "lucide-react";
 import PageHeader from "@/components/PageHeader";
 import SectionCard from "@/components/SectionCard";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
 import { toast } from "@/hooks/use-toast";
-import { createCustomer } from "@/services/customers";
+import { CustomerImageCropDialog } from "@/components/CustomerImageCropDialog";
+import { createCustomer, uploadCustomerProfileImage } from "@/services/customers";
 
 export default function CustomerNew() {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
+  const profileInputRef = useRef<HTMLInputElement | null>(null);
   const [form, setForm] = useState({ name: "", phone: "", email: "", address: "", birthday: "", preferences: "", notes: "" });
+  const [profileCropOpen, setProfileCropOpen] = useState(false);
+  const [profilePickFile, setProfilePickFile] = useState<File | null>(null);
+  const [profileBlob, setProfileBlob] = useState<Blob | null>(null);
+  const [profilePreviewUrl, setProfilePreviewUrl] = useState<string | null>(null);
   const update = (key: keyof typeof form, val: string) => setForm((f) => ({ ...f, [key]: val }));
 
   const createMutation = useMutation({
     mutationFn: createCustomer,
-    onSuccess: async (created) => {
-      await queryClient.invalidateQueries({ queryKey: ["customers"] });
-      toast({ title: "Customer created", description: `Customer ${created.customer_code} created.` });
-      navigate(`/customers/${created.id}`);
-    },
-    onError: (err: unknown) => {
-      const message =
-        typeof err === "object" && err !== null && "message" in err ? String((err as { message?: unknown }).message ?? "") : "";
-      toast({ title: "Create failed", description: message || "Unable to create customer.", variant: "destructive" });
-    },
   });
 
-  const submit = () => {
+  const submit = async () => {
     if (!form.name.trim()) {
       toast({ title: "Name required", description: "Please enter customer name.", variant: "destructive" });
       return;
     }
 
-    createMutation.mutate({
-      name: form.name.trim(),
-      phone: form.phone.trim() || null,
-      email: form.email.trim() || null,
-      address: form.address.trim() || null,
-      birthday: form.birthday.trim() || null,
-      preferences: {
-        fit_preference: form.preferences.trim() || null,
-        favorite_colors: null,
-        notes: form.notes.trim() || null,
-      },
-    });
+    try {
+      const created = await createMutation.mutateAsync({
+        name: form.name.trim(),
+        phone: form.phone.trim() || null,
+        email: form.email.trim() || null,
+        address: form.address.trim() || null,
+        birthday: form.birthday.trim() || null,
+        preferences: {
+          fit_preference: form.preferences.trim() || null,
+          favorite_colors: null,
+          notes: form.notes.trim() || null,
+        },
+      });
+
+      if (profileBlob) {
+        await uploadCustomerProfileImage({
+          customerId: created.id,
+          blob: profileBlob,
+          fileName: "profile.jpg",
+        });
+      }
+
+      await queryClient.invalidateQueries({ queryKey: ["customers"] });
+      toast({ title: "Customer created", description: `Customer ${created.customer_code} created.` });
+      navigate(`/customers/${created.id}`);
+    } catch (err: unknown) {
+      const message =
+        typeof err === "object" && err !== null && "message" in err ? String((err as { message?: unknown }).message ?? "") : "";
+      toast({ title: "Create failed", description: message || "Unable to create customer.", variant: "destructive" });
+    }
   };
 
   return (
@@ -63,6 +78,52 @@ export default function CustomerNew() {
             </div>
             <div><label className="text-xs text-muted-foreground mb-1 block">Address</label><Input value={form.address} onChange={e => update('address', e.target.value)} placeholder="Enter address" /></div>
             <div><label className="text-xs text-muted-foreground mb-1 block">Birth Date</label><Input type="date" value={form.birthday} onChange={e => update('birthday', e.target.value)} /></div>
+
+            <div>
+              <label className="text-xs text-muted-foreground mb-2 block">Profile photo</label>
+              <div className="flex flex-wrap items-center gap-3">
+                <div className="w-16 h-16 rounded-full bg-muted overflow-hidden flex items-center justify-center shrink-0 border border-border">
+                  {profilePreviewUrl ? (
+                    <img src={profilePreviewUrl} alt="" className="w-full h-full object-cover" />
+                  ) : (
+                    <Camera className="h-6 w-6 text-muted-foreground" />
+                  )}
+                </div>
+                <div className="flex flex-col gap-2">
+                  <Button type="button" variant="outline" size="sm" onClick={() => profileInputRef.current?.click()}>
+                    {profileBlob ? "Change photo" : "Upload photo"}
+                  </Button>
+                  {profileBlob ? (
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="sm"
+                      className="text-destructive h-8"
+                      onClick={() => {
+                        setProfileBlob(null);
+                        setProfilePreviewUrl(null);
+                      }}
+                    >
+                      Remove
+                    </Button>
+                  ) : null}
+                </div>
+              </div>
+              <p className="text-[11px] text-muted-foreground mt-2">Optional. Square crop recommended. Max 5MB.</p>
+              <input
+                ref={profileInputRef}
+                type="file"
+                accept="image/*"
+                className="hidden"
+                onChange={(e) => {
+                  const file = e.target.files?.[0] ?? null;
+                  e.target.value = "";
+                  if (!file) return;
+                  setProfilePickFile(file);
+                  setProfileCropOpen(true);
+                }}
+              />
+            </div>
           </div>
         </SectionCard>
 
@@ -76,10 +137,22 @@ export default function CustomerNew() {
 
       <div className="flex gap-2 justify-end">
         <Button variant="cancel" onClick={() => navigate('/customers')}>Cancel</Button>
-        <Button onClick={submit} disabled={createMutation.isPending}>
+        <Button onClick={() => void submit()} disabled={createMutation.isPending}>
           {createMutation.isPending ? "Creating..." : "Create Customer"}
         </Button>
       </div>
+
+      <CustomerImageCropDialog
+        open={profileCropOpen}
+        onOpenChange={setProfileCropOpen}
+        file={profilePickFile}
+        title="Crop profile photo"
+        aspect={1}
+        onConfirm={async (blob) => {
+          setProfileBlob(blob);
+          setProfilePreviewUrl(URL.createObjectURL(blob));
+        }}
+      />
     </div>
   );
 }
