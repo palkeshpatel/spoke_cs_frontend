@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { format } from "date-fns";
-import { Copy, MessageCircle } from "lucide-react";
+import { Copy } from "lucide-react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useLocation, useNavigate, useParams } from "react-router-dom";
 import PageHeader from "@/components/PageHeader";
@@ -177,17 +177,6 @@ export default function MeasurementNew() {
     }
   };
 
-  const handleShareWhatsApp = () => {
-    const custName = measurement?.customer?.name || customersQuery.data?.data.find(c => c.id === Number(customerId))?.name || "Customer";
-    let text = `*${custName} - ${garmentType} Measurements*\n\n`;
-    for (const f of fields) {
-      const val = valuesDraft[f.id] || "";
-      if (val) text += `${f.field_name}: ${val}\n`;
-    }
-    const url = `https://wa.me/?text=${encodeURIComponent(text)}`;
-    window.open(url, "_blank");
-  };
-
   const canEdit = !isEditMode || isEditing;
 
   if (isEditMode && measurementQuery.isLoading) {
@@ -321,14 +310,9 @@ export default function MeasurementNew() {
         className="mb-6"
         headerActions={
           isEditMode && !isEditing ? (
-            <>
-              <Button variant="ghost" size="sm" onClick={handleCopy} className="h-8 p-2" title="Copy CSV">
-                <Copy className="h-4 w-4" />
-              </Button>
-              <Button variant="ghost" size="sm" onClick={handleShareWhatsApp} className="h-8 p-2" title="Share via WhatsApp">
-                <MessageCircle className="h-4 w-4" />
-              </Button>
-            </>
+            <Button variant="ghost" size="sm" onClick={handleCopy} className="h-8 p-2" title="Copy CSV">
+              <Copy className="h-4 w-4" />
+            </Button>
           ) : null
         }
       >

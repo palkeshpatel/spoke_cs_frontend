@@ -395,86 +395,10 @@ export default function CustomerDetail() {
               />
             </div>
           </SectionCard>
-
-          <SectionCard title="Quick Actions">
-            <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
-              <Button asChild variant="default" className="h-auto min-h-[4.5rem] flex-col gap-1.5 py-3 px-2">
-                <Link to={`/appointments/new?customer_id=${customerId}`}>
-                  <Calendar className="h-5 w-5 shrink-0" />
-                  <span className="text-center text-[11px] font-semibold leading-tight">New Appointment</span>
-                </Link>
-              </Button>
-              <Button asChild variant="outline" className="h-auto min-h-[4.5rem] flex-col gap-1.5 py-3 px-2">
-                <Link to={`/billing/new?customer_id=${customerId}`}>
-                  <Receipt className="h-5 w-5 shrink-0" />
-                  <span className="text-center text-[11px] font-semibold leading-tight">New Invoice</span>
-                </Link>
-              </Button>
-              <Button asChild variant="outline" className="h-auto min-h-[4.5rem] flex-col gap-1.5 py-3 px-2">
-                <Link to={measurementEditPath}>
-                  <Ruler className="h-5 w-5 shrink-0" />
-                  <span className="text-center text-[11px] font-semibold leading-tight">Update Measurements</span>
-                </Link>
-              </Button>
-              {mailtoHref ? (
-                <Button asChild variant="outline" className="h-auto min-h-[4.5rem] flex-col gap-1.5 py-3 px-2">
-                  <a href={mailtoHref}>
-                    <Mail className="h-5 w-5 shrink-0" />
-                    <span className="text-center text-[11px] font-semibold leading-tight">Send Message</span>
-                  </a>
-                </Button>
-              ) : (
-                <Button
-                  type="button"
-                  variant="outline"
-                  disabled
-                  title="Add an email address to the customer to send a message"
-                  className="h-auto min-h-[4.5rem] flex-col gap-1.5 py-3 px-2"
-                >
-                  <Mail className="h-5 w-5 shrink-0 opacity-50" />
-                  <span className="text-center text-[11px] font-semibold leading-tight text-muted-foreground">Send Message</span>
-                </Button>
-              )}
-            </div>
-          </SectionCard>
         </div>
 
-        {/* Right column: body images + activity tabs */}
+        {/* Right column: tabs, quick actions under tab panel, then body images */}
         <div className="lg:col-span-2 space-y-6">
-          <SectionCard title="Body Images">
-            <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
-              {imageTypes.map((t) => {
-                const image = imagesByType.get(t.key);
-                const src = image ? resolvePublicUrl(image.path) : null;
-                return (
-                  <div key={t.key} className="border border-border rounded-lg p-2 flex flex-col items-center">
-                    <div className="text-xs font-medium w-full truncate text-center mb-1">{t.label}</div>
-                    <div className="relative h-28 sm:h-32 w-full rounded bg-muted overflow-hidden">
-                      {src ? <img src={src} alt={t.label} className="h-full w-full object-cover" /> : null}
-                    </div>
-                    {isEditing ? (
-                      <div className="w-full mt-2">
-                        <Button
-                          type="button"
-                          size="sm"
-                          className="w-full h-7 text-[10px]"
-                          variant="outline"
-                          onClick={() => {
-                            setPendingType(t.key);
-                            fileInputRef.current?.click();
-                          }}
-                          disabled={uploadMutation.isPending}
-                        >
-                          Upload
-                        </Button>
-                      </div>
-                    ) : null}
-                  </div>
-                );
-              })}
-            </div>
-          </SectionCard>
-
           <Tabs defaultValue="orders">
             <TabsList className="w-full grid grid-cols-4 h-12 gap-1 rounded-full border border-border/60 bg-muted/50 p-1 shadow-sm mb-4">
               <TabsTrigger value="orders" className={customerDetailTabTriggerClass}>
@@ -661,6 +585,82 @@ export default function CustomerDetail() {
               </SectionCard>
             </TabsContent>
           </Tabs>
+
+          <SectionCard title="Quick Actions">
+            <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
+              <Button asChild variant="default" className="h-auto min-h-[4.5rem] flex-col gap-1.5 py-3 px-2">
+                <Link to={`/appointments/new?customer_id=${customerId}`}>
+                  <Calendar className="h-5 w-5 shrink-0" />
+                  <span className="text-center text-[11px] font-semibold leading-tight">New Appointment</span>
+                </Link>
+              </Button>
+              <Button asChild variant="outline" className="h-auto min-h-[4.5rem] flex-col gap-1.5 py-3 px-2">
+                <Link to={`/billing/new?customer_id=${customerId}`}>
+                  <Receipt className="h-5 w-5 shrink-0" />
+                  <span className="text-center text-[11px] font-semibold leading-tight">New Invoice</span>
+                </Link>
+              </Button>
+              <Button asChild variant="outline" className="h-auto min-h-[4.5rem] flex-col gap-1.5 py-3 px-2">
+                <Link to={measurementEditPath}>
+                  <Ruler className="h-5 w-5 shrink-0" />
+                  <span className="text-center text-[11px] font-semibold leading-tight">Update Measurements</span>
+                </Link>
+              </Button>
+              {mailtoHref ? (
+                <Button asChild variant="outline" className="h-auto min-h-[4.5rem] flex-col gap-1.5 py-3 px-2">
+                  <a href={mailtoHref}>
+                    <Mail className="h-5 w-5 shrink-0" />
+                    <span className="text-center text-[11px] font-semibold leading-tight">Send Message</span>
+                  </a>
+                </Button>
+              ) : (
+                <Button
+                  type="button"
+                  variant="outline"
+                  disabled
+                  title="Add an email address to the customer to send a message"
+                  className="h-auto min-h-[4.5rem] flex-col gap-1.5 py-3 px-2"
+                >
+                  <Mail className="h-5 w-5 shrink-0 opacity-50" />
+                  <span className="text-center text-[11px] font-semibold leading-tight text-muted-foreground">Send Message</span>
+                </Button>
+              )}
+            </div>
+          </SectionCard>
+
+          <SectionCard title="Body Images">
+            <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+              {imageTypes.map((t) => {
+                const image = imagesByType.get(t.key);
+                const src = image ? resolvePublicUrl(image.path) : null;
+                return (
+                  <div key={t.key} className="border border-border rounded-lg p-2 flex flex-col items-center">
+                    <div className="text-xs font-medium w-full truncate text-center mb-1">{t.label}</div>
+                    <div className="relative h-28 sm:h-32 w-full rounded bg-muted overflow-hidden">
+                      {src ? <img src={src} alt={t.label} className="h-full w-full object-cover" /> : null}
+                    </div>
+                    {isEditing ? (
+                      <div className="w-full mt-2">
+                        <Button
+                          type="button"
+                          size="sm"
+                          className="w-full h-7 text-[10px]"
+                          variant="outline"
+                          onClick={() => {
+                            setPendingType(t.key);
+                            fileInputRef.current?.click();
+                          }}
+                          disabled={uploadMutation.isPending}
+                        >
+                          Upload
+                        </Button>
+                      </div>
+                    ) : null}
+                  </div>
+                );
+              })}
+            </div>
+          </SectionCard>
         </div>
       </div>
       
