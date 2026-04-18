@@ -1,6 +1,6 @@
 import { useMemo, useRef, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { DollarSign, ShoppingBag, Award, Clock, Ruler } from "lucide-react";
+import { Calendar, DollarSign, Mail, Receipt, ShoppingBag, Award, Clock, Ruler } from "lucide-react";
 import { Link, useParams } from "react-router-dom";
 import { format } from "date-fns";
 import PageHeader from "@/components/PageHeader";
@@ -48,6 +48,21 @@ function priorityLabel(p: string): "HIGH" | "NORMAL" | "LOW" {
 
 const customerDetailTabTriggerClass =
   "rounded-full text-sm font-medium text-muted-foreground transition-colors data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:shadow-sm data-[state=inactive]:hover:text-foreground";
+
+function measurementEditPathForCustomer(measurements: MeasurementDto[], cid: number): string {
+  const byGarment: Partial<Record<"Suit" | "Shirt" | "Pants", MeasurementDto>> = {};
+  for (const m of measurements) {
+    const g = m.garment_type as "Suit" | "Shirt" | "Pants";
+    if (g !== "Suit" && g !== "Shirt" && g !== "Pants") continue;
+    const cur = byGarment[g];
+    if (!cur || Number(m.id) > Number(cur.id)) {
+      byGarment[g] = m;
+    }
+  }
+  const first = byGarment.Suit ?? byGarment.Shirt ?? byGarment.Pants;
+  if (first) return `/measurements/${first.id}`;
+  return `/measurements/new?customer_id=${cid}`;
+}
 
 function measurementPreview(m: MeasurementDto, maxFields: number) {
   const vals = m.values ?? [];
@@ -120,6 +135,18 @@ export default function CustomerDetail() {
     const spent = rows.reduce((s, o) => s + sumOrderItems(o), 0);
     return { count, spent };
   }, [customerOrdersQuery.data]);
+
+  const measurementEditPath = useMemo(() => {
+    if (!Number.isFinite(customerId)) return "/measurements/new";
+    const rows = customerMeasurementsQuery.data?.data ?? [];
+    return measurementEditPathForCustomer(rows, customerId);
+  }, [customerMeasurementsQuery.data, customerId]);
+
+  const mailtoHref = useMemo(() => {
+    if (!customer?.email?.trim()) return null;
+    const subject = encodeURIComponent(`SPOKE — ${customer.name}`);
+    return `mailto:${encodeURIComponent(customer.email.trim())}?subject=${subject}`;
+  }, [customer?.email, customer?.name]);
 
   const imagesByType = useMemo(() => {
     const map = new Map<string, { id: number; path: string }>();
@@ -369,15 +396,60 @@ export default function CustomerDetail() {
             </div>
           </SectionCard>
 
+          <SectionCard title="Quick Actions">
+            <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
+              <Button asChild variant="default" className="h-auto min-h-[4.5rem] flex-col gap-1.5 py-3 px-2">
+                <Link to={`/appointments/new?customer_id=${customerId}`}>
+                  <Calendar className="h-5 w-5 shrink-0" />
+                  <span className="text-center text-[11px] font-semibold leading-tight">New Appointment</span>
+                </Link>
+              </Button>
+              <Button asChild variant="outline" className="h-auto min-h-[4.5rem] flex-col gap-1.5 py-3 px-2">
+                <Link to={`/billing/new?customer_id=${customerId}`}>
+                  <Receipt className="h-5 w-5 shrink-0" />
+                  <span className="text-center text-[11px] font-semibold leading-tight">New Invoice</span>
+                </Link>
+              </Button>
+              <Button asChild variant="outline" className="h-auto min-h-[4.5rem] flex-col gap-1.5 py-3 px-2">
+                <Link to={measurementEditPath}>
+                  <Ruler className="h-5 w-5 shrink-0" />
+                  <span className="text-center text-[11px] font-semibold leading-tight">Update Measurements</span>
+                </Link>
+              </Button>
+              {mailtoHref ? (
+                <Button asChild variant="outline" className="h-auto min-h-[4.5rem] flex-col gap-1.5 py-3 px-2">
+                  <a href={mailtoHref}>
+                    <Mail className="h-5 w-5 shrink-0" />
+                    <span className="text-center text-[11px] font-semibold leading-tight">Send Message</span>
+                  </a>
+                </Button>
+              ) : (
+                <Button
+                  type="button"
+                  variant="outline"
+                  disabled
+                  title="Add an email address to the customer to send a message"
+                  className="h-auto min-h-[4.5rem] flex-col gap-1.5 py-3 px-2"
+                >
+                  <Mail className="h-5 w-5 shrink-0 opacity-50" />
+                  <span className="text-center text-[11px] font-semibold leading-tight text-muted-foreground">Send Message</span>
+                </Button>
+              )}
+            </div>
+          </SectionCard>
+        </div>
+
+        {/* Right column: body images + activity tabs */}
+        <div className="lg:col-span-2 space-y-6">
           <SectionCard title="Body Images">
-            <div className="grid grid-cols-2 gap-3">
+            <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
               {imageTypes.map((t) => {
                 const image = imagesByType.get(t.key);
                 const src = image ? resolvePublicUrl(image.path) : null;
                 return (
                   <div key={t.key} className="border border-border rounded-lg p-2 flex flex-col items-center">
                     <div className="text-xs font-medium w-full truncate text-center mb-1">{t.label}</div>
-                    <div className="relative h-24 w-full rounded bg-muted overflow-hidden">
+                    <div className="relative h-28 sm:h-32 w-full rounded bg-muted overflow-hidden">
                       {src ? <img src={src} alt={t.label} className="h-full w-full object-cover" /> : null}
                     </div>
                     {isEditing ? (
@@ -402,10 +474,7 @@ export default function CustomerDetail() {
               })}
             </div>
           </SectionCard>
-        </div>
 
-        {/* Right Column - Tabs */}
-        <div className="lg:col-span-2">
           <Tabs defaultValue="orders">
             <TabsList className="w-full grid grid-cols-4 h-12 gap-1 rounded-full border border-border/60 bg-muted/50 p-1 shadow-sm mb-4">
               <TabsTrigger value="orders" className={customerDetailTabTriggerClass}>

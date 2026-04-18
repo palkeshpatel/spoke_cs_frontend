@@ -21,6 +21,7 @@ import OrderDetail from "@/views/OrderDetail";
 import OrderNew from "@/views/OrderNew";
 import BillingList from "@/views/BillingList";
 import BillingDetail from "@/views/BillingDetail";
+import InvoiceNew from "@/views/InvoiceNew";
 import Reports from "@/views/Reports";
 import SettingsPage from "@/views/SettingsPage";
 import Login from "@/views/Login";
@@ -96,6 +97,7 @@ const App = () => (
               <Route path="/orders/new" element={<OrderNew />} />
               <Route path="/orders/:id" element={<OrderDetail />} />
               <Route path="/billing" element={<BillingList />} />
+              <Route path="/billing/new" element={<InvoiceNew />} />
               <Route path="/billing/:id" element={<BillingDetail />} />
               <Route path="/reports" element={<Reports />} />
               <Route path="/settings" element={<SettingsPage />} />

@@ -1,5 +1,5 @@
-import { useMemo, useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useEffect, useMemo, useState } from "react";
+import { useLocation, useNavigate } from "react-router-dom";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import PageHeader from "@/components/PageHeader";
 import SectionCard from "@/components/SectionCard";
@@ -13,9 +13,16 @@ import { createAppointment, listAppointmentServices, listCustomers } from "@/ser
 
 export default function AppointmentNew() {
   const navigate = useNavigate();
+  const location = useLocation();
   const queryClient = useQueryClient();
 
   const [customerId, setCustomerId] = useState<string>("");
+
+  useEffect(() => {
+    const params = new URLSearchParams(location.search);
+    const cid = params.get("customer_id");
+    if (cid) setCustomerId(cid);
+  }, [location.search]);
   const [serviceType, setServiceType] = useState<string>("");
   const [appointmentDate, setAppointmentDate] = useState<string>("");
   const [appointmentTime, setAppointmentTime] = useState<string>("");

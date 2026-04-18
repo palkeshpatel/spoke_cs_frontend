@@ -62,3 +62,15 @@ export async function listInvoices(perPage = 100, customerId?: number) {
 export async function getInvoice(id: string | number) {
   return apiRequest<InvoiceDto>(`/api/invoices/${id}`);
 }
+
+export async function createInvoice(payload: {
+  customer_id: number;
+  order_id?: number | null;
+  invoice_date?: string | null;
+  discount?: number;
+  tax?: number;
+  status?: string;
+  items?: Array<{ description?: string; quantity?: number; price?: number }>;
+}) {
+  return apiRequest<InvoiceDto>("/api/invoices", { method: "POST", body: payload });
+}

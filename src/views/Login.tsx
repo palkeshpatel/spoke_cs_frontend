@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
-import { useNavigate } from "react-router-dom";
+import type { Location } from "react-router-dom";
+import { useLocation, useNavigate } from "react-router-dom";
 import { Scissors } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -12,8 +13,20 @@ import { clearAuthToken, getAuthToken } from "@/services/api";
 import { getMe, loginWithPassword, requestOtp, verifyOtp as verifyOtpApi } from "@/services/auth";
 import tailorBg from "@/assets/tailor-bg.jpg";
 
+function postLoginPath(state: unknown): string {
+  const from = (state as { from?: Location } | null)?.from;
+  if (from?.pathname && from.pathname !== "/login") {
+    return `${from.pathname}${from.search ?? ""}${from.hash ?? ""}`;
+  }
+  return "/";
+}
+
 export default function Login() {
   const navigate = useNavigate();
+  const location = useLocation();
+  const [sessionBootstrap, setSessionBootstrap] = useState<"checking" | "ready">(() =>
+    typeof window !== "undefined" && getAuthToken() ? "checking" : "ready",
+  );
   const [method, setMethod] = useState<"password" | "otp">("password");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -28,20 +41,26 @@ export default function Login() {
     typeof err === "object" && err !== null && "message" in err ? String((err as { message?: unknown }).message ?? "") : "";
 
   useEffect(() => {
+    if (sessionBootstrap !== "checking") return;
+    const token = getAuthToken();
+    if (!token) {
+      setSessionBootstrap("ready");
+      return;
+    }
     let cancelled = false;
     (async () => {
-      if (!getAuthToken()) return;
       try {
         await getMe();
-        if (!cancelled) navigate("/", { replace: true });
+        if (!cancelled) navigate(postLoginPath(location.state), { replace: true });
       } catch {
         clearAuthToken();
+        if (!cancelled) setSessionBootstrap("ready");
       }
     })();
     return () => {
       cancelled = true;
     };
-  }, [navigate]);
+  }, [sessionBootstrap, navigate, location.state]);
 
   useEffect(() => {
     if (otpCooldown <= 0) return;
@@ -71,7 +90,7 @@ export default function Login() {
       title: "Signed in",
       description: "Welcome back.",
     });
-    navigate("/");
+    navigate(postLoginPath(location.state), { replace: true });
   };
 
   const handlePasswordSubmit = async (e: React.FormEvent) => {
@@ -186,6 +205,14 @@ export default function Login() {
         <div className="bg-white rounded-xl shadow-2xl p-8">
           <h2 className="text-xl font-semibold text-foreground mb-6">Login</h2>
 
+          {sessionBootstrap === "checking" ? (
+            <div className="py-12 text-center space-y-3">
+              <p className="text-sm font-medium text-foreground">{"You're already signed in."}</p>
+              <p className="text-sm text-muted-foreground">Taking you to the app…</p>
+            </div>
+          ) : null}
+
+          {sessionBootstrap === "ready" ? (
           <Tabs value={method} onValueChange={(v) => setMethod(v as "password" | "otp")} className="w-full">
             <TabsList className="w-full">
               <TabsTrigger value="password" className="flex-1">
@@ -315,6 +342,7 @@ export default function Login() {
               </form>
             </TabsContent>
           </Tabs>
+          ) : null}
         </div>
       </div>
     </div>
