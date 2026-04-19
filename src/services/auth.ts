@@ -17,7 +17,9 @@ export type AuthUser = {
   name: string;
   email: string;
   role_id: number | null;
-  role?: Role;
+  role?: string | Role;
+  role_record?: Role;
+  roleRecord?: Role;
 };
 
 export type AuthResponse = {

@@ -15,7 +15,7 @@ export default function Layout() {
   const { data: userData } = useQuery({ queryKey: ['me'], queryFn: getMe });
   const user = userData?.user;
   const roleData = user?.role_record || user?.roleRecord;
-  const roleName = (roleData?.role_name || user?.role || 'staff').toLowerCase();
+  const roleName = (roleData?.role_name || (typeof user?.role === 'string' ? user.role : 'staff')).toLowerCase();
   const isAdmin = roleName === 'admin';
   const isManager = roleName === 'manager';
 
