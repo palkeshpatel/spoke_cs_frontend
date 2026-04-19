@@ -1,23 +1,33 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useNavigate, useParams } from "react-router-dom";
-import { useQuery, useMutation } from "@tanstack/react-query";
-import { Save, ArrowLeft, Loader2 } from "lucide-react";
-import { getRoles, getStaff, saveStaff } from "@/services/staff";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { Save, ArrowLeft, Loader2, Camera, Shield, User, Mail, Phone, Calendar, Info } from "lucide-react";
+import { getRoles, saveStaff } from "@/services/staff";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import { toast } from "sonner";
 import { apiRequest } from "@/services/api";
+import PageHeader from "@/components/PageHeader";
+import SectionCard from "@/components/SectionCard";
 
 export default function StaffNew() {
   const { id } = useParams();
   const navigate = useNavigate();
+  const queryClient = useQueryClient();
   const isEdit = !!id;
+  const profileInputRef = useRef<HTMLInputElement>(null);
 
   const [formData, setFormData] = useState({
     name: "",
     email: "",
     password: "",
     role_id: "",
+    phone: "",
+    dob: "",
+    anniversary_date: "",
+    profile_photo: null as File | null,
   });
+  const [photoPreview, setPhotoPreview] = useState<string | null>(null);
 
   const { data: roles } = useQuery({ queryKey: ["roles"], queryFn: getRoles });
   
@@ -34,99 +44,178 @@ export default function StaffNew() {
         email: staffData.email,
         password: "",
         role_id: staffData.role_id?.toString() || "",
+        phone: staffData.phone || "",
+        dob: staffData.dob || "",
+        anniversary_date: staffData.anniversary_date || "",
+        profile_photo: null,
       });
+      if (staffData.profile_photo_url) {
+        setPhotoPreview(staffData.profile_photo_url);
+      }
     }
   }, [staffData]);
 
   const mutation = useMutation({
     mutationFn: saveStaff,
     onSuccess: () => {
-      toast.success(isEdit ? "Staff updated" : "Staff added successfully");
+      queryClient.invalidateQueries({ queryKey: ["staff-list"] });
+      toast.success(isEdit ? "Staff profile updated" : "New staff member registered");
       navigate("/staff");
     },
     onError: (error: any) => {
-      toast.error(error.message || "Failed to save staff");
+      toast.error(error.message || "Operation failed");
     },
   });
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
+    if (!formData.name || !formData.email || (!isEdit && !formData.password) || !formData.role_id) {
+      toast.error("Please fill in all required fields.");
+      return;
+    }
     mutation.mutate({ ...formData, id: isEdit ? parseInt(id!) : undefined });
   };
 
-  if (isEdit && isStaffLoading) return <div className="p-12 text-center">Loading staff data...</div>;
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      if (file.size > 2 * 1024 * 1024) {
+        toast.error("Image too large. Max size is 2MB.");
+        return;
+      }
+      setFormData({ ...formData, profile_photo: file });
+      setPhotoPreview(URL.createObjectURL(file));
+    }
+  };
+
+  if (isEdit && isStaffLoading) return <div className="p-12 text-center text-muted-foreground animate-pulse">Fetching staff details...</div>;
 
   return (
-    <div className="max-w-2xl mx-auto space-y-6">
-      <div className="flex items-center gap-4">
-        <Button variant="ghost" size="icon" onClick={() => navigate("/staff")}>
-          <ArrowLeft className="w-5 h-5" />
-        </Button>
-        <h1 className="text-2xl font-bold">{isEdit ? "Edit Staff Member" : "Add New Staff Member"}</h1>
-      </div>
+    <div className="space-y-6 max-w-5xl mx-auto">
+      <PageHeader 
+        title={isEdit ? "Edit Staff Detail" : "New Staff Registration"} 
+        subtitle={isEdit ? `Update profile for ${formData.name}` : "Enter details for the new staff member."} 
+        backTo="/staff" 
+      />
 
-      <form onSubmit={handleSubmit} className="bg-card rounded-xl border p-6 space-y-4 card-shadow">
-        <div className="space-y-2">
-          <label className="text-sm font-medium">Full Name</label>
-          <input
-            required
-            className="w-full bg-background border rounded-md px-3 py-2 text-sm focus:ring-2 focus:ring-primary outline-none"
-            value={formData.name}
-            onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-            placeholder="John Doe"
-          />
-        </div>
+      <form onSubmit={handleSubmit}>
+        <div className="grid md:grid-cols-2 gap-4 sm:gap-6">
+          <SectionCard title="Staff Identity">
+            <div className="space-y-5">
+              <div className="flex flex-col gap-4 items-center sm:flex-row sm:items-start p-4 bg-muted/20 rounded-xl border border-dashed border-border mb-2">
+                <div className="w-24 h-24 rounded-full bg-card overflow-hidden flex items-center justify-center shrink-0 border-2 border-border shadow-md relative group">
+                  {photoPreview ? (
+                    <img src={photoPreview} alt="Profile" className="w-full h-full object-cover" />
+                  ) : (
+                    <User className="h-10 w-10 text-muted-foreground" />
+                  )}
+                  <div 
+                    className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center cursor-pointer"
+                    onClick={() => profileInputRef.current?.click()}
+                  >
+                    <Camera className="h-6 w-6 text-white" />
+                  </div>
+                </div>
+                <div className="flex flex-col gap-2 pt-2">
+                  <h4 className="text-sm font-bold text-foreground">Profile Picture</h4>
+                  <p className="text-[11px] text-muted-foreground leading-relaxed">Square crop recommended. Supports JPG, PNG. Max 2MB.</p>
+                  <Button type="button" variant="outline" size="sm" className="w-fit h-8 text-xs" onClick={() => profileInputRef.current?.click()}>
+                    {formData.profile_photo ? "Change Image" : "Choose Image"}
+                  </Button>
+                  <input ref={profileInputRef} type="file" accept="image/*" onChange={handleFileChange} className="hidden" />
+                </div>
+              </div>
 
-        <div className="space-y-2">
-          <label className="text-sm font-medium">Email Address</label>
-          <input
-            required
-            type="email"
-            className="w-full bg-background border rounded-md px-3 py-2 text-sm focus:ring-2 focus:ring-primary outline-none"
-            value={formData.email}
-            onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-            placeholder="john@example.com"
-          />
-        </div>
+              <div>
+                <label className="text-xs font-bold text-muted-foreground mb-1.5 block uppercase tracking-wider">Full Name *</label>
+                <Input required value={formData.name} onChange={(e) => setFormData({ ...formData, name: e.target.value })} placeholder="Enter formal name" className="h-10" />
+              </div>
 
-        {!isEdit && (
-          <div className="space-y-2">
-            <label className="text-sm font-medium">Initial Password</label>
-            <input
-              required={!isEdit}
-              type="password"
-              className="w-full bg-background border rounded-md px-3 py-2 text-sm focus:ring-2 focus:ring-primary outline-none"
-              value={formData.password}
-              onChange={(e) => setFormData({ ...formData, password: e.target.value })}
-              placeholder="••••••••"
-            />
+              <div className="grid sm:grid-cols-2 gap-4">
+                <div>
+                  <label className="text-xs font-bold text-muted-foreground mb-1.5 block uppercase tracking-wider">Email Address *</label>
+                  <div className="relative">
+                    <Mail className="absolute left-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground" />
+                    <Input required type="email" value={formData.email} onChange={(e) => setFormData({ ...formData, email: e.target.value })} placeholder="email@example.com" className="pl-9 h-10" />
+                  </div>
+                </div>
+                <div>
+                  <label className="text-xs font-bold text-muted-foreground mb-1.5 block uppercase tracking-wider">Contact Phone</label>
+                  <div className="relative">
+                    <Phone className="absolute left-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground" />
+                    <Input type="tel" value={formData.phone} onChange={(e) => setFormData({ ...formData, phone: e.target.value })} placeholder="+1 000-000-0000" className="pl-9 h-10" />
+                  </div>
+                </div>
+              </div>
+
+              {!isEdit && (
+                <div>
+                  <label className="text-xs font-bold text-muted-foreground mb-1.5 block uppercase tracking-wider">System Password *</label>
+                  <Input required={!isEdit} type="password" value={formData.password} onChange={(e) => setFormData({ ...formData, password: e.target.value })} placeholder="Minimum 6 characters" className="h-10" />
+                </div>
+              )}
+            </div>
+          </SectionCard>
+
+          <div className="space-y-4 sm:space-y-6">
+            <SectionCard title="Assignment & Role">
+              <div className="space-y-5">
+                <div>
+                  <label className="text-xs font-bold text-muted-foreground mb-1.5 block uppercase tracking-wider">Designation / Role *</label>
+                  <div className="relative">
+                    <Shield className="absolute left-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-primary" />
+                    <select
+                      required
+                      className="w-full h-10 bg-background border border-input rounded-md pl-9 pr-3 py-2 text-sm focus:ring-2 focus:ring-primary outline-none appearance-none transition-all cursor-pointer"
+                      value={formData.role_id}
+                      onChange={(e) => setFormData({ ...formData, role_id: e.target.value })}
+                    >
+                      <option value="">Select organizational role</option>
+                      {roles?.map((role: any) => (
+                        <option key={role.id} value={role.id}>{role.role_name}</option>
+                      ))}
+                    </select>
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <label className="text-xs font-bold text-muted-foreground mb-1.5 block uppercase tracking-wider">Date of Birth</label>
+                    <div className="relative">
+                      <Calendar className="absolute left-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground" />
+                      <Input type="date" value={formData.dob} onChange={(e) => setFormData({ ...formData, dob: e.target.value })} className="pl-9 h-10 px-0" />
+                    </div>
+                  </div>
+                  <div>
+                    <label className="text-xs font-bold text-muted-foreground mb-1.5 block uppercase tracking-wider">Join Anniversary</label>
+                    <div className="relative">
+                      <Calendar className="absolute left-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground" />
+                      <Input type="date" value={formData.anniversary_date} onChange={(e) => setFormData({ ...formData, anniversary_date: e.target.value })} className="pl-9 h-10 px-0" />
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </SectionCard>
+
+            <div className="p-5 bg-primary/5 rounded-xl border border-primary/10 flex gap-4">
+              <Info className="w-5 h-5 text-primary shrink-0 mt-0.5" />
+              <div className="space-y-1">
+                <p className="text-sm font-bold text-primary">Organizational Tip</p>
+                <p className="text-[11px] text-muted-foreground leading-relaxed">
+                  Roles define system access. <strong>Admins</strong> have full control, while <strong>Staff</strong> roles like Tailors are limited to order management and work tracking.
+                </p>
+              </div>
+            </div>
           </div>
-        )}
-
-        <div className="space-y-2">
-          <label className="text-sm font-medium">Assigned Role</label>
-          <select
-            required
-            className="w-full bg-background border rounded-md px-3 py-2 text-sm focus:ring-2 focus:ring-primary outline-none"
-            value={formData.role_id}
-            onChange={(e) => setFormData({ ...formData, role_id: e.target.value })}
-          >
-            <option value="">Select a role</option>
-            {roles?.map((role: any) => (
-              <option key={role.id} value={role.id}>
-                {role.role_name}
-              </option>
-            ))}
-          </select>
         </div>
 
-        <div className="pt-4 flex gap-3">
-          <Button type="submit" disabled={mutation.isPending} className="flex-1">
-            {mutation.isPending ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : <Save className="w-4 h-4 mr-2" />}
-            {isEdit ? "Update Staff" : "Create Staff Account"}
-          </Button>
-          <Button type="button" variant="outline" onClick={() => navigate("/staff")} className="flex-1">
+        <div className="flex gap-3 justify-end pt-8 border-t border-border mt-8">
+          <Button variant="outline" type="button" onClick={() => navigate("/staff")} className="h-11 px-8 rounded-lg">
             Cancel
+          </Button>
+          <Button type="submit" disabled={mutation.isPending} className="h-11 px-10 rounded-lg shadow-lg shadow-primary/20 min-w-[160px]">
+            {mutation.isPending ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : <Save className="w-4 h-4 mr-2" />}
+            {isEdit ? "Update Staff Profile" : "Register Member"}
           </Button>
         </div>
       </form>

@@ -95,7 +95,7 @@ export default function Layout() {
           {navItems.map(item => {
             const isActive = item.path === '/'
               ? location.pathname === '/'
-              : location.pathname.startsWith(item.path);
+              : location.pathname === item.path || location.pathname.startsWith(item.path + '/');
             return (
               <Link
                 key={item.path}

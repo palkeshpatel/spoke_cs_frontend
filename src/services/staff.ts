@@ -58,10 +58,32 @@ export async function getRoles() {
 }
 
 export async function saveStaff(data: any) {
-  if (data.id) {
-    return apiRequest<any>(`/api/staff/${data.id}`, { method: "PUT", body: data });
+  const isEdit = !!data.id;
+  const url = isEdit ? `/api/staff/${data.id}` : "/api/staff";
+  
+  // If we have a file, use FormData
+  if (data.profile_photo instanceof File) {
+    const formData = new FormData();
+    Object.keys(data).forEach(key => {
+      if (data[key] !== undefined && data[key] !== null) {
+        formData.append(key, data[key]);
+      }
+    });
+    
+    if (isEdit) {
+      formData.append('_method', 'PUT'); // Spoof PUT for Lumen/Laravel
+    }
+    
+    return apiRequest<any>(url, {
+      method: "POST", // Always use POST for multipart
+      body: formData,
+    });
   }
-  return apiRequest<any>("/api/staff", { method: "POST", body: data });
+
+  return apiRequest<any>(url, {
+    method: isEdit ? "PUT" : "POST",
+    body: data,
+  });
 }
 
 export async function deleteStaff(id: number) {
