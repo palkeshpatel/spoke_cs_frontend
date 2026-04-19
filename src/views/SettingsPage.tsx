@@ -1,4 +1,6 @@
 import { useState } from 'react';
+import { Shield, ArrowRight } from 'lucide-react';
+import { Link } from 'react-router-dom';
 import PageHeader from '@/components/PageHeader';
 import SectionCard from '@/components/SectionCard';
 import EditableField from '@/components/EditableField';
@@ -45,6 +47,23 @@ export default function SettingsPage() {
             <EditableField label="Business Hours" value={form.businessHours} isEditing={isEditing} onChange={v => update('businessHours', v)} />
           </div>
         </SectionCard>
+
+        <Link to="/settings/roles" className="block col-span-full mt-4">
+          <SectionCard title="Access Control" className="hover:ring-2 hover:ring-primary/20 transition-all">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-4">
+                <div className="w-12 h-12 rounded-lg bg-primary/10 flex items-center justify-center">
+                  <Shield className="w-6 h-6 text-primary" />
+                </div>
+                <div>
+                  <h3 className="font-bold">Roles & Permissions</h3>
+                  <p className="text-sm text-muted-foreground">Manage user roles and assign specific module permissions.</p>
+                </div>
+              </div>
+              <ArrowRight className="w-5 h-5 text-muted-foreground" />
+            </div>
+          </SectionCard>
+        </Link>
       </div>
     </div>
   );

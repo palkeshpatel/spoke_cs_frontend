@@ -1,10 +1,23 @@
 import { apiRequest, clearAuthToken, setAuthToken } from "@/services/api";
 
+export type Permission = {
+  id: number;
+  permission_name: string;
+  module: string;
+};
+
+export type Role = {
+  id: number;
+  role_name: string;
+  permissions?: Permission[];
+};
+
 export type AuthUser = {
   id: number;
   name: string;
   email: string;
-  role: string;
+  role_id: number | null;
+  role?: Role;
 };
 
 export type AuthResponse = {

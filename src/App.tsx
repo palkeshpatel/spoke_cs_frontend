@@ -26,6 +26,12 @@ import Reports from "@/views/Reports";
 import SettingsPage from "@/views/SettingsPage";
 import Login from "@/views/Login";
 import NotFound from "@/views/NotFound";
+import StaffActivityMonitor from "@/views/StaffActivityMonitor";
+import WorkReports from "@/views/WorkReports";
+import StaffList from "@/views/StaffList";
+import StaffNew from "@/views/StaffNew";
+import RoleList from "@/views/RoleList";
+import RoleDetail from "@/views/RoleDetail";
 
 const queryClient = new QueryClient();
 
@@ -100,6 +106,14 @@ const App = () => (
               <Route path="/billing/new" element={<InvoiceNew />} />
               <Route path="/billing/:id" element={<BillingDetail />} />
               <Route path="/reports" element={<Reports />} />
+              <Route path="/staff-monitoring" element={<StaffActivityMonitor />} />
+              <Route path="/work-reports" element={<WorkReports />} />
+              <Route path="/staff" element={<StaffList />} />
+              <Route path="/staff/new" element={<StaffNew />} />
+              <Route path="/staff/edit/:id" element={<StaffNew />} />
+              <Route path="/settings/roles" element={<RoleList />} />
+              <Route path="/settings/roles/new" element={<RoleDetail />} />
+              <Route path="/settings/roles/edit/:id" element={<RoleDetail />} />
               <Route path="/settings" element={<SettingsPage />} />
               <Route path="*" element={<NotFound />} />
             </Route>

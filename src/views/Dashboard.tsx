@@ -5,6 +5,7 @@ import { StatusBadge } from "@/components/StatusBadge";
 import { Link } from "react-router-dom";
 import { Bar, BarChart, Cell, Pie, PieChart, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
 import { getDashboard } from "@/services/dashboard";
+import { WorkTimer } from "@/components/WorkTimer";
 
 export default function Dashboard() {
   const dashboardQuery = useQuery({
@@ -82,6 +83,12 @@ export default function Dashboard() {
         <h1 className="text-xl sm:text-2xl font-bold text-foreground">Dashboard</h1>
         <p className="text-sm text-muted-foreground">Welcome back! Here's your business overview.</p>
       </div>
+
+      {!isAdmin && (
+        <div className="mb-6 max-w-md">
+          <WorkTimer />
+        </div>
+      )}
 
       {/* Stats */}
       <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3 sm:gap-4 mb-6">

@@ -2,27 +2,48 @@ import { useState, useEffect } from 'react';
 import { Link, Outlet, useLocation, useNavigate } from 'react-router-dom';
 import {
   LayoutDashboard, Users, Calendar, Ruler, Package, Receipt,
-  BarChart3, Settings, ChevronLeft, ChevronRight, Scissors, Menu, X, LogOut
+  BarChart3, Settings, ChevronLeft, ChevronRight, Scissors, Menu, X, LogOut, Shield
 } from 'lucide-react';
 import { logout as logoutApi } from '@/services/auth';
 
-const navItems = [
-  { path: '/', label: 'Dashboard', icon: LayoutDashboard },
-  { path: '/customers', label: 'Customers', icon: Users },
-  { path: '/appointments', label: 'Appointments', icon: Calendar },
-  { path: '/measurements', label: 'Measurements', icon: Ruler },
-  { path: '/orders', label: 'Orders', icon: Package },
-  { path: '/billing', label: 'Billing', icon: Receipt },
-  { path: '/reports', label: 'Reports', icon: BarChart3 },
-  { path: '/settings', label: 'Settings', icon: Settings },
-];
+// Dynamic navItems moved inside Layout component
+
+import { getMe } from '@/services/auth';
+import { useQuery } from '@tanstack/react-query';
 
 export default function Layout() {
+  const { data: userData } = useQuery({ queryKey: ['me'], queryFn: getMe });
+  const user = userData?.user;
+  const roleData = user?.role_record || user?.roleRecord;
+  const roleName = (roleData?.role_name || user?.role || 'staff').toLowerCase();
+  const isAdmin = roleName === 'admin';
+  const isManager = roleName === 'manager';
+
   const [collapsed, setCollapsed] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
   const [loggingOut, setLoggingOut] = useState(false);
+  
   const location = useLocation();
   const navigate = useNavigate();
+
+  const navItems = [
+    { path: '/', label: 'Dashboard', icon: LayoutDashboard },
+    { path: '/customers', label: 'Customers', icon: Users, permission: 'manage_customers' },
+    { path: '/appointments', label: 'Appointments', icon: Calendar, permission: 'manage_appointments' },
+    { path: '/measurements', label: 'Measurements', icon: Ruler, permission: 'manage_measurements' },
+    { path: '/orders', label: 'Orders', icon: Package, permission: 'manage_orders' },
+    { path: '/billing', label: 'Billing', icon: Receipt, permission: 'manage_billing' }, 
+    { path: '/reports', label: 'Reports', icon: BarChart3, permission: 'view_reports' },
+    { path: '/staff', label: 'Team', icon: Users, permission: 'manage_users' },
+    { path: '/settings/roles', label: 'Roles & Permissions', icon: Shield, permission: 'manage_roles' },
+    { path: '/staff-monitoring', label: 'Staff Monitor', icon: Users, permission: 'manage_users' },
+    { path: '/work-reports', label: 'Work Reports', icon: BarChart3, permission: 'view_reports' },
+    { path: '/settings', label: 'Settings', icon: Settings },
+  ].filter(item => {
+    if (!item.permission) return true;
+    if (isAdmin) return true;
+    return roleData?.permissions?.some((p: any) => p.permission_name === item.permission);
+  });
 
   const handleLogout = async () => {
     setLoggingOut(true);
