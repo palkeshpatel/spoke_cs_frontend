@@ -377,24 +377,6 @@ export default function CustomerDetail() {
               </div>
             </div>
           </SectionCard>
-
-          <SectionCard title="Preferences">
-            <div className="space-y-4">
-              <EditableField
-                label="Fit Preferences"
-                value={isEditing ? form.fitPreference : customer.preference?.fit_preference ?? ""}
-                isEditing={isEditing}
-                onChange={(v) => updateForm("fitPreference", v)}
-              />
-              <EditableField
-                label="Notes"
-                value={isEditing ? form.notes : customer.preference?.notes ?? ""}
-                isEditing={isEditing}
-                type="textarea"
-                onChange={(v) => updateForm("notes", v)}
-              />
-            </div>
-          </SectionCard>
         </div>
 
         {/* Right column: tabs, quick actions under tab panel, then body images */}
