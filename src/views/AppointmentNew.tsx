@@ -10,6 +10,8 @@ import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { toast } from "@/hooks/use-toast";
 import { createAppointment, listAppointmentServices, listCustomers } from "@/services/appointments";
+import { createCustomer } from "@/services/customers";
+import { UserPlus } from "lucide-react";
 
 export default function AppointmentNew() {
   const navigate = useNavigate();
@@ -17,6 +19,10 @@ export default function AppointmentNew() {
   const queryClient = useQueryClient();
 
   const [customerId, setCustomerId] = useState<string>("");
+  const [customerMode, setCustomerMode] = useState<"select" | "create">("select");
+  const [newCustomerName, setNewCustomerName] = useState("");
+  const [newCustomerEmail, setNewCustomerEmail] = useState("");
+  const [newCustomerPhone, setNewCustomerPhone] = useState("");
 
   useEffect(() => {
     const params = new URLSearchParams(location.search);
@@ -37,6 +43,29 @@ export default function AppointmentNew() {
   const customersQuery = useQuery({
     queryKey: ["customers", "list"],
     queryFn: () => listCustomers(200),
+  });
+
+  const createCustomerMutation = useMutation({
+    mutationFn: () =>
+      createCustomer({
+        name: newCustomerName.trim(),
+        email: newCustomerEmail.trim() ? newCustomerEmail.trim() : null,
+        phone: newCustomerPhone.trim() ? newCustomerPhone.trim() : null,
+      }),
+    onSuccess: async (created) => {
+      await queryClient.invalidateQueries({ queryKey: ["customers"] });
+      setCustomerId(String(created.id));
+      setCustomerMode("select");
+      setNewCustomerName("");
+      setNewCustomerEmail("");
+      setNewCustomerPhone("");
+      toast({ title: "Customer created", description: `${created.name} was added and selected.` });
+    },
+    onError: (err: unknown) => {
+      const message =
+        typeof err === "object" && err !== null && "message" in err ? String((err as { message?: unknown }).message ?? "") : "";
+      toast({ title: "Create failed", description: message || "Unable to create customer.", variant: "destructive" });
+    },
   });
 
   const servicesQuery = useQuery({
@@ -101,17 +130,88 @@ export default function AppointmentNew() {
       <PageHeader title="New Appointment" subtitle="Schedule a new appointment for your customer" backTo="/appointments" />
 
       <div className="grid md:grid-cols-2 gap-4 sm:gap-6 mb-6">
-        <SectionCard title="Customer Details">
+        <SectionCard
+          title="Customer Details"
+          headerActions={
+            customerMode === "select" ? (
+              <Button type="button" size="sm" variant="outline" onClick={() => setCustomerMode("create")} className="h-8">
+                <UserPlus className="h-4 w-4 mr-1" />
+                Add
+              </Button>
+            ) : (
+              <Button
+                type="button"
+                size="sm"
+                variant="outline"
+                onClick={() => {
+                  setCustomerMode("select");
+                  setNewCustomerName("");
+                  setNewCustomerEmail("");
+                  setNewCustomerPhone("");
+                }}
+                className="h-8"
+              >
+                Choose existing
+              </Button>
+            )
+          }
+        >
           <div className="space-y-4">
-            <div>
-              <label className="text-xs text-muted-foreground mb-1 block">Customer *</label>
-              <CustomerSelect
-                customers={customersQuery.data?.data || []}
-                value={customerId}
-                onChange={setCustomerId}
-                isLoading={customersQuery.isLoading}
-              />
-            </div>
+            {customerMode === "select" ? (
+              <div>
+                <label className="text-xs text-muted-foreground mb-1 block">Customer *</label>
+                <CustomerSelect
+                  customers={customersQuery.data?.data || []}
+                  value={customerId}
+                  onChange={setCustomerId}
+                  isLoading={customersQuery.isLoading}
+                />
+              </div>
+            ) : (
+              <div className="space-y-4">
+                <div>
+                  <label className="text-xs text-muted-foreground mb-1 block">Name *</label>
+                  <Input value={newCustomerName} onChange={(e) => setNewCustomerName(e.target.value)} placeholder="Customer name" />
+                </div>
+                <div className="grid sm:grid-cols-2 gap-4">
+                  <div>
+                    <label className="text-xs text-muted-foreground mb-1 block">Email</label>
+                    <Input value={newCustomerEmail} onChange={(e) => setNewCustomerEmail(e.target.value)} placeholder="email@example.com" />
+                  </div>
+                  <div>
+                    <label className="text-xs text-muted-foreground mb-1 block">Phone</label>
+                    <Input value={newCustomerPhone} onChange={(e) => setNewCustomerPhone(e.target.value)} placeholder="Phone number" />
+                  </div>
+                </div>
+                <div className="flex justify-end gap-2">
+                  <Button
+                    type="button"
+                    variant="outline"
+                    onClick={() => {
+                      setCustomerMode("select");
+                      setNewCustomerName("");
+                      setNewCustomerEmail("");
+                      setNewCustomerPhone("");
+                    }}
+                  >
+                    Cancel
+                  </Button>
+                  <Button
+                    type="button"
+                    onClick={() => {
+                      if (!newCustomerName.trim()) {
+                        toast({ title: "Name required", description: "Please enter the customer name.", variant: "destructive" });
+                        return;
+                      }
+                      createCustomerMutation.mutate();
+                    }}
+                    disabled={createCustomerMutation.isPending}
+                  >
+                    {createCustomerMutation.isPending ? "Saving..." : "Save customer"}
+                  </Button>
+                </div>
+              </div>
+            )}
             <div className="grid sm:grid-cols-2 gap-4">
               <div>
                 <label className="text-xs text-muted-foreground mb-1 block">Phone Number</label>
