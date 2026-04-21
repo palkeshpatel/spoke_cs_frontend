@@ -14,6 +14,8 @@ import { getAppointment, updateAppointment } from "@/services/appointments";
 type AppointmentForm = {
   customerName: string;
   customerCode: string;
+  customerEmail: string;
+  customerPhone: string;
   serviceType: string;
   appointmentDate: string;
   appointmentTime: string;
@@ -46,6 +48,8 @@ export default function AppointmentDetail() {
     return {
       customerName: appointment.customer?.name ?? "—",
       customerCode: appointment.customer?.customer_code ?? `C${String(appointment.customer_id).padStart(3, "0")}`,
+      customerEmail: appointment.customer?.email ?? "",
+      customerPhone: appointment.customer?.phone ?? "",
       serviceType: appointment.service_type,
       appointmentDate: appointment.appointment_date,
       appointmentTime: appointment.appointment_time ? appointment.appointment_time.slice(0, 5) : "",
@@ -144,6 +148,15 @@ export default function AppointmentDetail() {
                 <span className="text-xs bg-muted px-1.5 py-0.5 rounded font-mono">{form.customerCode}</span>
                 <StatusBadge status={form.status} />
               </div>
+              {form.customerPhone || form.customerEmail ? (
+                <p className="text-xs text-muted-foreground mt-1">
+                  {form.customerPhone ? form.customerPhone : null}
+                  {form.customerPhone && form.customerEmail ? " · " : null}
+                  {form.customerEmail ? form.customerEmail : null}
+                </p>
+              ) : (
+                <p className="text-xs text-muted-foreground mt-1">—</p>
+              )}
               <p className="text-sm text-primary mt-0.5">{form.serviceType}</p>
             </div>
           </div>
