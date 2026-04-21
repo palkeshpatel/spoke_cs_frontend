@@ -6,10 +6,10 @@ import SectionCard from "@/components/SectionCard";
 import EditableField from "@/components/EditableField";
 import { StatusBadge, PriorityBadge } from "@/components/StatusBadge";
 import { Button } from "@/components/ui/button";
-import { CheckCircle, MessageSquare } from "lucide-react";
+import { Bell, CalendarClock, CheckCircle, MessageSquare, X } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
 import { format } from "date-fns";
-import { getAppointment, updateAppointment } from "@/services/appointments";
+import { getAppointment, sendAppointmentReminder, updateAppointment } from "@/services/appointments";
 
 type AppointmentForm = {
   customerName: string;
@@ -94,6 +94,32 @@ export default function AppointmentDetail() {
     },
   });
 
+  const reminderMutation = useMutation({
+    mutationFn: () => sendAppointmentReminder(appointmentId),
+    onSuccess: () => {
+      toast({ title: "Reminder sent", description: "Email reminder sent to customer (if email is available)." });
+    },
+    onError: (err: unknown) => {
+      const message =
+        typeof err === "object" && err !== null && "message" in err ? String((err as { message?: unknown }).message ?? "") : "";
+      toast({ title: "Reminder failed", description: message || "Unable to send reminder.", variant: "destructive" });
+    },
+  });
+
+  const cancelMutation = useMutation({
+    mutationFn: () => updateAppointment(appointmentId, { status: "cancelled" }),
+    onSuccess: async () => {
+      await queryClient.invalidateQueries({ queryKey: ["appointments"] });
+      await queryClient.invalidateQueries({ queryKey: ["appointments", "detail", appointmentId] });
+      toast({ title: "Cancelled", description: "Appointment cancelled." });
+    },
+    onError: (err: unknown) => {
+      const message =
+        typeof err === "object" && err !== null && "message" in err ? String((err as { message?: unknown }).message ?? "") : "";
+      toast({ title: "Cancel failed", description: message || "Unable to cancel appointment.", variant: "destructive" });
+    },
+  });
+
   if (!Number.isFinite(appointmentId)) {
     return <div className="p-8 text-center text-muted-foreground">Appointment not found</div>;
   }
@@ -109,8 +135,14 @@ export default function AppointmentDetail() {
   const updateForm = <K extends keyof AppointmentForm>(key: K, val: AppointmentForm[K]) =>
     setForm((f) => (f ? { ...f, [key]: val } : f));
 
+  const isCancelled = form.status === "cancelled";
+  const isCompleted = form.status === "completed";
+  const canRemind = !isCancelled;
+  const canReschedule = !isCancelled && !isCompleted;
+  const canCancel = !isCancelled;
+
   return (
-    <div>
+    <div className="pb-24">
       <PageHeader
         title="Appointment Details"
         subtitle={`ID: ${id}`}
@@ -250,6 +282,47 @@ export default function AppointmentDetail() {
           </div>
         )}
       </SectionCard>
+
+      <div className="fixed bottom-0 left-0 right-0 z-40">
+        <div className="mx-auto max-w-6xl px-4 pb-4">
+          <div className="bg-card/95 backdrop-blur supports-[backdrop-filter]:bg-card/80 border border-border rounded-xl card-shadow p-2 flex gap-2">
+            <Button
+              variant="outline"
+              className="flex-1 h-11"
+              onClick={() => reminderMutation.mutate()}
+              disabled={!canRemind || reminderMutation.isPending}
+              title="Send reminder email to customer"
+            >
+              <Bell className="h-4 w-4 mr-2" />
+              {reminderMutation.isPending ? "Sending..." : "Send Reminder"}
+            </Button>
+            <Button
+              variant="outline"
+              className="flex-1 h-11"
+              onClick={() => setIsEditing(true)}
+              disabled={!canReschedule}
+              title="Reschedule appointment (edit date/time)"
+            >
+              <CalendarClock className="h-4 w-4 mr-2" />
+              Reschedule
+            </Button>
+            <Button
+              variant="cancel"
+              className="flex-1 h-11"
+              onClick={() => {
+                const ok = window.confirm("Cancel this appointment?");
+                if (!ok) return;
+                cancelMutation.mutate();
+              }}
+              disabled={!canCancel || cancelMutation.isPending}
+              title="Cancel appointment"
+            >
+              <X className="h-4 w-4 mr-2" />
+              {cancelMutation.isPending ? "Cancelling..." : "Cancel"}
+            </Button>
+          </div>
+        </div>
+      </div>
     </div>
   );
 }

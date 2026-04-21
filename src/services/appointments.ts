@@ -78,6 +78,10 @@ export async function updateAppointment(
   return apiRequest<AppointmentDto>(`/api/appointments/${id}`, { method: "PUT", body: payload });
 }
 
+export async function sendAppointmentReminder(id: string | number) {
+  return apiRequest<{ message: string }>(`/api/appointments/${id}/remind`, { method: "POST", body: {} });
+}
+
 export async function listAppointmentServices() {
   return apiRequest<AppointmentServiceDto[]>("/api/appointment-services");
 }
