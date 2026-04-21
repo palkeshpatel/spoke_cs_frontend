@@ -10,6 +10,7 @@ import { Button } from "@/components/ui/button";
 import { toast } from "@/hooks/use-toast";
 import { CustomerImageCropDialog } from "@/components/CustomerImageCropDialog";
 import { createCustomer, uploadCustomerProfileImage } from "@/services/customers";
+import { isValidEmail } from "@/lib/utils";
 
 export default function CustomerNew() {
   const navigate = useNavigate();
@@ -31,12 +32,16 @@ export default function CustomerNew() {
       toast({ title: "Name required", description: "Please enter customer name.", variant: "destructive" });
       return;
     }
+    if (!isValidEmail(form.email)) {
+      toast({ title: "Email required", description: "Please enter a valid email address.", variant: "destructive" });
+      return;
+    }
 
     try {
       const created = await createMutation.mutateAsync({
         name: form.name.trim(),
         phone: form.phone.trim() || null,
-        email: form.email.trim() || null,
+        email: form.email.trim(),
         address: form.address.trim() || null,
         birthday: form.birthday.trim() || null,
         preferences: {
@@ -74,7 +79,7 @@ export default function CustomerNew() {
             <div><label className="text-xs text-muted-foreground mb-1 block">Name *</label><Input value={form.name} onChange={e => update('name', e.target.value)} placeholder="Enter customer name" /></div>
             <div className="grid sm:grid-cols-2 gap-4">
               <div><label className="text-xs text-muted-foreground mb-1 block">Phone</label><Input value={form.phone} onChange={e => update('phone', e.target.value)} placeholder="+1 234-567-8900" /></div>
-              <div><label className="text-xs text-muted-foreground mb-1 block">Email</label><Input value={form.email} onChange={e => update('email', e.target.value)} placeholder="email@example.com" /></div>
+              <div><label className="text-xs text-muted-foreground mb-1 block">Email *</label><Input value={form.email} onChange={e => update('email', e.target.value)} placeholder="email@example.com" /></div>
             </div>
             <div><label className="text-xs text-muted-foreground mb-1 block">Address</label><Input value={form.address} onChange={e => update('address', e.target.value)} placeholder="Enter address" /></div>
             <div><label className="text-xs text-muted-foreground mb-1 block">Birth Date</label><Input type="date" value={form.birthday} onChange={e => update('birthday', e.target.value)} /></div>

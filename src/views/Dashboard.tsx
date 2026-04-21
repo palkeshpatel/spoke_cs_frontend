@@ -1,17 +1,6 @@
 import { useMemo, type ReactNode } from "react";
 import { useQuery } from "@tanstack/react-query";
-import {
-  AlertCircle,
-  Bell,
-  CalendarDays,
-  Clock,
-  DollarSign,
-  HelpCircle,
-  Ruler,
-  Share2,
-  TrendingUp,
-  Users,
-} from "lucide-react";
+import { AlertCircle, CalendarDays, Clock, DollarSign, Ruler, TrendingUp, Users } from "lucide-react";
 import { Link } from "react-router-dom";
 import { getDashboard } from "@/services/dashboard";
 import { WorkTimer } from "@/components/WorkTimer";
@@ -19,12 +8,10 @@ import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 
 const IMG = {
-  hero: "https://images.unsplash.com/photo-1558171813-3c29a3c0f55b?auto=format&fit=crop&w=1600&q=70",
   appointments: "https://images.unsplash.com/photo-1521791136064-7986c2920216?auto=format&fit=crop&w=900&q=80",
   measurements: "https://images.unsplash.com/photo-1558171813-3c29a3c0f55b?auto=format&fit=crop&w=900&q=80",
   billing: "https://images.unsplash.com/photo-1558618666-fcd25c85cd64?auto=format&fit=crop&w=900&q=80",
   customers: "https://images.unsplash.com/photo-1507679799987-c73779587ccf?auto=format&fit=crop&w=900&q=80",
-  footer: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&w=1600&q=60",
 } as const;
 
 function formatMoney(n: number) {
@@ -81,10 +68,19 @@ function QuickAccessTile({ to, title, description, image, imageAlt, icon, iconCl
   );
 }
 
+function dashboardErrorMessage(err: unknown): string {
+  if (err && typeof err === "object" && "message" in err && typeof (err as { message: unknown }).message === "string") {
+    return (err as { message: string }).message;
+  }
+  return "Could not load dashboard data.";
+}
+
 export default function Dashboard() {
   const dashboardQuery = useQuery({
     queryKey: ["dashboard"],
     queryFn: getDashboard,
+    staleTime: 60_000,
+    refetchOnWindowFocus: true,
   });
 
   const dashboard = dashboardQuery.data;
@@ -94,7 +90,10 @@ export default function Dashboard() {
   const todaysAppointments = dashboard?.todays_appointments ?? [];
 
   const summary = useMemo(() => {
-    const todayAppts = s?.today_appointments_count ?? todaysAppointments.length;
+    const todayAppts =
+      s?.today_appointments_count !== undefined && s?.today_appointments_count !== null
+        ? Number(s.today_appointments_count)
+        : todaysAppointments.length;
     const pendingOrders = Number(s?.pending_orders ?? 0);
     const revenueMonth = isAdmin ? Number(s?.revenue_this_month ?? 0) : null;
     const overdue = Number(s?.billing_overdue_count ?? 0);
@@ -144,7 +143,10 @@ export default function Dashboard() {
   }, [isAdmin, s, todaysAppointments.length]);
 
   const tiles = useMemo(() => {
-    const todayAppts = s?.today_appointments_count ?? todaysAppointments.length;
+    const todayAppts =
+      s?.today_appointments_count !== undefined && s?.today_appointments_count !== null
+        ? Number(s.today_appointments_count)
+        : todaysAppointments.length;
     const upcoming = Number(s?.upcoming_appointments_count ?? 0);
     const mTotal = Number(s?.measurements_total ?? 0);
     const mRecent = Number(s?.measurements_recent_7d ?? 0);
@@ -165,160 +167,129 @@ export default function Dashboard() {
     };
   }, [s, todaysAppointments.length]);
 
-  return (
-    <div className="-mx-4 sm:-mx-6">
-      {/* Hero */}
-      <section className="relative overflow-hidden rounded-none sm:rounded-2xl border border-border/60 bg-muted/30">
-        <div className="absolute inset-0">
-          <img src={IMG.hero} alt="" className="h-full w-full object-cover opacity-[0.22]" />
-          <div className="absolute inset-0 bg-gradient-to-b from-background/40 via-background/85 to-background" />
-        </div>
+  const loadFailed = dashboardQuery.isError;
+  const showData = !dashboardQuery.isPending && !loadFailed && dashboard != null;
 
-        <div className="relative px-4 sm:px-8 pt-8 pb-6 sm:pt-10 sm:pb-8">
-          <div className="flex flex-col gap-6 lg:flex-row lg:items-start lg:justify-between">
+  return (
+    <div className="space-y-8">
+      {loadFailed ? (
+        <div className="rounded-xl border border-destructive/40 bg-destructive/5 px-4 py-4 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+          <div className="flex items-start gap-2">
+            <AlertCircle className="h-5 w-5 text-destructive shrink-0 mt-0.5" />
             <div>
-              <h1 className="text-3xl sm:text-4xl font-extrabold tracking-tight text-foreground">SPOKE</h1>
-              <p className="text-sm sm:text-base text-muted-foreground mt-2 max-w-xl">
-                Professional Tailoring Management System
+              <p className="text-sm font-medium text-destructive">Dashboard could not be loaded</p>
+              <p className="text-sm text-muted-foreground mt-1">{dashboardErrorMessage(dashboardQuery.error)}</p>
+              <p className="text-xs text-muted-foreground mt-2">
+                Check that the API is running and <code className="rounded bg-muted px-1 py-0.5">VITE_API_BASE_URL</code> points to your backend
+                (for example <code className="rounded bg-muted px-1 py-0.5">http://localhost:8000</code>).
               </p>
             </div>
+          </div>
+          <Button type="button" variant="outline" size="sm" className="shrink-0 self-start sm:self-center" onClick={() => void dashboardQuery.refetch()}>
+            Retry
+          </Button>
+        </div>
+      ) : null}
 
-            <div className="w-full lg:max-w-md rounded-xl border border-border/80 bg-card/90 backdrop-blur-sm shadow-sm overflow-hidden">
-              <div className="flex items-center justify-between gap-2 px-3 py-2.5 bg-zinc-900 text-zinc-100">
-                <span className="text-xs font-medium truncate">Tailoring App Home Screen</span>
-                <div className="flex items-center gap-1 shrink-0">
-                  <Button type="button" variant="ghost" size="icon" className="h-8 w-8 text-zinc-100 hover:bg-white/10" aria-label="Notifications">
-                    <Bell className="h-4 w-4" />
-                  </Button>
-                  <Button type="button" variant="ghost" size="icon" className="h-8 w-8 text-zinc-100 hover:bg-white/10" aria-label="Help">
-                    <HelpCircle className="h-4 w-4" />
-                  </Button>
-                  <Button type="button" variant="ghost" size="sm" className="h-8 px-2 text-zinc-100 hover:bg-white/10 gap-1">
-                    <Share2 className="h-3.5 w-3.5" />
-                    Share
-                  </Button>
+      {!isAdmin && (
+        <div className="max-w-md">
+          <WorkTimer />
+        </div>
+      )}
+
+      <section>
+        <h2 className="text-lg font-semibold text-foreground mb-4">Welcome back</h2>
+        {dashboardQuery.isPending ? (
+          <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
+            {Array.from({ length: 4 }).map((_, i) => (
+              <div key={i} className="h-28 rounded-2xl bg-muted/80 animate-pulse border border-border/50" />
+            ))}
+          </div>
+        ) : showData ? (
+          <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
+            {summary.map((item) => (
+              <div
+                key={item.label}
+                className="bg-card rounded-2xl border border-border/60 card-shadow p-4 sm:p-5 flex flex-col justify-between min-h-[7.5rem]"
+              >
+                <div className={cn("inline-flex h-10 w-10 items-center justify-center rounded-xl text-white mb-3", item.iconWrap)}>
+                  <item.icon className="h-5 w-5" />
+                </div>
+                <div>
+                  <p className="text-xs text-muted-foreground leading-snug">{item.label}</p>
+                  <p className="text-xl sm:text-2xl font-bold text-foreground tabular-nums mt-1">{item.value}</p>
                 </div>
               </div>
-            </div>
+            ))}
           </div>
-        </div>
+        ) : null}
       </section>
 
-      <div className="px-4 sm:px-0 mt-6 space-y-8">
-        {!isAdmin && (
-          <div className="max-w-md">
-            <WorkTimer />
+      <section>
+        <h2 className="text-lg font-semibold text-foreground mb-4">Quick access</h2>
+        {dashboardQuery.isPending ? (
+          <div className="grid md:grid-cols-2 gap-4 sm:gap-6">
+            {Array.from({ length: 4 }).map((_, i) => (
+              <div key={i} className="h-[22rem] rounded-2xl bg-muted/80 animate-pulse border border-border/50" />
+            ))}
           </div>
-        )}
-
-        {/* Welcome summary */}
-        <section>
-          <h2 className="text-lg font-semibold text-foreground mb-4">Welcome back</h2>
-          {dashboardQuery.isLoading ? (
-            <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
-              {Array.from({ length: 4 }).map((_, i) => (
-                <div key={i} className="h-28 rounded-2xl bg-muted/80 animate-pulse border border-border/50" />
-              ))}
-            </div>
-          ) : (
-            <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
-              {summary.map((item) => (
-                <div
-                  key={item.label}
-                  className="bg-card rounded-2xl border border-border/60 card-shadow p-4 sm:p-5 flex flex-col justify-between min-h-[7.5rem]"
-                >
-                  <div className={cn("inline-flex h-10 w-10 items-center justify-center rounded-xl text-white mb-3", item.iconWrap)}>
-                    <item.icon className="h-5 w-5" />
-                  </div>
-                  <div>
-                    <p className="text-xs text-muted-foreground leading-snug">{item.label}</p>
-                    <p className="text-xl sm:text-2xl font-bold text-foreground tabular-nums mt-1">{item.value}</p>
-                  </div>
-                </div>
-              ))}
-            </div>
-          )}
-        </section>
-
-        {/* Quick access */}
-        <section>
-          <h2 className="text-lg font-semibold text-foreground mb-4">Quick access</h2>
-          {dashboardQuery.isLoading ? (
-            <div className="grid md:grid-cols-2 gap-4 sm:gap-6">
-              {Array.from({ length: 4 }).map((_, i) => (
-                <div key={i} className="h-[22rem] rounded-2xl bg-muted/80 animate-pulse border border-border/50" />
-              ))}
-            </div>
-          ) : (
-            <div className="grid md:grid-cols-2 gap-4 sm:gap-6">
-              <QuickAccessTile
-                to="/appointments"
-                title="Appointments"
-                description="Manage bookings & schedule"
-                image={IMG.appointments}
-                imageAlt="Scheduling and appointments"
-                icon={<CalendarDays className="h-5 w-5" />}
-                iconClass="bg-sky-600"
-                leftLabel="Today"
-                leftValue={tiles.todayAppts}
-                rightLabel="Upcoming"
-                rightValue={tiles.upcoming}
-              />
-              <QuickAccessTile
-                to="/measurements"
-                title="Measurements"
-                description="Customer measurements"
-                image={IMG.measurements}
-                imageAlt="Tailoring and measurements"
-                icon={<Ruler className="h-5 w-5" />}
-                iconClass="bg-violet-600"
-                leftLabel="Total"
-                leftValue={tiles.mTotal}
-                rightLabel="Recent"
-                rightValue={tiles.mRecent}
-              />
-              <QuickAccessTile
-                to="/billing"
-                title="Billing"
-                description="Invoices & payments"
-                image={IMG.billing}
-                imageAlt="Fabrics and tailoring"
-                icon={<DollarSign className="h-5 w-5" />}
-                iconClass="bg-emerald-600"
-                leftLabel="Pending"
-                leftValue={formatMoney(tiles.pendingTotal)}
-                rightLabel="Overdue"
-                rightValue={tiles.overdue}
-              />
-              <QuickAccessTile
-                to="/customers"
-                title="Customer Profiles"
-                description="Customer database"
-                image={IMG.customers}
-                imageAlt="Tailored suit"
-                icon={<Users className="h-5 w-5" />}
-                iconClass="bg-orange-500"
-                leftLabel="Total"
-                leftValue={tiles.customers}
-                rightLabel="New"
-                rightValue={tiles.newThisMonth}
-              />
-            </div>
-          )}
-        </section>
-
-        {/* Footer banner */}
-        <section className="relative overflow-hidden rounded-2xl border border-border/60 min-h-[11rem]">
-          <img src={IMG.footer} alt="" className="absolute inset-0 h-full w-full object-cover opacity-25" />
-          <div className="absolute inset-0 bg-gradient-to-r from-background/95 via-background/90 to-background/75" />
-          <div className="relative px-6 py-8 sm:px-10 sm:py-10 max-w-3xl">
-            <p className="text-xl sm:text-2xl font-bold text-foreground">Crafting Excellence Since 2020</p>
-            <p className="text-sm sm:text-base text-muted-foreground mt-3 leading-relaxed">
-              Managing satisfied customers with precision and care. Your trusted partner in bespoke tailoring management.
-            </p>
+        ) : showData ? (
+          <div className="grid md:grid-cols-2 gap-4 sm:gap-6">
+            <QuickAccessTile
+              to="/appointments"
+              title="Appointments"
+              description="Manage bookings & schedule"
+              image={IMG.appointments}
+              imageAlt="Scheduling and appointments"
+              icon={<CalendarDays className="h-5 w-5" />}
+              iconClass="bg-sky-600"
+              leftLabel="Today"
+              leftValue={tiles.todayAppts}
+              rightLabel="Upcoming"
+              rightValue={tiles.upcoming}
+            />
+            <QuickAccessTile
+              to="/measurements"
+              title="Measurements"
+              description="Customer measurements"
+              image={IMG.measurements}
+              imageAlt="Tailoring and measurements"
+              icon={<Ruler className="h-5 w-5" />}
+              iconClass="bg-violet-600"
+              leftLabel="Total"
+              leftValue={tiles.mTotal}
+              rightLabel="Recent"
+              rightValue={tiles.mRecent}
+            />
+            <QuickAccessTile
+              to="/billing"
+              title="Billing"
+              description="Invoices & payments"
+              image={IMG.billing}
+              imageAlt="Fabrics and tailoring"
+              icon={<DollarSign className="h-5 w-5" />}
+              iconClass="bg-emerald-600"
+              leftLabel="Pending"
+              leftValue={formatMoney(tiles.pendingTotal)}
+              rightLabel="Overdue"
+              rightValue={tiles.overdue}
+            />
+            <QuickAccessTile
+              to="/customers"
+              title="Customer Profiles"
+              description="Customer database"
+              image={IMG.customers}
+              imageAlt="Tailored suit"
+              icon={<Users className="h-5 w-5" />}
+              iconClass="bg-orange-500"
+              leftLabel="Total"
+              leftValue={tiles.customers}
+              rightLabel="New"
+              rightValue={tiles.newThisMonth}
+            />
           </div>
-        </section>
-      </div>
+        ) : null}
+      </section>
     </div>
   );
 }

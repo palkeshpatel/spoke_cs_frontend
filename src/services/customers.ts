@@ -75,8 +75,8 @@ export async function getCustomer(id: string | number) {
 
 export async function createCustomer(payload: {
   name: string;
+  email: string;
   phone?: string | null;
-  email?: string | null;
   address?: string | null;
   birthday?: string | null;
   vip_status?: boolean;

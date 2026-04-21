@@ -11,6 +11,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { toast } from "@/hooks/use-toast";
 import { createAppointment, listAppointmentServices, listCustomers } from "@/services/appointments";
 import { createCustomer } from "@/services/customers";
+import { isValidEmail } from "@/lib/utils";
 import { UserPlus } from "lucide-react";
 
 export default function AppointmentNew() {
@@ -49,7 +50,7 @@ export default function AppointmentNew() {
     mutationFn: () =>
       createCustomer({
         name: newCustomerName.trim(),
-        email: newCustomerEmail.trim() ? newCustomerEmail.trim() : null,
+        email: newCustomerEmail.trim(),
         phone: newCustomerPhone.trim() ? newCustomerPhone.trim() : null,
       }),
     onSuccess: async (created) => {
@@ -175,7 +176,7 @@ export default function AppointmentNew() {
                 </div>
                 <div className="grid sm:grid-cols-2 gap-4">
                   <div>
-                    <label className="text-xs text-muted-foreground mb-1 block">Email</label>
+                    <label className="text-xs text-muted-foreground mb-1 block">Email *</label>
                     <Input value={newCustomerEmail} onChange={(e) => setNewCustomerEmail(e.target.value)} placeholder="email@example.com" />
                   </div>
                   <div>
@@ -201,6 +202,10 @@ export default function AppointmentNew() {
                     onClick={() => {
                       if (!newCustomerName.trim()) {
                         toast({ title: "Name required", description: "Please enter the customer name.", variant: "destructive" });
+                        return;
+                      }
+                      if (!isValidEmail(newCustomerEmail)) {
+                        toast({ title: "Email required", description: "Please enter a valid email address.", variant: "destructive" });
                         return;
                       }
                       createCustomerMutation.mutate();
