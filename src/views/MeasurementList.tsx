@@ -29,6 +29,7 @@ export default function MeasurementList() {
   });
 
   const measurements = useMemo(() => measurementsQuery.data?.data ?? [], [measurementsQuery.data]);
+  const collator = useMemo(() => new Intl.Collator(undefined, { numeric: true, sensitivity: "base" }), []);
 
   const groupedByCustomer = useMemo(() => {
     const map = new Map<
@@ -65,8 +66,15 @@ export default function MeasurementList() {
       });
     }
 
-    return Array.from(map.values()).sort((a, b) => (a.latestUpdatedAt < b.latestUpdatedAt ? 1 : -1));
-  }, [measurements]);
+    // Keep list order stable so editing a record doesn't reshuffle the page.
+    return Array.from(map.values()).sort((a, b) => {
+      const byName = collator.compare(a.customerName, b.customerName);
+      if (byName) return byName;
+      const byCode = collator.compare(a.customerCode ?? "", b.customerCode ?? "");
+      if (byCode) return byCode;
+      return a.customerId - b.customerId;
+    });
+  }, [collator, measurements]);
 
   const filtered = useMemo(() => {
     const q = search.trim().toLowerCase();
