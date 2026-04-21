@@ -28,6 +28,8 @@ export default function AppointmentNew() {
   const [serviceType, setServiceType] = useState<string>("");
   const [appointmentDate, setAppointmentDate] = useState<string>("");
   const [appointmentTime, setAppointmentTime] = useState<string>("");
+  const [trialDate, setTrialDate] = useState<string>("");
+  const [deliveryDate, setDeliveryDate] = useState<string>("");
   const [durationMinutes, setDurationMinutes] = useState<string>("30");
   const [priority, setPriority] = useState<"low" | "normal" | "high">("normal");
   const [notes, setNotes] = useState<string>("");
@@ -85,6 +87,8 @@ export default function AppointmentNew() {
       service_type: serviceType,
       appointment_date: appointmentDate,
       appointment_time: time,
+      trial_date: trialDate ? trialDate : null,
+      delivery_date: deliveryDate ? deliveryDate : null,
       duration_minutes: Number(durationMinutes || 0),
       priority,
       status: "confirmed",
@@ -172,6 +176,16 @@ export default function AppointmentNew() {
                     <SelectItem value="low">Low</SelectItem>
                   </SelectContent>
                 </Select>
+              </div>
+            </div>
+            <div className="grid sm:grid-cols-2 gap-4">
+              <div>
+                <label className="text-xs text-muted-foreground mb-1 block">Trial Date</label>
+                <Input type="date" value={trialDate} onChange={(e) => setTrialDate(e.target.value)} />
+              </div>
+              <div>
+                <label className="text-xs text-muted-foreground mb-1 block">Delivery Date</label>
+                <Input type="date" value={deliveryDate} onChange={(e) => setDeliveryDate(e.target.value)} />
               </div>
             </div>
           </div>

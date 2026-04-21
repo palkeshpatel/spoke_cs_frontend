@@ -11,6 +11,12 @@ import { toast } from "@/hooks/use-toast";
 import { format } from "date-fns";
 import { getAppointment, sendAppointmentReminder, updateAppointment } from "@/services/appointments";
 
+function toDateInputValue(v: string | null | undefined): string {
+  if (!v) return "";
+  if (v.includes("T")) return v.split("T")[0] ?? "";
+  return v.length >= 10 ? v.slice(0, 10) : v;
+}
+
 type AppointmentForm = {
   customerName: string;
   customerCode: string;
@@ -19,6 +25,8 @@ type AppointmentForm = {
   serviceType: string;
   appointmentDate: string;
   appointmentTime: string;
+  trialDate: string;
+  deliveryDate: string;
   durationMinutes: string;
   status: "pending" | "confirmed" | "completed" | "cancelled";
   priority: "low" | "normal" | "high";
@@ -51,8 +59,10 @@ export default function AppointmentDetail() {
       customerEmail: appointment.customer?.email ?? "",
       customerPhone: appointment.customer?.phone ?? "",
       serviceType: appointment.service_type,
-      appointmentDate: appointment.appointment_date,
+      appointmentDate: toDateInputValue(appointment.appointment_date),
       appointmentTime: appointment.appointment_time ? appointment.appointment_time.slice(0, 5) : "",
+      trialDate: toDateInputValue(appointment.trial_date ?? ""),
+      deliveryDate: toDateInputValue(appointment.delivery_date ?? ""),
       durationMinutes: String(appointment.duration_minutes ?? 0),
       status: appointment.status,
       priority: appointment.priority,
@@ -154,6 +164,8 @@ export default function AppointmentDetail() {
             service_type: form.serviceType,
             appointment_date: form.appointmentDate,
             appointment_time: form.appointmentTime ? `${form.appointmentTime}:00` : null,
+            trial_date: form.trialDate ? form.trialDate : null,
+            delivery_date: form.deliveryDate ? form.deliveryDate : null,
             duration_minutes: Number(form.durationMinutes || 0),
             status: form.status,
             priority: form.priority,
@@ -208,6 +220,22 @@ export default function AppointmentDetail() {
                 type="number"
                 onChange={(v) => updateForm("durationMinutes", v)}
                 unit="min"
+              />
+            </div>
+            <div className="grid grid-cols-2 gap-4">
+              <EditableField
+                label="Trial Date"
+                value={form.trialDate}
+                isEditing={isEditing}
+                type="date"
+                onChange={(v) => updateForm("trialDate", v)}
+              />
+              <EditableField
+                label="Delivery Date"
+                value={form.deliveryDate}
+                isEditing={isEditing}
+                type="date"
+                onChange={(v) => updateForm("deliveryDate", v)}
               />
             </div>
           </div>
