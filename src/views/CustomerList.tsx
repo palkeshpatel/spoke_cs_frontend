@@ -2,7 +2,7 @@ import { useEffect, useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Link, useNavigate } from "react-router-dom";
 import { format } from "date-fns";
-import { LayoutGrid, List, Plus, Search, User } from "lucide-react";
+import { Clock, LayoutGrid, List, Mail, Phone, Plus, Search, User } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import PageHeader from "@/components/PageHeader";
@@ -202,7 +202,7 @@ export default function CustomerList() {
                   <Link
                     to={`/customers/${c.id}`}
                     key={c.id}
-                    className="bg-card rounded-xl card-shadow p-5 hover:card-shadow-hover transition-shadow"
+                    className="bg-card rounded-xl card-shadow p-5 border border-border/70 hover:card-shadow-hover hover:bg-muted/10 transition-[box-shadow,background-color]"
                   >
                     <div className="flex items-start justify-between gap-3">
                       <div className="min-w-0">
@@ -226,10 +226,21 @@ export default function CustomerList() {
                       </div>
                     </div>
 
-                    <div className="mt-4 space-y-1">
-                      <div className="text-xs text-muted-foreground truncate">{c.phone ?? "—"}</div>
-                      <div className="text-xs text-muted-foreground truncate">{c.email ?? "—"}</div>
-                      <div className="text-xs text-muted-foreground">Last visit: {c.loyalty?.last_visit ? format(new Date(c.loyalty.last_visit), "dd-MMM-yyyy") : "—"}</div>
+                    <div className="mt-4 space-y-2">
+                      <div className="flex items-center gap-2 text-xs text-muted-foreground min-w-0">
+                        <Phone className="h-3.5 w-3.5 shrink-0 opacity-80" />
+                        <span className="truncate">{c.phone ?? "—"}</span>
+                      </div>
+                      <div className="flex items-center gap-2 text-xs text-muted-foreground min-w-0">
+                        <Mail className="h-3.5 w-3.5 shrink-0 opacity-80" />
+                        <span className="truncate">{c.email ?? "—"}</span>
+                      </div>
+                      <div className="flex items-center gap-2 text-xs text-muted-foreground min-w-0">
+                        <Clock className="h-3.5 w-3.5 shrink-0 opacity-80" />
+                        <span className="truncate">
+                          Last visit: {c.loyalty?.last_visit ? format(new Date(c.loyalty.last_visit), "dd-MMM-yyyy") : "—"}
+                        </span>
+                      </div>
                     </div>
                   </Link>
                 ))}
