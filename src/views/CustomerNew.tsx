@@ -17,11 +17,15 @@ export default function CustomerNew() {
   const queryClient = useQueryClient();
   const profileInputRef = useRef<HTMLInputElement | null>(null);
   const [form, setForm] = useState({ name: "", phone: "", email: "", address: "", birthday: "", preferences: "", notes: "" });
+  const [emailInlineError, setEmailInlineError] = useState<string>("");
   const [profileCropOpen, setProfileCropOpen] = useState(false);
   const [profilePickFile, setProfilePickFile] = useState<File | null>(null);
   const [profileBlob, setProfileBlob] = useState<Blob | null>(null);
   const [profilePreviewUrl, setProfilePreviewUrl] = useState<string | null>(null);
-  const update = (key: keyof typeof form, val: string) => setForm((f) => ({ ...f, [key]: val }));
+  const update = (key: keyof typeof form, val: string) => {
+    if (key === "email") setEmailInlineError("");
+    setForm((f) => ({ ...f, [key]: val }));
+  };
 
   const createMutation = useMutation({
     mutationFn: createCustomer,
@@ -33,6 +37,7 @@ export default function CustomerNew() {
       return;
     }
     if (!isValidEmail(form.email)) {
+      setEmailInlineError("Please enter a valid email address.");
       toast({ title: "Email required", description: "Please enter a valid email address.", variant: "destructive" });
       return;
     }
@@ -76,6 +81,7 @@ export default function CustomerNew() {
           : "";
       const message =
         typeof err === "object" && err !== null && "message" in err ? String((err as { message?: unknown }).message ?? "") : "";
+      if (emailError) setEmailInlineError(emailError);
       toast({ title: "Create failed", description: emailError || message || "Unable to create customer.", variant: "destructive" });
     }
   };
@@ -90,7 +96,18 @@ export default function CustomerNew() {
             <div><label className="text-xs text-muted-foreground mb-1 block">Name *</label><Input value={form.name} onChange={e => update('name', e.target.value)} placeholder="Enter customer name" /></div>
             <div className="grid sm:grid-cols-2 gap-4">
               <div><label className="text-xs text-muted-foreground mb-1 block">Phone</label><Input value={form.phone} onChange={e => update('phone', e.target.value)} placeholder="+1 234-567-8900" /></div>
-              <div><label className="text-xs text-muted-foreground mb-1 block">Email *</label><Input value={form.email} onChange={e => update('email', e.target.value)} placeholder="email@example.com" /></div>
+              <div>
+                <label className="text-xs text-muted-foreground mb-1 block">Email *</label>
+                <Input
+                  value={form.email}
+                  onChange={e => update('email', e.target.value)}
+                  placeholder="email@example.com"
+                  className={emailInlineError ? "border-destructive focus-visible:ring-destructive" : undefined}
+                />
+                {emailInlineError ? (
+                  <p className="mt-1 text-xs text-destructive">{emailInlineError}</p>
+                ) : null}
+              </div>
             </div>
             <div><label className="text-xs text-muted-foreground mb-1 block">Address</label><Input value={form.address} onChange={e => update('address', e.target.value)} placeholder="Enter address" /></div>
             <div><label className="text-xs text-muted-foreground mb-1 block">Birth Date</label><Input type="date" value={form.birthday} onChange={e => update('birthday', e.target.value)} /></div>
