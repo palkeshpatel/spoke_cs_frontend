@@ -112,6 +112,23 @@ export default function MeasurementNew() {
 
   const fields = useMemo(() => fieldsQuery.data ?? [], [fieldsQuery.data]);
 
+  const handleGarmentTypeChange = (v: string) => {
+    if (isEditMode) {
+      if (!customerId) return;
+      const existing = allMeasurementsQuery.data?.data.find(
+        (m) => m.customer_id === Number(customerId) && m.garment_type.toLowerCase() === v.toLowerCase(),
+      );
+      if (existing) {
+        navigate(`/measurements/${existing.id}`);
+      } else {
+        navigate(`/measurements/new?customer_id=${customerId}&garment_type=${encodeURIComponent(v)}`);
+      }
+      return;
+    }
+    setGarmentType(v);
+    setValuesDraft({});
+  };
+
   const measurementQuery = useQuery({
     queryKey: ["measurements", "detail", measurementId],
     queryFn: () => getMeasurement(measurementId as number),
@@ -406,35 +423,6 @@ export default function MeasurementNew() {
             </div>
 
             <div>
-              <label className="text-xs text-muted-foreground mb-1 block">Garment Type *</label>
-              <Tabs
-                value={garmentType}
-                onValueChange={(v) => {
-                  if (isEditMode) {
-                    if (!customerId) return;
-                    const existing = allMeasurementsQuery.data?.data.find(
-                      m => m.customer_id === Number(customerId) && m.garment_type.toLowerCase() === v.toLowerCase()
-                    );
-                    if (existing) {
-                      navigate(`/measurements/${existing.id}`);
-                    } else {
-                      navigate(`/measurements/new?customer_id=${customerId}&garment_type=${encodeURIComponent(v)}`);
-                    }
-                    return;
-                  }
-                  setGarmentType(v);
-                  setValuesDraft({});
-                }}
-              >
-                <TabsList className="w-full">
-                  <TabsTrigger value="Suit" className="flex-1">Suit</TabsTrigger>
-                  <TabsTrigger value="Shirt" className="flex-1">Shirt</TabsTrigger>
-                  <TabsTrigger value="Pants" className="flex-1">Pants</TabsTrigger>
-                </TabsList>
-              </Tabs>
-            </div>
-
-            <div>
               <label className="text-xs text-muted-foreground mb-1 block">Taken By</label>
               {canEdit ? (
                 <Select value={takenBy} onValueChange={setTakenBy}>
@@ -471,7 +459,7 @@ export default function MeasurementNew() {
       </div>
 
       <SectionCard
-        title={`${garmentType} Fields`}
+        title="Fields"
         className="mb-6"
         headerActions={
           isEditMode && !isEditing ? (
@@ -481,6 +469,22 @@ export default function MeasurementNew() {
           ) : null
         }
       >
+        <div className="mb-4">
+          <label className="text-xs text-muted-foreground mb-2 block">Garment Type *</label>
+          <Tabs value={garmentType} onValueChange={handleGarmentTypeChange}>
+            <TabsList className="w-full">
+              <TabsTrigger value="Suit" className="flex-1">
+                Suit
+              </TabsTrigger>
+              <TabsTrigger value="Shirt" className="flex-1">
+                Shirt
+              </TabsTrigger>
+              <TabsTrigger value="Pants" className="flex-1">
+                Pants
+              </TabsTrigger>
+            </TabsList>
+          </Tabs>
+        </div>
         {fieldsQuery.isLoading ? (
           <div className="text-sm text-muted-foreground">Loading fields...</div>
         ) : fields.length === 0 ? (
