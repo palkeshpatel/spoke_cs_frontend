@@ -11,16 +11,32 @@ interface PageHeaderProps {
   onSave?: () => void;
   onCancel?: () => void;
   actions?: React.ReactNode;
+  /** When true, `actions` stay visible while editing (e.g. Print on measurement detail). */
+  persistActions?: boolean;
 }
 
-export default function PageHeader({ title, subtitle, backTo, isEditing, onEdit, onSave, onCancel, actions }: PageHeaderProps) {
+export default function PageHeader({
+  title,
+  subtitle,
+  backTo,
+  isEditing,
+  onEdit,
+  onSave,
+  onCancel,
+  actions,
+  persistActions = false,
+}: PageHeaderProps) {
   const navigate = useNavigate();
 
   return (
     <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-6">
       <div className="flex items-center gap-3 min-w-0">
         {backTo && (
-          <button onClick={() => navigate(backTo)} className="p-1.5 rounded-lg hover:bg-card transition-colors shrink-0">
+          <button
+            type="button"
+            onClick={() => navigate(backTo)}
+            className="p-1.5 rounded-lg hover:bg-card transition-colors shrink-0 print:hidden"
+          >
             <ArrowLeft className="h-5 w-5 text-muted-foreground" />
           </button>
         )}
@@ -29,19 +45,23 @@ export default function PageHeader({ title, subtitle, backTo, isEditing, onEdit,
           {subtitle && <p className="text-sm text-muted-foreground truncate">{subtitle}</p>}
         </div>
       </div>
-      <div className="flex items-center gap-2 shrink-0">
+      <div className="flex items-center gap-2 shrink-0 print:hidden">
+        {(persistActions || !isEditing) && actions}
         {isEditing ? (
           <>
-            <Button variant="cancel" size="sm" onClick={onCancel}><X className="h-4 w-4 mr-1" /> Cancel</Button>
-            <Button size="sm" onClick={onSave}><Save className="h-4 w-4 mr-1" /> Save</Button>
+            <Button variant="cancel" size="sm" onClick={onCancel}>
+              <X className="h-4 w-4 mr-1" /> Cancel
+            </Button>
+            <Button size="sm" onClick={onSave}>
+              <Save className="h-4 w-4 mr-1" /> Save
+            </Button>
           </>
         ) : (
-          <>
-            {actions}
-            {onEdit && (
-              <Button variant="default" size="sm" onClick={onEdit}><Pencil className="h-4 w-4 mr-1" /> Edit</Button>
-            )}
-          </>
+          onEdit && (
+            <Button variant="default" size="sm" onClick={onEdit}>
+              <Pencil className="h-4 w-4 mr-1" /> Edit
+            </Button>
+          )
         )}
       </div>
     </div>

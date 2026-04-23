@@ -63,9 +63,20 @@ export default function CustomerNew() {
       toast({ title: "Customer created", description: `Customer ${created.customer_code} created.` });
       navigate(`/customers/${created.id}`);
     } catch (err: unknown) {
+      const emailError =
+        typeof err === "object" &&
+        err !== null &&
+        "details" in err &&
+        typeof (err as { details?: unknown }).details === "object" &&
+        (err as { details?: any }).details &&
+        (err as { details?: any }).details.errors &&
+        Array.isArray((err as { details?: any }).details.errors.email) &&
+        (err as { details?: any }).details.errors.email[0]
+          ? String((err as { details?: any }).details.errors.email[0])
+          : "";
       const message =
         typeof err === "object" && err !== null && "message" in err ? String((err as { message?: unknown }).message ?? "") : "";
-      toast({ title: "Create failed", description: message || "Unable to create customer.", variant: "destructive" });
+      toast({ title: "Create failed", description: emailError || message || "Unable to create customer.", variant: "destructive" });
     }
   };
 

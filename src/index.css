@@ -79,3 +79,39 @@
     box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.06), 0 2px 4px -2px rgba(0, 0, 0, 0.04);
   }
 }
+
+/* Measurement (and general app) print: hide chrome via print:hidden; widen content */
+@media print {
+  @page {
+    margin: 12mm;
+    size: auto;
+  }
+
+  body {
+    background: white !important;
+  }
+
+  main {
+    overflow: visible !important;
+  }
+
+  main .max-w-7xl {
+    max-width: 100% !important;
+    padding: 0 !important;
+  }
+
+  .measurement-print-root .bg-card {
+    box-shadow: none !important;
+    border: 1px solid #e5e7eb !important;
+    break-inside: avoid;
+  }
+
+  .measurement-print-root input,
+  .measurement-print-root textarea {
+    border: 1px solid #d1d5db !important;
+    background: white !important;
+    color: black !important;
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+}

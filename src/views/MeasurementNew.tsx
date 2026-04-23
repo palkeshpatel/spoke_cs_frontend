@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { format } from "date-fns";
-import { Copy } from "lucide-react";
+import { Copy, Printer, UserPlus } from "lucide-react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useLocation, useNavigate, useParams } from "react-router-dom";
 import PageHeader from "@/components/PageHeader";
@@ -12,7 +12,9 @@ import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { toast } from "@/hooks/use-toast";
+import { isValidEmail } from "@/lib/utils";
 import { listCustomers } from "@/services/customers";
+import { createCustomer } from "@/services/customers";
 import { createMeasurement, getMeasurement, listMeasurementFields, listMeasurements, listStaff, updateMeasurement } from "@/services/measurements";
 
 export default function MeasurementNew() {
@@ -24,6 +26,10 @@ export default function MeasurementNew() {
   const isEditMode = measurementId !== null && Number.isFinite(measurementId);
 
   const [customerId, setCustomerId] = useState<string | undefined>(undefined);
+  const [customerMode, setCustomerMode] = useState<"select" | "create">("select");
+  const [newCustomerName, setNewCustomerName] = useState("");
+  const [newCustomerEmail, setNewCustomerEmail] = useState("");
+  const [newCustomerPhone, setNewCustomerPhone] = useState("");
   const [garmentType, setGarmentType] = useState<string>("Suit");
   const [takenBy, setTakenBy] = useState<string>("__none__");
   const [notes, setNotes] = useState<string>("");
@@ -45,6 +51,47 @@ export default function MeasurementNew() {
   const customersQuery = useQuery({
     queryKey: ["customers", "list"],
     queryFn: () => listCustomers(200),
+  });
+
+  const existingCustomerByEmail = useMemo(() => {
+    const email = newCustomerEmail.trim().toLowerCase();
+    if (!email) return null;
+    const list = customersQuery.data?.data ?? [];
+    return list.find((c) => (c.email ?? "").trim().toLowerCase() === email) ?? null;
+  }, [customersQuery.data, newCustomerEmail]);
+
+  const createCustomerMutation = useMutation({
+    mutationFn: () =>
+      createCustomer({
+        name: newCustomerName.trim(),
+        email: newCustomerEmail.trim(),
+        phone: newCustomerPhone.trim() ? newCustomerPhone.trim() : null,
+      }),
+    onSuccess: async (created) => {
+      await queryClient.invalidateQueries({ queryKey: ["customers"] });
+      setCustomerId(String(created.id));
+      setCustomerMode("select");
+      setNewCustomerName("");
+      setNewCustomerEmail("");
+      setNewCustomerPhone("");
+      toast({ title: "Customer created", description: `${created.name} was added and selected.` });
+    },
+    onError: (err: unknown) => {
+      const emailError =
+        typeof err === "object" &&
+        err !== null &&
+        "details" in err &&
+        typeof (err as { details?: unknown }).details === "object" &&
+        (err as { details?: any }).details &&
+        (err as { details?: any }).details.errors &&
+        Array.isArray((err as { details?: any }).details.errors.email) &&
+        (err as { details?: any }).details.errors.email[0]
+          ? String((err as { details?: any }).details.errors.email[0])
+          : "";
+      const message =
+        typeof err === "object" && err !== null && "message" in err ? String((err as { message?: unknown }).message ?? "") : "";
+      toast({ title: "Create failed", description: emailError || message || "Unable to create customer.", variant: "destructive" });
+    },
   });
 
   const allMeasurementsQuery = useQuery({
@@ -163,6 +210,10 @@ export default function MeasurementNew() {
     });
   };
 
+  const handlePrint = () => {
+    window.print();
+  };
+
   const handleCopy = async () => {
     let text = "label,value\n";
     for (const f of fields) {
@@ -188,7 +239,7 @@ export default function MeasurementNew() {
   }
 
   return (
-    <div>
+    <div className="measurement-print-root">
       {isEditMode ? (
         <PageHeader
           title={measurement?.customer?.name ?? "Measurement"}
@@ -196,6 +247,13 @@ export default function MeasurementNew() {
           backTo="/measurements"
           isEditing={isEditing}
           onEdit={() => setIsEditing(true)}
+          persistActions
+          actions={
+            <Button type="button" variant="outline" size="sm" onClick={handlePrint} title="Print measurement">
+              <Printer className="h-4 w-4 mr-1" />
+              Print
+            </Button>
+          }
           onCancel={() => {
             if (!measurement) return;
             setTakenBy(measurement.taken_by ? String(measurement.taken_by) : "__none__");
@@ -222,13 +280,120 @@ export default function MeasurementNew() {
       )}
 
       <div className="grid md:grid-cols-2 gap-4 sm:gap-6 mb-6">
-        <SectionCard title="Measurement Details">
+        <SectionCard
+          title="Measurement Details"
+          headerActions={
+            !isEditMode
+              ? customerMode === "select"
+                ? (
+                  <Button type="button" size="sm" variant="outline" onClick={() => setCustomerMode("create")} className="h-8">
+                    <UserPlus className="h-4 w-4 mr-1" />
+                    Add
+                  </Button>
+                )
+                : (
+                  <Button
+                    type="button"
+                    size="sm"
+                    variant="outline"
+                    onClick={() => {
+                      setCustomerMode("select");
+                      setNewCustomerName("");
+                      setNewCustomerEmail("");
+                      setNewCustomerPhone("");
+                    }}
+                    className="h-8"
+                  >
+                    Choose existing
+                  </Button>
+                )
+              : null
+          }
+        >
           <div className="space-y-4">
             <div>
               <label className="text-xs text-muted-foreground mb-1 block">Customer *</label>
               {isEditMode ? (
                 <div className="flex h-10 w-full items-center rounded-md border border-input bg-muted px-3 text-sm">
                   {measurement?.customer ? `${measurement.customer.name} (${measurement.customer.customer_code})` : "—"}
+                </div>
+              ) : customerMode === "create" ? (
+                <div className="space-y-4">
+                  <div>
+                    <label className="text-xs text-muted-foreground mb-1 block">Name *</label>
+                    <Input value={newCustomerName} onChange={(e) => setNewCustomerName(e.target.value)} placeholder="Customer name" />
+                  </div>
+                  <div className="grid sm:grid-cols-2 gap-4">
+                    <div>
+                      <label className="text-xs text-muted-foreground mb-1 block">Email *</label>
+                      <Input value={newCustomerEmail} onChange={(e) => setNewCustomerEmail(e.target.value)} placeholder="email@example.com" />
+                      {existingCustomerByEmail ? (
+                        <div className="mt-2 flex items-center justify-between gap-2 rounded-md border border-amber-200 bg-amber-50 px-3 py-2 text-xs">
+                          <div className="min-w-0">
+                            <span className="font-medium text-amber-900">Email already exists</span>
+                            <span className="text-amber-800"> for </span>
+                            <span className="text-amber-900 truncate">{existingCustomerByEmail.name}</span>
+                            <span className="text-amber-800"> ({existingCustomerByEmail.customer_code})</span>
+                          </div>
+                          <Button
+                            type="button"
+                            size="sm"
+                            variant="outline"
+                            className="h-7 px-2"
+                            onClick={() => {
+                              setCustomerId(String(existingCustomerByEmail.id));
+                              setCustomerMode("select");
+                              setNewCustomerName("");
+                              setNewCustomerEmail("");
+                              setNewCustomerPhone("");
+                              toast({ title: "Selected existing customer", description: `${existingCustomerByEmail.name} selected.` });
+                            }}
+                          >
+                            Select
+                          </Button>
+                        </div>
+                      ) : null}
+                    </div>
+                    <div>
+                      <label className="text-xs text-muted-foreground mb-1 block">Phone</label>
+                      <Input value={newCustomerPhone} onChange={(e) => setNewCustomerPhone(e.target.value)} placeholder="Phone number" />
+                    </div>
+                  </div>
+                  <div className="flex justify-end gap-2">
+                    <Button
+                      type="button"
+                      variant="outline"
+                      onClick={() => {
+                        setCustomerMode("select");
+                        setNewCustomerName("");
+                        setNewCustomerEmail("");
+                        setNewCustomerPhone("");
+                      }}
+                    >
+                      Cancel
+                    </Button>
+                    <Button
+                      type="button"
+                      onClick={() => {
+                        if (!newCustomerName.trim()) {
+                          toast({ title: "Name required", description: "Please enter the customer name.", variant: "destructive" });
+                          return;
+                        }
+                        if (!isValidEmail(newCustomerEmail)) {
+                          toast({ title: "Email required", description: "Please enter a valid email address.", variant: "destructive" });
+                          return;
+                        }
+                        if (existingCustomerByEmail) {
+                          toast({ title: "Email already used", description: "This email is already linked to an existing customer. Please select that customer.", variant: "destructive" });
+                          return;
+                        }
+                        createCustomerMutation.mutate();
+                      }}
+                      disabled={createCustomerMutation.isPending}
+                    >
+                      {createCustomerMutation.isPending ? "Saving..." : "Save customer"}
+                    </Button>
+                  </div>
                 </div>
               ) : (
                 <CustomerSelect
@@ -339,7 +504,7 @@ export default function MeasurementNew() {
       </SectionCard>
 
       {!isEditMode ? (
-        <div className="flex gap-2 justify-end">
+        <div className="flex gap-2 justify-end print:hidden">
           <Button variant="cancel" onClick={() => navigate("/measurements")}>
             Cancel
           </Button>

@@ -46,6 +46,13 @@ export default function AppointmentNew() {
     queryFn: () => listCustomers(200),
   });
 
+  const existingCustomerByEmail = useMemo(() => {
+    const email = newCustomerEmail.trim().toLowerCase();
+    if (!email) return null;
+    const list = customersQuery.data?.data ?? [];
+    return list.find((c) => (c.email ?? "").trim().toLowerCase() === email) ?? null;
+  }, [customersQuery.data, newCustomerEmail]);
+
   const createCustomerMutation = useMutation({
     mutationFn: () =>
       createCustomer({
@@ -63,9 +70,20 @@ export default function AppointmentNew() {
       toast({ title: "Customer created", description: `${created.name} was added and selected.` });
     },
     onError: (err: unknown) => {
+      const emailError =
+        typeof err === "object" &&
+        err !== null &&
+        "details" in err &&
+        typeof (err as { details?: unknown }).details === "object" &&
+        (err as { details?: any }).details &&
+        (err as { details?: any }).details.errors &&
+        Array.isArray((err as { details?: any }).details.errors.email) &&
+        (err as { details?: any }).details.errors.email[0]
+          ? String((err as { details?: any }).details.errors.email[0])
+          : "";
       const message =
         typeof err === "object" && err !== null && "message" in err ? String((err as { message?: unknown }).message ?? "") : "";
-      toast({ title: "Create failed", description: message || "Unable to create customer.", variant: "destructive" });
+      toast({ title: "Create failed", description: emailError || message || "Unable to create customer.", variant: "destructive" });
     },
   });
 
@@ -178,6 +196,32 @@ export default function AppointmentNew() {
                   <div>
                     <label className="text-xs text-muted-foreground mb-1 block">Email *</label>
                     <Input value={newCustomerEmail} onChange={(e) => setNewCustomerEmail(e.target.value)} placeholder="email@example.com" />
+                    {existingCustomerByEmail ? (
+                      <div className="mt-2 flex items-center justify-between gap-2 rounded-md border border-amber-200 bg-amber-50 px-3 py-2 text-xs">
+                        <div className="min-w-0">
+                          <span className="font-medium text-amber-900">Email already exists</span>
+                          <span className="text-amber-800"> for </span>
+                          <span className="text-amber-900 truncate">{existingCustomerByEmail.name}</span>
+                          <span className="text-amber-800"> ({existingCustomerByEmail.customer_code})</span>
+                        </div>
+                        <Button
+                          type="button"
+                          size="sm"
+                          variant="outline"
+                          className="h-7 px-2"
+                          onClick={() => {
+                            setCustomerId(String(existingCustomerByEmail.id));
+                            setCustomerMode("select");
+                            setNewCustomerName("");
+                            setNewCustomerEmail("");
+                            setNewCustomerPhone("");
+                            toast({ title: "Selected existing customer", description: `${existingCustomerByEmail.name} selected.` });
+                          }}
+                        >
+                          Select
+                        </Button>
+                      </div>
+                    ) : null}
                   </div>
                   <div>
                     <label className="text-xs text-muted-foreground mb-1 block">Phone</label>
@@ -206,6 +250,10 @@ export default function AppointmentNew() {
                       }
                       if (!isValidEmail(newCustomerEmail)) {
                         toast({ title: "Email required", description: "Please enter a valid email address.", variant: "destructive" });
+                        return;
+                      }
+                      if (existingCustomerByEmail) {
+                        toast({ title: "Email already used", description: "This email is already linked to an existing customer. Please select that customer.", variant: "destructive" });
                         return;
                       }
                       createCustomerMutation.mutate();

@@ -67,14 +67,14 @@ export default function Layout() {
       {/* Mobile overlay */}
       {mobileOpen && (
         <div
-          className="fixed inset-0 bg-black/50 z-40 lg:hidden"
+          className="fixed inset-0 bg-black/50 z-40 lg:hidden print:hidden"
           onClick={() => setMobileOpen(false)}
         />
       )}
 
       {/* Sidebar */}
       <aside className={`
-        bg-sidebar-bg flex flex-col transition-all duration-200 z-50
+        bg-sidebar-bg flex flex-col transition-all duration-200 z-50 print:hidden
         fixed lg:relative inset-y-0 left-0
         ${mobileOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'}
         ${collapsed ? 'w-16' : 'w-60'}
@@ -135,7 +135,7 @@ export default function Layout() {
       {/* Main content */}
       <div className="flex-1 flex flex-col overflow-hidden">
         {/* Mobile top bar */}
-        <div className="lg:hidden flex items-center gap-3 h-14 px-4 border-b border-border bg-card shrink-0">
+        <div className="lg:hidden flex items-center gap-3 h-14 px-4 border-b border-border bg-card shrink-0 print:hidden">
           <button type="button" onClick={() => setMobileOpen(true)} className="p-1.5 rounded-lg hover:bg-muted transition-colors">
             <Menu className="h-5 w-5 text-foreground" />
           </button>
