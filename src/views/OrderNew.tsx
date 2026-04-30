@@ -1,15 +1,20 @@
 import { useEffect, useState } from "react";
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useLocation, useNavigate } from "react-router-dom";
 import PageHeader from "@/components/PageHeader";
 import SectionCard from "@/components/SectionCard";
-import CustomerSelect from "@/components/CustomerSelect";
+import CustomerSelectWithAdd from "@/components/CustomerSelectWithAdd";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { toast } from "@/hooks/use-toast";
-import { listCustomers } from "@/services/customers";
 import { createOrder } from "@/services/orders";
 
 export default function OrderNew() {
@@ -30,28 +35,36 @@ export default function OrderNew() {
     if (cid) setCustomerId(cid);
   }, [location.search]);
 
-  const customersQuery = useQuery({
-    queryKey: ["customers", "list"],
-    queryFn: () => listCustomers(200),
-  });
-
   const createMutation = useMutation({
     mutationFn: createOrder,
     onSuccess: async (created) => {
       await queryClient.invalidateQueries({ queryKey: ["orders"] });
-      toast({ title: "Order created", description: `Order #${created.order_number} created.` });
+      toast({
+        title: "Order created",
+        description: `Order #${created.order_number} created.`,
+      });
       navigate(`/orders/${created.id}`);
     },
     onError: (err: unknown) => {
       const message =
-        typeof err === "object" && err !== null && "message" in err ? String((err as { message?: unknown }).message ?? "") : "";
-      toast({ title: "Create failed", description: message || "Unable to create order.", variant: "destructive" });
+        typeof err === "object" && err !== null && "message" in err
+          ? String((err as { message?: unknown }).message ?? "")
+          : "";
+      toast({
+        title: "Create failed",
+        description: message || "Unable to create order.",
+        variant: "destructive",
+      });
     },
   });
 
   const submit = () => {
     if (!customerId) {
-      toast({ title: "Customer required", description: "Please select customer.", variant: "destructive" });
+      toast({
+        title: "Customer required",
+        description: "Please select customer.",
+        variant: "destructive",
+      });
       return;
     }
 
@@ -74,22 +87,28 @@ export default function OrderNew() {
 
   return (
     <div>
-      <PageHeader title="New Order" subtitle="Create a new order" backTo="/orders" />
+      <PageHeader
+        title="New Order"
+        subtitle="Create a new order"
+        backTo="/orders"
+      />
 
       <div className="grid md:grid-cols-2 gap-4 sm:gap-6 mb-6">
         <SectionCard title="Order Details">
           <div className="space-y-4">
             <div>
-              <label className="text-xs text-muted-foreground mb-1 block">Customer *</label>
-              <CustomerSelect
-                customers={customersQuery.data?.data || []}
+              <label className="text-xs text-muted-foreground mb-1 block">
+                Customer *
+              </label>
+              <CustomerSelectWithAdd
                 value={customerId}
                 onChange={setCustomerId}
-                isLoading={customersQuery.isLoading}
               />
             </div>
             <div>
-              <label className="text-xs text-muted-foreground mb-1 block">Garment Type *</label>
+              <label className="text-xs text-muted-foreground mb-1 block">
+                Garment Type *
+              </label>
               <Select value={orderType} onValueChange={setOrderType}>
                 <SelectTrigger>
                   <SelectValue />
@@ -104,8 +123,14 @@ export default function OrderNew() {
               </Select>
             </div>
             <div>
-              <label className="text-xs text-muted-foreground mb-1 block">Delivery Date</label>
-              <Input type="date" value={deliveryDate} onChange={(e) => setDeliveryDate(e.target.value)} />
+              <label className="text-xs text-muted-foreground mb-1 block">
+                Delivery Date
+              </label>
+              <Input
+                type="date"
+                value={deliveryDate}
+                onChange={(e) => setDeliveryDate(e.target.value)}
+              />
             </div>
           </div>
         </SectionCard>
@@ -113,16 +138,36 @@ export default function OrderNew() {
         <SectionCard title="Fabric & Style">
           <div className="space-y-4">
             <div>
-              <label className="text-xs text-muted-foreground mb-1 block">Fabric</label>
-              <Input placeholder="e.g. Italian Wool - Navy Blue" value={fabric} onChange={(e) => setFabric(e.target.value)} />
+              <label className="text-xs text-muted-foreground mb-1 block">
+                Fabric
+              </label>
+              <Input
+                placeholder="e.g. Italian Wool - Navy Blue"
+                value={fabric}
+                onChange={(e) => setFabric(e.target.value)}
+              />
             </div>
             <div>
-              <label className="text-xs text-muted-foreground mb-1 block">Price ($)</label>
-              <Input type="number" placeholder="0.00" value={price} onChange={(e) => setPrice(e.target.value)} />
+              <label className="text-xs text-muted-foreground mb-1 block">
+                Price ($)
+              </label>
+              <Input
+                type="number"
+                placeholder="0.00"
+                value={price}
+                onChange={(e) => setPrice(e.target.value)}
+              />
             </div>
             <div>
-              <label className="text-xs text-muted-foreground mb-1 block">Notes</label>
-              <Textarea placeholder="Add order notes..." rows={3} value={notes} onChange={(e) => setNotes(e.target.value)} />
+              <label className="text-xs text-muted-foreground mb-1 block">
+                Notes
+              </label>
+              <Textarea
+                placeholder="Add order notes..."
+                rows={3}
+                value={notes}
+                onChange={(e) => setNotes(e.target.value)}
+              />
             </div>
           </div>
         </SectionCard>

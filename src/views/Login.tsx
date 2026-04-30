@@ -7,10 +7,19 @@ import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { InputOTP, InputOTPGroup, InputOTPSlot } from "@/components/ui/input-otp";
+import {
+  InputOTP,
+  InputOTPGroup,
+  InputOTPSlot,
+} from "@/components/ui/input-otp";
 import { toast } from "@/hooks/use-toast";
 import { clearAuthToken, getAuthToken } from "@/services/api";
-import { getMe, loginWithPassword, requestOtp, verifyOtp as verifyOtpApi } from "@/services/auth";
+import {
+  getMe,
+  loginWithPassword,
+  requestOtp,
+  verifyOtp as verifyOtpApi,
+} from "@/services/auth";
 import tailorBg from "@/assets/tailor-bg.jpg";
 
 function postLoginPath(state: unknown): string {
@@ -24,7 +33,9 @@ function postLoginPath(state: unknown): string {
 export default function Login() {
   const navigate = useNavigate();
   const location = useLocation();
-  const [sessionBootstrap, setSessionBootstrap] = useState<"checking" | "ready">(() =>
+  const [sessionBootstrap, setSessionBootstrap] = useState<
+    "checking" | "ready"
+  >(() =>
     typeof window !== "undefined" && getAuthToken() ? "checking" : "ready",
   );
   const [method, setMethod] = useState<"password" | "otp">("password");
@@ -36,9 +47,14 @@ export default function Login() {
   const [otpCooldown, setOtpCooldown] = useState(0);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const isEmailValid = useMemo(() => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim()), [email]);
+  const isEmailValid = useMemo(
+    () => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim()),
+    [email],
+  );
   const getErrorMessage = (err: unknown) =>
-    typeof err === "object" && err !== null && "message" in err ? String((err as { message?: unknown }).message ?? "") : "";
+    typeof err === "object" && err !== null && "message" in err
+      ? String((err as { message?: unknown }).message ?? "")
+      : "";
 
   useEffect(() => {
     if (sessionBootstrap !== "checking") return;
@@ -51,7 +67,8 @@ export default function Login() {
     (async () => {
       try {
         await getMe();
-        if (!cancelled) navigate(postLoginPath(location.state), { replace: true });
+        if (!cancelled)
+          navigate(postLoginPath(location.state), { replace: true });
       } catch {
         clearAuthToken();
         if (!cancelled) setSessionBootstrap("ready");
@@ -96,11 +113,19 @@ export default function Login() {
   const handlePasswordSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!isEmailValid) {
-      toast({ title: "Invalid email", description: "Please enter a valid email address.", variant: "destructive" });
+      toast({
+        title: "Invalid email",
+        description: "Please enter a valid email address.",
+        variant: "destructive",
+      });
       return;
     }
     if (!password.trim()) {
-      toast({ title: "Password required", description: "Please enter your password.", variant: "destructive" });
+      toast({
+        title: "Password required",
+        description: "Please enter your password.",
+        variant: "destructive",
+      });
       return;
     }
 
@@ -121,7 +146,11 @@ export default function Login() {
 
   const sendOtp = async () => {
     if (!isEmailValid) {
-      toast({ title: "Invalid email", description: "Please enter a valid email address.", variant: "destructive" });
+      toast({
+        title: "Invalid email",
+        description: "Please enter a valid email address.",
+        variant: "destructive",
+      });
       return;
     }
     if (otpCooldown > 0) return;
@@ -133,7 +162,9 @@ export default function Login() {
       setOtpCooldown(30);
       toast({
         title: "OTP sent",
-        description: res.debug_otp ? `Enter OTP. Debug OTP: ${res.debug_otp}` : "Enter the 6-digit code sent to your email.",
+        description: res.debug_otp
+          ? `Enter OTP. Debug OTP: ${res.debug_otp}`
+          : "Enter the 6-digit code sent to your email.",
       });
     } catch (err: unknown) {
       toast({
@@ -148,11 +179,19 @@ export default function Login() {
 
   const verifyOtp = async () => {
     if (!isEmailValid) {
-      toast({ title: "Invalid email", description: "Please enter a valid email address.", variant: "destructive" });
+      toast({
+        title: "Invalid email",
+        description: "Please enter a valid email address.",
+        variant: "destructive",
+      });
       return;
     }
     if (otp.length !== 6) {
-      toast({ title: "Invalid OTP", description: "Enter the 6-digit OTP.", variant: "destructive" });
+      toast({
+        title: "Invalid OTP",
+        description: "Enter the 6-digit OTP.",
+        variant: "destructive",
+      });
       return;
     }
 
@@ -182,23 +221,34 @@ export default function Login() {
   };
 
   return (
-    <div className="relative min-h-screen flex items-center justify-center">
+    <div className="relative min-h-screen flex items-center justify-center overflow-hidden">
       {/* Background image */}
       <div
-        className="absolute inset-0 bg-cover bg-center"
-        style={{ backgroundImage: `url(${tailorBg})` }}
+        className="absolute inset-0 bg-cover bg-center scale-105"
+        style={{
+          backgroundImage: `url(${tailorBg})`,
+          filter: "blur(2px)",
+        }}
       />
-      <div className="absolute inset-0 bg-black/50" />
+      {/* Gradient overlay — left side dark, overall branded */}
+      <div className="absolute inset-0 bg-gradient-to-br from-black/70 via-black/50 to-slate-900/60" />
 
       {/* Content */}
       <div className="relative z-10 w-full max-w-md px-4">
         {/* Branding */}
-        <div className="text-center mb-6">
-          <div className="flex items-center justify-center gap-2 mb-2">
-            <Scissors className="h-8 w-8 text-white" />
-            <h1 className="text-4xl font-bold text-white tracking-widest">SPOKE</h1>
+        <div className="text-center mb-8">
+          <div className="flex items-center justify-center gap-3 mb-3">
+            <div className="bg-white/10 backdrop-blur-sm border border-white/20 rounded-xl p-2.5">
+              <Scissors className="h-8 w-8 text-white" />
+            </div>
+            <h1 className="text-5xl font-bold text-white tracking-[0.25em]">
+              SPOKE
+            </h1>
           </div>
-          <p className="text-white/80 text-sm">Professional Tailoring Management System</p>
+          <p className="text-white/70 text-sm tracking-widest uppercase">
+            Professional Tailoring Management System
+          </p>
+          <div className="mt-3 h-px w-24 bg-white/30 mx-auto" />
         </div>
 
         {/* Login Card */}
@@ -207,141 +257,179 @@ export default function Login() {
 
           {sessionBootstrap === "checking" ? (
             <div className="py-12 text-center space-y-3">
-              <p className="text-sm font-medium text-foreground">{"You're already signed in."}</p>
-              <p className="text-sm text-muted-foreground">Taking you to the app…</p>
+              <p className="text-sm font-medium text-foreground">
+                {"You're already signed in."}
+              </p>
+              <p className="text-sm text-muted-foreground">
+                Taking you to the app…
+              </p>
             </div>
           ) : null}
 
           {sessionBootstrap === "ready" ? (
-          <Tabs value={method} onValueChange={(v) => setMethod(v as "password" | "otp")} className="w-full">
-            <TabsList className="w-full">
-              <TabsTrigger value="password" className="flex-1">
-                Email & Password
-              </TabsTrigger>
-              <TabsTrigger value="otp" className="flex-1">
-                Email & OTP
-              </TabsTrigger>
-            </TabsList>
+            <Tabs
+              value={method}
+              onValueChange={(v) => setMethod(v as "password" | "otp")}
+              className="w-full"
+            >
+              <TabsList className="w-full">
+                <TabsTrigger value="password" className="flex-1">
+                  Email & Password
+                </TabsTrigger>
+                <TabsTrigger value="otp" className="flex-1">
+                  Email & OTP
+                </TabsTrigger>
+              </TabsList>
 
-            <TabsContent value="password" className="mt-6">
-              <form onSubmit={handlePasswordSubmit} className="space-y-5">
-                <div className="space-y-2">
-                  <Label htmlFor="email">Email</Label>
-                  <Input
-                    id="email"
-                    type="email"
-                    value={email}
-                    onChange={(e) => setEmail(e.target.value)}
-                    placeholder="you@example.com"
-                    className="bg-muted/50"
-                    required
-                  />
-                </div>
-
-                <div className="space-y-2">
-                  <Label htmlFor="password">Password</Label>
-                  <Input
-                    id="password"
-                    type="password"
-                    value={password}
-                    onChange={(e) => setPassword(e.target.value)}
-                    placeholder="••••••••"
-                    className="bg-muted/50"
-                    required
-                  />
-                </div>
-
-                <div className="flex items-center gap-2">
-                  <Checkbox id="remember" checked={remember} onCheckedChange={(v) => setRemember(v === true)} />
-                  <Label htmlFor="remember" className="text-sm font-normal cursor-pointer">
-                    Remember
-                  </Label>
-                </div>
-
-                <Button
-                  type="submit"
-                  disabled={isSubmitting}
-                  className="w-full bg-foreground text-background hover:bg-foreground/90 h-11 text-base"
-                >
-                  {isSubmitting ? "Signing in..." : "Sign in"}
-                </Button>
-              </form>
-            </TabsContent>
-
-            <TabsContent value="otp" className="mt-6">
-              <form onSubmit={otpStep === "request" ? handleSendOtpSubmit : handleVerifyOtpSubmit} className="space-y-5">
-                <div className="space-y-2">
-                  <Label htmlFor="otp_email">Email</Label>
-                  <Input
-                    id="otp_email"
-                    type="email"
-                    value={email}
-                    onChange={(e) => setEmail(e.target.value)}
-                    placeholder="you@example.com"
-                    className="bg-muted/50"
-                    required
-                  />
-                </div>
-
-                {otpStep === "verify" && (
+              <TabsContent value="password" className="mt-6">
+                <form onSubmit={handlePasswordSubmit} className="space-y-5">
                   <div className="space-y-2">
-                    <Label htmlFor="otp_code">OTP</Label>
-                    <div className="flex items-center justify-between gap-3">
-                      <InputOTP id="otp_code" maxLength={6} value={otp} onChange={setOtp}>
-                        <InputOTPGroup>
-                          <InputOTPSlot index={0} />
-                          <InputOTPSlot index={1} />
-                          <InputOTPSlot index={2} />
-                          <InputOTPSlot index={3} />
-                          <InputOTPSlot index={4} />
-                          <InputOTPSlot index={5} />
-                        </InputOTPGroup>
-                      </InputOTP>
-                    </div>
-                    <div className="text-xs text-muted-foreground">
-                      {otpCooldown > 0 ? `Resend OTP in ${otpCooldown}s` : "Didn’t receive the code? Resend OTP."}
-                    </div>
+                    <Label htmlFor="email">Email</Label>
+                    <Input
+                      id="email"
+                      type="email"
+                      value={email}
+                      onChange={(e) => setEmail(e.target.value)}
+                      placeholder="you@example.com"
+                      className="bg-muted/50"
+                      required
+                    />
                   </div>
-                )}
 
-                <div className="flex items-center gap-2">
-                  <Checkbox id="remember_otp" checked={remember} onCheckedChange={(v) => setRemember(v === true)} />
-                  <Label htmlFor="remember_otp" className="text-sm font-normal cursor-pointer">
-                    Remember
-                  </Label>
-                </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="password">Password</Label>
+                    <Input
+                      id="password"
+                      type="password"
+                      value={password}
+                      onChange={(e) => setPassword(e.target.value)}
+                      placeholder="••••••••"
+                      className="bg-muted/50"
+                      required
+                    />
+                  </div>
 
-                {otpStep === "request" ? (
+                  <div className="flex items-center gap-2">
+                    <Checkbox
+                      id="remember"
+                      checked={remember}
+                      onCheckedChange={(v) => setRemember(v === true)}
+                    />
+                    <Label
+                      htmlFor="remember"
+                      className="text-sm font-normal cursor-pointer"
+                    >
+                      Remember
+                    </Label>
+                  </div>
+
                   <Button
                     type="submit"
-                    disabled={isSubmitting || !isEmailValid}
+                    disabled={isSubmitting}
                     className="w-full bg-foreground text-background hover:bg-foreground/90 h-11 text-base"
                   >
-                    {isSubmitting ? "Sending..." : "Send OTP"}
+                    {isSubmitting ? "Signing in..." : "Sign in"}
                   </Button>
-                ) : (
-                  <div className="space-y-3">
+                </form>
+              </TabsContent>
+
+              <TabsContent value="otp" className="mt-6">
+                <form
+                  onSubmit={
+                    otpStep === "request"
+                      ? handleSendOtpSubmit
+                      : handleVerifyOtpSubmit
+                  }
+                  className="space-y-5"
+                >
+                  <div className="space-y-2">
+                    <Label htmlFor="otp_email">Email</Label>
+                    <Input
+                      id="otp_email"
+                      type="email"
+                      value={email}
+                      onChange={(e) => setEmail(e.target.value)}
+                      placeholder="you@example.com"
+                      className="bg-muted/50"
+                      required
+                    />
+                  </div>
+
+                  {otpStep === "verify" && (
+                    <div className="space-y-2">
+                      <Label htmlFor="otp_code">OTP</Label>
+                      <div className="flex items-center justify-between gap-3">
+                        <InputOTP
+                          id="otp_code"
+                          maxLength={6}
+                          value={otp}
+                          onChange={setOtp}
+                        >
+                          <InputOTPGroup>
+                            <InputOTPSlot index={0} />
+                            <InputOTPSlot index={1} />
+                            <InputOTPSlot index={2} />
+                            <InputOTPSlot index={3} />
+                            <InputOTPSlot index={4} />
+                            <InputOTPSlot index={5} />
+                          </InputOTPGroup>
+                        </InputOTP>
+                      </div>
+                      <div className="text-xs text-muted-foreground">
+                        {otpCooldown > 0
+                          ? `Resend OTP in ${otpCooldown}s`
+                          : "Didn’t receive the code? Resend OTP."}
+                      </div>
+                    </div>
+                  )}
+
+                  <div className="flex items-center gap-2">
+                    <Checkbox
+                      id="remember_otp"
+                      checked={remember}
+                      onCheckedChange={(v) => setRemember(v === true)}
+                    />
+                    <Label
+                      htmlFor="remember_otp"
+                      className="text-sm font-normal cursor-pointer"
+                    >
+                      Remember
+                    </Label>
+                  </div>
+
+                  {otpStep === "request" ? (
                     <Button
                       type="submit"
-                      disabled={isSubmitting || otp.length !== 6}
+                      disabled={isSubmitting || !isEmailValid}
                       className="w-full bg-foreground text-background hover:bg-foreground/90 h-11 text-base"
                     >
-                      {isSubmitting ? "Verifying..." : "Verify & Sign in"}
+                      {isSubmitting ? "Sending..." : "Send OTP"}
                     </Button>
-                    <Button
-                      type="button"
-                      variant="outline"
-                      disabled={isSubmitting || otpCooldown > 0}
-                      onClick={() => void sendOtp()}
-                      className="w-full h-11 text-base"
-                    >
-                      {otpCooldown > 0 ? `Resend OTP (${otpCooldown}s)` : "Resend OTP"}
-                    </Button>
-                  </div>
-                )}
-              </form>
-            </TabsContent>
-          </Tabs>
+                  ) : (
+                    <div className="space-y-3">
+                      <Button
+                        type="submit"
+                        disabled={isSubmitting || otp.length !== 6}
+                        className="w-full bg-foreground text-background hover:bg-foreground/90 h-11 text-base"
+                      >
+                        {isSubmitting ? "Verifying..." : "Verify & Sign in"}
+                      </Button>
+                      <Button
+                        type="button"
+                        variant="outline"
+                        disabled={isSubmitting || otpCooldown > 0}
+                        onClick={() => void sendOtp()}
+                        className="w-full h-11 text-base"
+                      >
+                        {otpCooldown > 0
+                          ? `Resend OTP (${otpCooldown}s)`
+                          : "Resend OTP"}
+                      </Button>
+                    </div>
+                  )}
+                </form>
+              </TabsContent>
+            </Tabs>
           ) : null}
         </div>
       </div>

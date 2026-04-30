@@ -3,16 +3,23 @@ import { useLocation, useNavigate } from "react-router-dom";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import PageHeader from "@/components/PageHeader";
 import SectionCard from "@/components/SectionCard";
-import CustomerSelect from "@/components/CustomerSelect";
+import CustomerSelectWithAdd from "@/components/CustomerSelectWithAdd";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { toast } from "@/hooks/use-toast";
-import { createAppointment, listAppointmentServices, listCustomers } from "@/services/appointments";
-import { createCustomer } from "@/services/customers";
-import { isValidEmail } from "@/lib/utils";
-import { UserPlus } from "lucide-react";
+import {
+  createAppointment,
+  listAppointmentServices,
+} from "@/services/appointments";
+import { listCustomers } from "@/services/customers";
 
 export default function AppointmentNew() {
   const navigate = useNavigate();
@@ -20,18 +27,6 @@ export default function AppointmentNew() {
   const queryClient = useQueryClient();
 
   const [customerId, setCustomerId] = useState<string>("");
-  const [customerMode, setCustomerMode] = useState<"select" | "create">("select");
-  const [newCustomerName, setNewCustomerName] = useState("");
-  const [newCustomerEmail, setNewCustomerEmail] = useState("");
-  const [newCustomerPhone, setNewCustomerPhone] = useState("");
-
-  useEffect(() => {
-    const params = new URLSearchParams(location.search);
-    const cid = params.get("customer_id");
-    if (cid) setCustomerId(cid);
-    const ad = params.get("appointment_date");
-    if (ad && /^\d{4}-\d{2}-\d{2}$/.test(ad)) setAppointmentDate(ad);
-  }, [location.search]);
   const [serviceType, setServiceType] = useState<string>("");
   const [appointmentDate, setAppointmentDate] = useState<string>("");
   const [appointmentTime, setAppointmentTime] = useState<string>("");
@@ -41,50 +36,20 @@ export default function AppointmentNew() {
   const [priority, setPriority] = useState<"low" | "normal" | "high">("normal");
   const [notes, setNotes] = useState<string>("");
 
+  useEffect(() => {
+    const params = new URLSearchParams(location.search);
+    const cid = params.get("customer_id");
+    if (cid) setCustomerId(cid);
+    const ad = params.get("appointment_date");
+    if (ad && /^\d{4}-\d{2}-\d{2}$/.test(ad)) setAppointmentDate(ad);
+  }, [location.search]);
+
+  // Keep customers query here only for the read-only phone/email display fields.
+  // CustomerSelectWithAdd uses the same cache key so no duplicate API call.
   const customersQuery = useQuery({
     queryKey: ["customers", "list"],
     queryFn: () => listCustomers(200),
-  });
-
-  const existingCustomerByEmail = useMemo(() => {
-    const email = newCustomerEmail.trim().toLowerCase();
-    if (!email) return null;
-    const list = customersQuery.data?.data ?? [];
-    return list.find((c) => (c.email ?? "").trim().toLowerCase() === email) ?? null;
-  }, [customersQuery.data, newCustomerEmail]);
-
-  const createCustomerMutation = useMutation({
-    mutationFn: () =>
-      createCustomer({
-        name: newCustomerName.trim(),
-        email: newCustomerEmail.trim(),
-        phone: newCustomerPhone.trim() ? newCustomerPhone.trim() : null,
-      }),
-    onSuccess: async (created) => {
-      await queryClient.invalidateQueries({ queryKey: ["customers"] });
-      setCustomerId(String(created.id));
-      setCustomerMode("select");
-      setNewCustomerName("");
-      setNewCustomerEmail("");
-      setNewCustomerPhone("");
-      toast({ title: "Customer created", description: `${created.name} was added and selected.` });
-    },
-    onError: (err: unknown) => {
-      const emailError =
-        typeof err === "object" &&
-        err !== null &&
-        "details" in err &&
-        typeof (err as { details?: unknown }).details === "object" &&
-        (err as { details?: any }).details &&
-        (err as { details?: any }).details.errors &&
-        Array.isArray((err as { details?: any }).details.errors.email) &&
-        (err as { details?: any }).details.errors.email[0]
-          ? String((err as { details?: any }).details.errors.email[0])
-          : "";
-      const message =
-        typeof err === "object" && err !== null && "message" in err ? String((err as { message?: unknown }).message ?? "") : "";
-      toast({ title: "Create failed", description: emailError || message || "Unable to create customer.", variant: "destructive" });
-    },
+    staleTime: 30_000,
   });
 
   const servicesQuery = useQuery({
@@ -101,12 +66,17 @@ export default function AppointmentNew() {
     mutationFn: createAppointment,
     onSuccess: async (created) => {
       await queryClient.invalidateQueries({ queryKey: ["appointments"] });
-      toast({ title: "Appointment created", description: `Appointment #${created.id} created.` });
+      toast({
+        title: "Appointment created",
+        description: `Appointment #${created.id} created.`,
+      });
       navigate(`/appointments/${created.id}`);
     },
     onError: (err: unknown) => {
       const message =
-        typeof err === "object" && err !== null && "message" in err ? String((err as { message?: unknown }).message ?? "") : "";
+        typeof err === "object" && err !== null && "message" in err
+          ? String((err as { message?: unknown }).message ?? "")
+          : "";
       toast({
         title: "Create failed",
         description: message || "Unable to create appointment.",
@@ -117,15 +87,27 @@ export default function AppointmentNew() {
 
   const submit = () => {
     if (!customerId) {
-      toast({ title: "Customer required", description: "Please select a customer.", variant: "destructive" });
+      toast({
+        title: "Customer required",
+        description: "Please select a customer.",
+        variant: "destructive",
+      });
       return;
     }
     if (!serviceType) {
-      toast({ title: "Service required", description: "Please select a service.", variant: "destructive" });
+      toast({
+        title: "Service required",
+        description: "Please select a service.",
+        variant: "destructive",
+      });
       return;
     }
     if (!appointmentDate) {
-      toast({ title: "Date required", description: "Please select a date.", variant: "destructive" });
+      toast({
+        title: "Date required",
+        description: "Please select a date.",
+        variant: "destructive",
+      });
       return;
     }
 
@@ -135,8 +117,8 @@ export default function AppointmentNew() {
       service_type: serviceType,
       appointment_date: appointmentDate,
       appointment_time: time,
-      trial_date: trialDate ? trialDate : null,
-      delivery_date: deliveryDate ? deliveryDate : null,
+      trial_date: trialDate || null,
+      delivery_date: deliveryDate || null,
       duration_minutes: Number(durationMinutes || 0),
       priority,
       status: "confirmed",
@@ -146,149 +128,77 @@ export default function AppointmentNew() {
 
   return (
     <div>
-      <PageHeader title="New Appointment" subtitle="Schedule a new appointment for your customer" backTo="/appointments" />
+      <PageHeader
+        title="New Appointment"
+        subtitle="Schedule a new appointment for your customer"
+        backTo="/appointments"
+      />
 
       <div className="grid md:grid-cols-2 gap-4 sm:gap-6 mb-6">
-        <SectionCard
-          title="Customer Details"
-          headerActions={
-            customerMode === "select" ? (
-              <Button type="button" size="sm" variant="outline" onClick={() => setCustomerMode("create")} className="h-8">
-                <UserPlus className="h-4 w-4 mr-1" />
-                Add
-              </Button>
-            ) : (
-              <Button
-                type="button"
-                size="sm"
-                variant="outline"
-                onClick={() => {
-                  setCustomerMode("select");
-                  setNewCustomerName("");
-                  setNewCustomerEmail("");
-                  setNewCustomerPhone("");
-                }}
-                className="h-8"
-              >
-                Choose existing
-              </Button>
-            )
-          }
-        >
+        {/* ── Customer Details ── */}
+        <SectionCard title="Customer Details">
           <div className="space-y-4">
-            {customerMode === "select" ? (
-              <div>
-                <label className="text-xs text-muted-foreground mb-1 block">Customer *</label>
-                <CustomerSelect
-                  customers={customersQuery.data?.data || []}
-                  value={customerId}
-                  onChange={setCustomerId}
-                  isLoading={customersQuery.isLoading}
-                />
-              </div>
-            ) : (
-              <div className="space-y-4">
-                <div>
-                  <label className="text-xs text-muted-foreground mb-1 block">Name *</label>
-                  <Input value={newCustomerName} onChange={(e) => setNewCustomerName(e.target.value)} placeholder="Customer name" />
-                </div>
-                <div className="grid sm:grid-cols-2 gap-4">
-                  <div>
-                    <label className="text-xs text-muted-foreground mb-1 block">Email *</label>
-                    <Input value={newCustomerEmail} onChange={(e) => setNewCustomerEmail(e.target.value)} placeholder="email@example.com" />
-                    {existingCustomerByEmail ? (
-                      <div className="mt-2 flex items-center justify-between gap-2 rounded-md border border-amber-200 bg-amber-50 px-3 py-2 text-xs">
-                        <div className="min-w-0">
-                          <span className="font-medium text-amber-900">Email already exists</span>
-                          <span className="text-amber-800"> for </span>
-                          <span className="text-amber-900 truncate">{existingCustomerByEmail.name}</span>
-                          <span className="text-amber-800"> ({existingCustomerByEmail.customer_code})</span>
-                        </div>
-                        <Button
-                          type="button"
-                          size="sm"
-                          variant="outline"
-                          className="h-7 px-2"
-                          onClick={() => {
-                            setCustomerId(String(existingCustomerByEmail.id));
-                            setCustomerMode("select");
-                            setNewCustomerName("");
-                            setNewCustomerEmail("");
-                            setNewCustomerPhone("");
-                            toast({ title: "Selected existing customer", description: `${existingCustomerByEmail.name} selected.` });
-                          }}
-                        >
-                          Select
-                        </Button>
-                      </div>
-                    ) : null}
-                  </div>
-                  <div>
-                    <label className="text-xs text-muted-foreground mb-1 block">Phone</label>
-                    <Input value={newCustomerPhone} onChange={(e) => setNewCustomerPhone(e.target.value)} placeholder="Phone number" />
-                  </div>
-                </div>
-                <div className="flex justify-end gap-2">
-                  <Button
-                    type="button"
-                    variant="outline"
-                    onClick={() => {
-                      setCustomerMode("select");
-                      setNewCustomerName("");
-                      setNewCustomerEmail("");
-                      setNewCustomerPhone("");
-                    }}
-                  >
-                    Cancel
-                  </Button>
-                  <Button
-                    type="button"
-                    onClick={() => {
-                      if (!newCustomerName.trim()) {
-                        toast({ title: "Name required", description: "Please enter the customer name.", variant: "destructive" });
-                        return;
-                      }
-                      if (!isValidEmail(newCustomerEmail)) {
-                        toast({ title: "Email required", description: "Please enter a valid email address.", variant: "destructive" });
-                        return;
-                      }
-                      if (existingCustomerByEmail) {
-                        toast({ title: "Email already used", description: "This email is already linked to an existing customer. Please select that customer.", variant: "destructive" });
-                        return;
-                      }
-                      createCustomerMutation.mutate();
-                    }}
-                    disabled={createCustomerMutation.isPending}
-                  >
-                    {createCustomerMutation.isPending ? "Saving..." : "Save customer"}
-                  </Button>
-                </div>
-              </div>
-            )}
+            <div>
+              <label className="text-xs text-muted-foreground mb-1 block">
+                Customer *
+              </label>
+              <CustomerSelectWithAdd
+                value={customerId}
+                onChange={setCustomerId}
+              />
+            </div>
+
+            {/* Read-only info fields populated after customer selection */}
             <div className="grid sm:grid-cols-2 gap-4">
               <div>
-                <label className="text-xs text-muted-foreground mb-1 block">Phone Number</label>
-                <Input value={selectedCustomer?.phone ?? ""} placeholder="—" disabled />
+                <label className="text-xs text-muted-foreground mb-1 block">
+                  Phone Number
+                </label>
+                <Input
+                  value={selectedCustomer?.phone ?? ""}
+                  placeholder="—"
+                  disabled
+                />
               </div>
               <div>
-                <label className="text-xs text-muted-foreground mb-1 block">Email</label>
-                <Input value={selectedCustomer?.email ?? ""} placeholder="—" disabled />
+                <label className="text-xs text-muted-foreground mb-1 block">
+                  Email
+                </label>
+                <Input
+                  value={selectedCustomer?.email ?? ""}
+                  placeholder="—"
+                  disabled
+                />
               </div>
             </div>
           </div>
         </SectionCard>
 
+        {/* ── Appointment Details ── */}
         <SectionCard title="Appointment Details">
           <div className="space-y-4">
             <div>
-              <label className="text-xs text-muted-foreground mb-1 block">Service Type *</label>
-              <Select value={serviceType} onValueChange={(v) => {
-                setServiceType(v);
-                const svc = servicesQuery.data?.find((s) => s.service_name === v);
-                if (svc) setDurationMinutes(String(svc.duration_minutes));
-              }}>
+              <label className="text-xs text-muted-foreground mb-1 block">
+                Service Type *
+              </label>
+              <Select
+                value={serviceType}
+                onValueChange={(v) => {
+                  setServiceType(v);
+                  const svc = servicesQuery.data?.find(
+                    (s) => s.service_name === v,
+                  );
+                  if (svc) setDurationMinutes(String(svc.duration_minutes));
+                }}
+              >
                 <SelectTrigger>
-                  <SelectValue placeholder={servicesQuery.isLoading ? "Loading services..." : "Select service"} />
+                  <SelectValue
+                    placeholder={
+                      servicesQuery.isLoading
+                        ? "Loading services..."
+                        : "Select service"
+                    }
+                  />
                 </SelectTrigger>
                 <SelectContent>
                   {(servicesQuery.data ?? []).map((s) => (
@@ -299,19 +209,42 @@ export default function AppointmentNew() {
                 </SelectContent>
               </Select>
             </div>
+
             <div className="grid sm:grid-cols-2 gap-4">
               <div>
-                <label className="text-xs text-muted-foreground mb-1 block">Date *</label>
-                <Input type="date" value={appointmentDate} onChange={(e) => setAppointmentDate(e.target.value)} />
+                <label className="text-xs text-muted-foreground mb-1 block">
+                  Date *
+                </label>
+                <Input
+                  type="date"
+                  value={appointmentDate}
+                  onChange={(e) => setAppointmentDate(e.target.value)}
+                />
               </div>
               <div>
-                <label className="text-xs text-muted-foreground mb-1 block">Time</label>
-                <Input type="time" value={appointmentTime} onChange={(e) => setAppointmentTime(e.target.value)} />
+                <label className="text-xs text-muted-foreground mb-1 block">
+                  Time
+                </label>
+                <Input
+                  type="time"
+                  value={appointmentTime}
+                  onChange={(e) => setAppointmentTime(e.target.value)}
+                />
               </div>
             </div>
+
             <div className="grid sm:grid-cols-2 gap-4">
-              <div><label className="text-xs text-muted-foreground mb-1 block">Duration (min)</label>
-                <Select value={durationMinutes} onValueChange={setDurationMinutes}><SelectTrigger><SelectValue /></SelectTrigger>
+              <div>
+                <label className="text-xs text-muted-foreground mb-1 block">
+                  Duration (min)
+                </label>
+                <Select
+                  value={durationMinutes}
+                  onValueChange={setDurationMinutes}
+                >
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
                   <SelectContent>
                     <SelectItem value="15">15 minutes</SelectItem>
                     <SelectItem value="20">20 minutes</SelectItem>
@@ -321,8 +254,19 @@ export default function AppointmentNew() {
                   </SelectContent>
                 </Select>
               </div>
-              <div><label className="text-xs text-muted-foreground mb-1 block">Priority</label>
-                <Select value={priority} onValueChange={(v) => setPriority(v as "low" | "normal" | "high")}><SelectTrigger><SelectValue /></SelectTrigger>
+              <div>
+                <label className="text-xs text-muted-foreground mb-1 block">
+                  Priority
+                </label>
+                <Select
+                  value={priority}
+                  onValueChange={(v) =>
+                    setPriority(v as "low" | "normal" | "high")
+                  }
+                >
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
                   <SelectContent>
                     <SelectItem value="high">High</SelectItem>
                     <SelectItem value="normal">Normal</SelectItem>
@@ -331,14 +275,27 @@ export default function AppointmentNew() {
                 </Select>
               </div>
             </div>
+
             <div className="grid sm:grid-cols-2 gap-4">
               <div>
-                <label className="text-xs text-muted-foreground mb-1 block">Trial Date</label>
-                <Input type="date" value={trialDate} onChange={(e) => setTrialDate(e.target.value)} />
+                <label className="text-xs text-muted-foreground mb-1 block">
+                  Trial Date
+                </label>
+                <Input
+                  type="date"
+                  value={trialDate}
+                  onChange={(e) => setTrialDate(e.target.value)}
+                />
               </div>
               <div>
-                <label className="text-xs text-muted-foreground mb-1 block">Delivery Date</label>
-                <Input type="date" value={deliveryDate} onChange={(e) => setDeliveryDate(e.target.value)} />
+                <label className="text-xs text-muted-foreground mb-1 block">
+                  Delivery Date
+                </label>
+                <Input
+                  type="date"
+                  value={deliveryDate}
+                  onChange={(e) => setDeliveryDate(e.target.value)}
+                />
               </div>
             </div>
           </div>
@@ -346,11 +303,18 @@ export default function AppointmentNew() {
       </div>
 
       <SectionCard title="Notes" className="mb-6">
-        <Textarea placeholder="Add any special instructions or notes..." rows={4} value={notes} onChange={(e) => setNotes(e.target.value)} />
+        <Textarea
+          placeholder="Add any special instructions or notes..."
+          rows={4}
+          value={notes}
+          onChange={(e) => setNotes(e.target.value)}
+        />
       </SectionCard>
 
       <div className="flex gap-2 justify-end">
-        <Button variant="cancel" onClick={() => navigate('/appointments')}>Cancel</Button>
+        <Button variant="cancel" onClick={() => navigate("/appointments")}>
+          Cancel
+        </Button>
         <Button onClick={submit} disabled={createMutation.isPending}>
           {createMutation.isPending ? "Creating..." : "Create Appointment"}
         </Button>
