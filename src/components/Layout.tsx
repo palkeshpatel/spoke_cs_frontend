@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { Link, Outlet, useLocation, useNavigate } from 'react-router-dom';
 import {
   LayoutDashboard, Users, Calendar, Ruler, Package, Receipt,
-  BarChart3, Settings, ChevronLeft, ChevronRight, Scissors, Menu, X, LogOut, Shield
+  BarChart3, Settings, ChevronLeft, ChevronRight, ChevronDown, Scissors, Menu, X, LogOut, Shield
 } from 'lucide-react';
 import { logout as logoutApi } from '@/services/auth';
 
@@ -22,28 +22,52 @@ export default function Layout() {
   const [collapsed, setCollapsed] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
   const [loggingOut, setLoggingOut] = useState(false);
+  const [openSections, setOpenSections] = useState<Record<string, boolean>>({
+    system: true,
+    staff: true,
+  });
   
   const location = useLocation();
   const navigate = useNavigate();
 
-  const navItems = [
+  const canViewItem = (item: { permission?: string }) => {
+    if (!item.permission) return true;
+    if (isAdmin) return true;
+    return roleData?.permissions?.some((p: any) => p.permission_name === item.permission);
+  };
+
+  const primaryNavItems = [
     { path: '/', label: 'Dashboard', icon: LayoutDashboard },
     { path: '/customers', label: 'Customers', icon: Users, permission: 'manage_customers' },
     { path: '/appointments', label: 'Appointments', icon: Calendar, permission: 'manage_appointments' },
     { path: '/measurements', label: 'Measurements', icon: Ruler, permission: 'manage_measurements' },
     { path: '/orders', label: 'Orders', icon: Package, permission: 'manage_orders' },
     { path: '/billing', label: 'Billing', icon: Receipt, permission: 'manage_billing' }, 
-    { path: '/reports', label: 'Reports', icon: BarChart3, permission: 'view_reports' },
-    { path: '/staff', label: 'Team', icon: Users, permission: 'manage_users' },
-    { path: '/settings/roles', label: 'Roles & Permissions', icon: Shield, permission: 'manage_roles' },
-    { path: '/staff-monitoring', label: 'Staff Monitor', icon: Users, permission: 'manage_users' },
-    { path: '/work-reports', label: 'Work Reports', icon: BarChart3, permission: 'view_reports' },
-    { path: '/settings', label: 'Settings', icon: Settings },
-  ].filter(item => {
-    if (!item.permission) return true;
-    if (isAdmin) return true;
-    return roleData?.permissions?.some((p: any) => p.permission_name === item.permission);
-  });
+  ].filter(canViewItem);
+
+  const settingsNavItem = { path: '/settings', label: 'Settings', icon: Settings };
+
+  const navSections = [
+    {
+      key: 'system',
+      title: 'System Management',
+      icon: Shield,
+      items: [
+        { path: '/settings/roles', label: 'Role & Permission', icon: Shield, permission: 'manage_roles' },
+        { path: '/reports', label: 'Report', icon: BarChart3, permission: 'view_reports' },
+      ].filter(canViewItem),
+    },
+    {
+      key: 'staff',
+      title: 'Staff Management',
+      icon: Users,
+      items: [
+        { path: '/staff', label: 'Staff', icon: Users, permission: 'manage_users' },
+        { path: '/staff-monitoring', label: 'Staff Monitor', icon: Users, permission: 'manage_users' },
+        { path: '/work-reports', label: 'Work Report', icon: BarChart3, permission: 'view_reports' },
+      ].filter(canViewItem),
+    },
+  ].filter(section => section.items.length > 0);
 
   const handleLogout = async () => {
     setLoggingOut(true);
@@ -55,6 +79,17 @@ export default function Layout() {
       setLoggingOut(false);
       navigate('/login', { replace: true });
     }
+  };
+
+  const isNavItemActive = (path: string) => path === '/'
+    ? location.pathname === '/'
+    : location.pathname === path || location.pathname.startsWith(path + '/');
+
+  const toggleSection = (sectionKey: string) => {
+    setOpenSections(prev => ({
+      ...prev,
+      [sectionKey]: !prev[sectionKey],
+    }));
   };
 
   // Close mobile menu on route change
@@ -79,7 +114,7 @@ export default function Layout() {
         ${mobileOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'}
         ${collapsed ? 'w-16' : 'w-60'}
       `}>
-        <div className="flex items-center gap-2 px-4 h-14 border-b border-sidebar-hover">
+        <div className="flex items-center gap-2 px-3 h-14 border-b border-sidebar-hover">
           <Scissors className="h-6 w-6 text-primary shrink-0" />
           {!collapsed && <span className="text-sidebar-fg font-bold text-lg tracking-tight">SPOKE</span>}
           {/* Mobile close */}
@@ -91,16 +126,14 @@ export default function Layout() {
           </button>
         </div>
 
-        <nav className="flex-1 py-2 px-2 space-y-0.5 overflow-y-auto">
-          {navItems.map(item => {
-            const isActive = item.path === '/'
-              ? location.pathname === '/'
-              : location.pathname === item.path || location.pathname.startsWith(item.path + '/');
+        <nav className="flex-1 py-1.5 px-2 space-y-0.5 overflow-y-auto">
+          {primaryNavItems.map(item => {
+            const isActive = isNavItemActive(item.path);
             return (
               <Link
                 key={item.path}
                 to={item.path}
-                className={`flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
+                className={`flex items-center gap-2.5 px-2.5 py-1.5 rounded-lg text-sm font-medium transition-colors ${
                   isActive
                     ? 'bg-sidebar-hover text-sidebar-fg'
                     : 'text-sidebar-muted hover:bg-sidebar-hover hover:text-sidebar-fg'
@@ -111,13 +144,75 @@ export default function Layout() {
               </Link>
             );
           })}
+          {navSections.map(section => {
+            const sectionIsActive = section.items.some(item => isNavItemActive(item.path));
+            const sectionIsOpen = openSections[section.key];
+
+            return (
+              <div key={section.key} className="pt-1">
+                <button
+                  type="button"
+                  onClick={() => toggleSection(section.key)}
+                  aria-expanded={sectionIsOpen}
+                  title={collapsed ? section.title : undefined}
+                  className={`flex w-full items-center gap-2.5 px-2.5 py-1.5 rounded-lg text-sm font-semibold transition-colors ${
+                    sectionIsActive
+                      ? 'bg-sidebar-hover text-sidebar-fg'
+                      : 'text-sidebar-muted hover:bg-sidebar-hover hover:text-sidebar-fg'
+                  }`}
+                >
+                  <section.icon className="h-4.5 w-4.5 shrink-0" />
+                  {!collapsed && (
+                    <>
+                      <span className="flex-1 text-left">{section.title}</span>
+                      <ChevronDown className={`h-4 w-4 shrink-0 transition-transform ${sectionIsOpen ? 'rotate-180' : ''}`} />
+                    </>
+                  )}
+                </button>
+
+                {(sectionIsOpen || collapsed) && (
+                  <div className={`${collapsed ? 'mt-0.5 space-y-0.5' : 'mt-0.5 ml-3 space-y-0.5 border-l border-sidebar-hover pl-1.5'}`}>
+                    {section.items.map(item => {
+                      const isActive = isNavItemActive(item.path);
+                      return (
+                        <Link
+                          key={item.path}
+                          to={item.path}
+                          title={collapsed ? item.label : undefined}
+                          className={`flex items-center gap-2.5 rounded-lg px-2.5 py-1.5 text-sm font-medium transition-colors ${
+                            isActive
+                              ? 'bg-sidebar-hover text-sidebar-fg'
+                              : 'text-sidebar-muted hover:bg-sidebar-hover hover:text-sidebar-fg'
+                          }`}
+                        >
+                          <item.icon className="h-4.5 w-4.5 shrink-0" />
+                          {!collapsed && <span>{item.label}</span>}
+                        </Link>
+                      );
+                    })}
+                  </div>
+                )}
+              </div>
+            );
+          })}
+          <Link
+            to={settingsNavItem.path}
+            className={`flex items-center gap-2.5 px-2.5 py-1.5 rounded-lg text-sm font-medium transition-colors ${
+              location.pathname === settingsNavItem.path
+                ? 'bg-sidebar-hover text-sidebar-fg'
+                : 'text-sidebar-muted hover:bg-sidebar-hover hover:text-sidebar-fg'
+            }`}
+          >
+            <settingsNavItem.icon className="h-4.5 w-4.5 shrink-0" />
+            {!collapsed && <span>{settingsNavItem.label}</span>}
+          </Link>
         </nav>
 
         <button
           type="button"
           onClick={handleLogout}
           disabled={loggingOut}
-          className="flex items-center gap-3 px-3 py-2 mx-2 mb-1 rounded-lg text-sm font-medium text-sidebar-muted hover:bg-sidebar-hover hover:text-sidebar-fg transition-colors disabled:opacity-50"
+          className="flex items-center gap-2.5 px-2.5 py-1.5 mx-2 mb-1 rounded-lg text-sm font-medium text-sidebar-muted hover:bg-sidebar-hover hover:text-sidebar-fg transition-colors disabled:opacity-50"
         >
           <LogOut className="h-4.5 w-4.5 shrink-0" />
           {!collapsed && <span>{loggingOut ? 'Signing out…' : 'Log out'}</span>}
