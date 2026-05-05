@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { Save, ArrowLeft, Loader2, Camera, Shield, User, Mail, Phone, Calendar, Info } from "lucide-react";
+import { Save, ArrowLeft, Loader2, Camera, Shield, User, Mail, Phone, Calendar, Info, Lock } from "lucide-react";
 import { getRoles, saveStaff } from "@/services/staff";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -36,6 +36,8 @@ export default function StaffNew() {
     queryFn: () => apiRequest<any>(`/api/staff/${id}`),
     enabled: isEdit,
   });
+  const staffRoleName = staffData?.role_record?.role_name || staffData?.role || "";
+  const isAdminStaff = isEdit && staffRoleName.toLowerCase() === "admin";
 
   useEffect(() => {
     if (staffData) {
@@ -69,6 +71,10 @@ export default function StaffNew() {
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
+    if (isAdminStaff) {
+      toast.error("Admin profile is locked and cannot be changed.");
+      return;
+    }
     if (!formData.name || !formData.email || (!isEdit && !formData.password) || !formData.role_id) {
       toast.error("Please fill in all required fields.");
       return;
@@ -77,6 +83,7 @@ export default function StaffNew() {
   };
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (isAdminStaff) return;
     const file = e.target.files?.[0];
     if (file) {
       if (file.size > 2 * 1024 * 1024) {
@@ -94,11 +101,17 @@ export default function StaffNew() {
     <div className="space-y-6 max-w-5xl mx-auto">
       <PageHeader 
         title={isEdit ? "Edit Staff Detail" : "New Staff Registration"} 
-        subtitle={isEdit ? `Update profile for ${formData.name}` : "Enter details for the new staff member."} 
+        subtitle={isAdminStaff ? "Admin profile is locked and cannot be changed." : isEdit ? `Update profile for ${formData.name}` : "Enter details for the new staff member."} 
         backTo="/staff" 
       />
 
       <form onSubmit={handleSubmit}>
+        {isAdminStaff && (
+          <div className="mb-6 rounded-xl border border-border bg-muted/40 p-4 flex items-center gap-3 text-sm text-muted-foreground">
+            <Lock className="h-4 w-4 shrink-0" />
+            <span>Admin has full system access, so this staff profile is locked from editing.</span>
+          </div>
+        )}
         <div className="grid md:grid-cols-2 gap-4 sm:gap-6">
           <SectionCard title="Staff Identity">
             <div className="space-y-5">
@@ -110,25 +123,27 @@ export default function StaffNew() {
                     <User className="h-10 w-10 text-muted-foreground" />
                   )}
                   <div 
-                    className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center cursor-pointer"
+                    className={`absolute inset-0 bg-black/40 opacity-0 transition-opacity flex items-center justify-center ${
+                      isAdminStaff ? 'cursor-not-allowed' : 'cursor-pointer group-hover:opacity-100'
+                    }`}
                     onClick={() => profileInputRef.current?.click()}
                   >
-                    <Camera className="h-6 w-6 text-white" />
+                    {isAdminStaff ? <Lock className="h-6 w-6 text-white" /> : <Camera className="h-6 w-6 text-white" />}
                   </div>
                 </div>
                 <div className="flex flex-col gap-2 pt-2">
                   <h4 className="text-sm font-bold text-foreground">Profile Picture</h4>
                   <p className="text-[11px] text-muted-foreground leading-relaxed">Square crop recommended. Supports JPG, PNG. Max 2MB.</p>
-                  <Button type="button" variant="outline" size="sm" className="w-fit h-8 text-xs" onClick={() => profileInputRef.current?.click()}>
+                  <Button type="button" variant="outline" size="sm" className="w-fit h-8 text-xs" disabled={isAdminStaff} onClick={() => profileInputRef.current?.click()}>
                     {formData.profile_photo ? "Change Image" : "Choose Image"}
                   </Button>
-                  <input ref={profileInputRef} type="file" accept="image/*" onChange={handleFileChange} className="hidden" />
+                  <input ref={profileInputRef} type="file" accept="image/*" onChange={handleFileChange} disabled={isAdminStaff} className="hidden" />
                 </div>
               </div>
 
               <div>
                 <label className="text-xs font-bold text-muted-foreground mb-1.5 block uppercase tracking-wider">Full Name *</label>
-                <Input required value={formData.name} onChange={(e) => setFormData({ ...formData, name: e.target.value })} placeholder="Enter formal name" className="h-10" />
+                <Input required disabled={isAdminStaff} value={formData.name} onChange={(e) => setFormData({ ...formData, name: e.target.value })} placeholder="Enter formal name" className="h-10" />
               </div>
 
               <div className="grid sm:grid-cols-2 gap-4">
@@ -136,14 +151,14 @@ export default function StaffNew() {
                   <label className="text-xs font-bold text-muted-foreground mb-1.5 block uppercase tracking-wider">Email Address *</label>
                   <div className="relative">
                     <Mail className="absolute left-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground" />
-                    <Input required type="email" value={formData.email} onChange={(e) => setFormData({ ...formData, email: e.target.value })} placeholder="email@example.com" className="pl-9 h-10" />
+                    <Input required disabled={isAdminStaff} type="email" value={formData.email} onChange={(e) => setFormData({ ...formData, email: e.target.value })} placeholder="email@example.com" className="pl-9 h-10" />
                   </div>
                 </div>
                 <div>
                   <label className="text-xs font-bold text-muted-foreground mb-1.5 block uppercase tracking-wider">Contact Phone</label>
                   <div className="relative">
                     <Phone className="absolute left-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground" />
-                    <Input type="tel" value={formData.phone} onChange={(e) => setFormData({ ...formData, phone: e.target.value })} placeholder="+1 000-000-0000" className="pl-9 h-10" />
+                    <Input type="tel" disabled={isAdminStaff} value={formData.phone} onChange={(e) => setFormData({ ...formData, phone: e.target.value })} placeholder="+1 000-000-0000" className="pl-9 h-10" />
                   </div>
                 </div>
               </div>
@@ -166,7 +181,8 @@ export default function StaffNew() {
                     <Shield className="absolute left-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-primary" />
                     <select
                       required
-                      className="w-full h-10 bg-background border border-input rounded-md pl-9 pr-3 py-2 text-sm focus:ring-2 focus:ring-primary outline-none appearance-none transition-all cursor-pointer"
+                      disabled={isAdminStaff}
+                      className="w-full h-10 bg-background border border-input rounded-md pl-9 pr-3 py-2 text-sm focus:ring-2 focus:ring-primary outline-none appearance-none transition-all cursor-pointer disabled:cursor-not-allowed disabled:opacity-60"
                       value={formData.role_id}
                       onChange={(e) => setFormData({ ...formData, role_id: e.target.value })}
                     >
@@ -183,14 +199,14 @@ export default function StaffNew() {
                     <label className="text-xs font-bold text-muted-foreground mb-1.5 block uppercase tracking-wider">Date of Birth</label>
                     <div className="relative">
                       <Calendar className="absolute left-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground" />
-                      <Input type="date" value={formData.dob} onChange={(e) => setFormData({ ...formData, dob: e.target.value })} className="pl-9 h-10 px-0" />
+                      <Input type="date" disabled={isAdminStaff} value={formData.dob} onChange={(e) => setFormData({ ...formData, dob: e.target.value })} className="pl-9 h-10 pr-3 [&::-webkit-calendar-picker-indicator]:hidden" />
                     </div>
                   </div>
                   <div>
                     <label className="text-xs font-bold text-muted-foreground mb-1.5 block uppercase tracking-wider">Join Anniversary</label>
                     <div className="relative">
                       <Calendar className="absolute left-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground" />
-                      <Input type="date" value={formData.anniversary_date} onChange={(e) => setFormData({ ...formData, anniversary_date: e.target.value })} className="pl-9 h-10 px-0" />
+                      <Input type="date" disabled={isAdminStaff} value={formData.anniversary_date} onChange={(e) => setFormData({ ...formData, anniversary_date: e.target.value })} className="pl-9 h-10 pr-3 [&::-webkit-calendar-picker-indicator]:hidden" />
                     </div>
                   </div>
                 </div>
@@ -213,7 +229,7 @@ export default function StaffNew() {
           <Button variant="outline" type="button" onClick={() => navigate("/staff")} className="h-11 px-8 rounded-lg">
             Cancel
           </Button>
-          <Button type="submit" disabled={mutation.isPending} className="h-11 px-10 rounded-lg shadow-lg shadow-primary/20 min-w-[160px]">
+          <Button type="submit" disabled={mutation.isPending || isAdminStaff} className="h-11 px-10 rounded-lg shadow-lg shadow-primary/20 min-w-[160px]">
             {mutation.isPending ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : <Save className="w-4 h-4 mr-2" />}
             {isEdit ? "Update Staff Profile" : "Register Member"}
           </Button>

@@ -1,5 +1,4 @@
 import { useMemo, useState } from "react";
-import { format } from "date-fns";
 import { useQuery } from "@tanstack/react-query";
 import { Link } from "react-router-dom";
 import { LayoutGrid, List, Plus, Search } from "lucide-react";
@@ -27,8 +26,7 @@ export default function OrderList() {
     return orders.filter((o) => {
       const orderNumber = (o.order_number ?? "").toLowerCase();
       const customerName = (o.customer?.name ?? "").toLowerCase();
-      const orderType = (o.order_type ?? "").toLowerCase();
-      return orderNumber.includes(q) || customerName.includes(q) || orderType.includes(q);
+      return orderNumber.includes(q) || customerName.includes(q);
     });
   }, [orders, search]);
 
@@ -100,11 +98,7 @@ export default function OrderList() {
                   <div className="min-w-0 space-y-1">
                     <p className="text-sm font-semibold">{o.order_number}</p>
                     <p className="text-sm text-muted-foreground">{o.customer?.name ?? "—"}</p>
-                    <p className="text-sm text-primary">{o.order_type ?? "—"}</p>
-                    <p className="text-xs text-muted-foreground">
-                      Fabric: {o.fabric ?? "—"} · Delivery:{" "}
-                      {o.delivery_date ? format(new Date(o.delivery_date), "dd-MMM-yyyy") : "—"}
-                    </p>
+                    <p className="text-xs text-muted-foreground">Fabric: {o.fabric ?? "—"}</p>
                   </div>
                   <div className="flex shrink-0 flex-row items-center justify-between gap-4 border-t border-border pt-3 sm:border-t-0 sm:pt-0 sm:text-right">
                     <StatusBadge status={o.status} />
@@ -127,11 +121,7 @@ export default function OrderList() {
                   >
                     <p className="text-sm font-semibold">{o.order_number}</p>
                     <p className="text-sm text-muted-foreground truncate">{o.customer?.name ?? "—"}</p>
-                    <p className="text-sm text-primary truncate mt-1">{o.order_type ?? "—"}</p>
                     <p className="text-xs text-muted-foreground mt-2 line-clamp-2">Fabric: {o.fabric ?? "—"}</p>
-                    <p className="text-xs text-muted-foreground mt-1">
-                      Delivery: {o.delivery_date ? format(new Date(o.delivery_date), "dd-MMM-yyyy") : "—"}
-                    </p>
                     <div className="mt-3 flex items-center justify-between gap-2">
                       <StatusBadge status={o.status} />
                       <p className="text-sm font-semibold">${total.toFixed(2)}</p>

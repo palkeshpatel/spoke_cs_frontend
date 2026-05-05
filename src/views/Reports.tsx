@@ -13,13 +13,6 @@ const ordersPerMonth = [
   { month: 'Feb', orders: 11 }, { month: 'Mar', orders: 16 },
 ];
 
-const garmentTypes = [
-  { name: 'Suits', value: 35, color: 'hsl(239, 84%, 67%)' },
-  { name: 'Shirts', value: 28, color: 'hsl(263, 70%, 58%)' },
-  { name: 'Pants', value: 22, color: 'hsl(199, 89%, 48%)' },
-  { name: 'Blazers', value: 15, color: 'hsl(142, 76%, 36%)' },
-];
-
 const topCustomers = customers.sort((a, b) => b.totalOrders - a.totalOrders).slice(0, 5);
 
 export default function Reports() {
@@ -56,27 +49,7 @@ export default function Reports() {
         </div>
       </div>
 
-      <div className="grid md:grid-cols-2 gap-4 sm:gap-6">
-        <div className="bg-card rounded-xl card-shadow p-4 sm:p-5">
-          <h3 className="text-base font-semibold mb-4">Garment Types</h3>
-          <ResponsiveContainer width="100%" height={250}>
-            <PieChart>
-              <Pie data={garmentTypes} cx="50%" cy="50%" innerRadius={50} outerRadius={90} dataKey="value" paddingAngle={3}>
-                {garmentTypes.map((entry, i) => <Cell key={i} fill={entry.color} />)}
-              </Pie>
-              <Tooltip />
-            </PieChart>
-          </ResponsiveContainer>
-          <div className="flex flex-wrap gap-3 justify-center mt-2">
-            {garmentTypes.map(d => (
-              <div key={d.name} className="flex items-center gap-1.5 text-xs">
-                <div className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: d.color }} />
-                {d.name}
-              </div>
-            ))}
-          </div>
-        </div>
-
+      <div className="grid md:grid-cols-1 gap-4 sm:gap-6">
         <div className="bg-card rounded-xl card-shadow p-4 sm:p-5">
           <h3 className="text-base font-semibold mb-4">Top Customers</h3>
           <div className="space-y-3">
@@ -95,7 +68,6 @@ export default function Reports() {
               </div>
             ))}
           </div>
-        </div>
       </div>
     </div>
   );

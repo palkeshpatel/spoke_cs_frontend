@@ -10,7 +10,7 @@ import { toast } from "@/hooks/use-toast";
 import { StatusBadge } from "@/components/StatusBadge";
 import { getOrder, updateOrder } from "@/services/orders";
 
-type ItemDraft = { garment_type: string; quantity: string; price: string };
+type ItemDraft = { quantity: string; price: string };
 
 export default function OrderDetail() {
   const { id } = useParams();
@@ -18,10 +18,8 @@ export default function OrderDetail() {
   const orderId = id ? Number(id) : NaN;
 
   const [isEditing, setIsEditing] = useState(false);
-  const [orderTypeDraft, setOrderTypeDraft] = useState("");
   const [fabricDraft, setFabricDraft] = useState("");
   const [trialDateDraft, setTrialDateDraft] = useState("");
-  const [deliveryDateDraft, setDeliveryDateDraft] = useState("");
   const [statusDraft, setStatusDraft] = useState<"pending" | "in_progress" | "trial" | "completed" | "delivered">("pending");
   const [notesDraft, setNotesDraft] = useState("");
   const [itemsDraft, setItemsDraft] = useState<ItemDraft[]>([]);
@@ -37,15 +35,12 @@ export default function OrderDetail() {
 
   const initDraft = useCallback(() => {
     if (!order) return;
-    setOrderTypeDraft(order.order_type ?? "");
     setFabricDraft(order.fabric ?? "");
     setTrialDateDraft(order.trial_date ?? "");
-    setDeliveryDateDraft(order.delivery_date ?? "");
     setStatusDraft(order.status ?? "pending");
     setNotesDraft(order.notes ?? "");
     setItemsDraft(
       (order.items ?? []).map((it) => ({
-        garment_type: it.garment_type ?? "",
         quantity: String(it.quantity ?? 1),
         price: typeof it.price === "string" ? it.price : String(it.price ?? 0),
       })),
@@ -62,7 +57,6 @@ export default function OrderDetail() {
     const arr: ItemDraft[] = isEditing
       ? itemsDraft
       : items.map((it) => ({
-          garment_type: it.garment_type ?? "",
           quantity: String(it.quantity ?? 0),
           price: typeof it.price === "string" ? it.price : String(it.price ?? 0),
         }));
@@ -80,7 +74,6 @@ export default function OrderDetail() {
         const qty = Number(it.quantity);
         const price = Number(it.price);
         return {
-          garment_type: it.garment_type || null,
           measurement_id: null,
           quantity: Number.isFinite(qty) ? qty : 1,
           price: Number.isFinite(price) ? price : 0,
@@ -88,10 +81,8 @@ export default function OrderDetail() {
       });
 
       return updateOrder(orderId, {
-        order_type: orderTypeDraft || null,
         fabric: fabricDraft || null,
         trial_date: trialDateDraft || null,
-        delivery_date: deliveryDateDraft || null,
         status: statusDraft,
         notes: notesDraft || null,
         items: nextItems,
@@ -150,13 +141,6 @@ export default function OrderDetail() {
 
             <EditableField label="Customer" value={order.customer?.name ?? "—"} isEditing={false} onChange={() => {}} />
 
-            <EditableField
-              label="Order Type"
-              value={isEditing ? orderTypeDraft : order.order_type ?? "—"}
-              isEditing={isEditing}
-              onChange={(v) => setOrderTypeDraft(v)}
-            />
-
             <div>
               <p className="text-xs text-muted-foreground mb-1">Trial Date</p>
               {isEditing ? (
@@ -164,17 +148,6 @@ export default function OrderDetail() {
               ) : (
                 <p className="text-sm font-medium text-foreground">
                   {order.trial_date ? format(new Date(order.trial_date), "dd-MMM-yyyy") : "—"}
-                </p>
-              )}
-            </div>
-
-            <div>
-              <p className="text-xs text-muted-foreground mb-1">Delivery Date</p>
-              {isEditing ? (
-                <Input type="date" value={deliveryDateDraft} onChange={(e) => setDeliveryDateDraft(e.target.value)} className="text-sm" />
-              ) : (
-                <p className="text-sm font-medium text-foreground">
-                  {order.delivery_date ? format(new Date(order.delivery_date), "dd-MMM-yyyy") : "—"}
                 </p>
               )}
             </div>
@@ -220,32 +193,17 @@ export default function OrderDetail() {
           <table className="w-full mb-4">
             <thead>
               <tr className="border-b border-border">
-                <th className="text-left text-xs font-medium text-muted-foreground py-2">Garment</th>
                 <th className="text-left text-xs font-medium text-muted-foreground py-2">Qty</th>
                 <th className="text-right text-xs font-medium text-muted-foreground py-2">Price</th>
               </tr>
             </thead>
             <tbody>
-              {(isEditing
-                ? itemsDraft
-                : items.map((it) => ({
-                    garment_type: it.garment_type ?? "",
+              {(isEditing ? itemsDraft : items.map((it) => ({
                     quantity: String(it.quantity ?? 1),
                     price: typeof it.price === "string" ? it.price : String(it.price ?? 0),
                   }))
               ).map((item, i) => (
                 <tr key={i} className="border-b border-border last:border-0">
-                  <td className="text-sm py-2">
-                    {isEditing ? (
-                      <Input
-                        value={item.garment_type}
-                        onChange={(e) => setItemsDraft((prev) => prev.map((x, idx) => (idx === i ? { ...x, garment_type: e.target.value } : x)))}
-                        className="h-9"
-                      />
-                    ) : (
-                      item.garment_type || "—"
-                    )}
-                  </td>
                   <td className="text-sm py-2">
                     {isEditing ? (
                       <Input

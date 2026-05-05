@@ -5,12 +5,21 @@ export type StaffWorkSession = {
   staff_id: number;
   work_date: string;
   start_time: string;
-  pause_time: string | null;
-  resume_time: string | null;
-  complete_time: string | null;
+  end_time: string | null;
   total_break_minutes: number;
   total_work_minutes: number;
-  status: 'started' | 'paused' | 'resumed' | 'completed';
+  status: 'active' | 'on_break' | 'completed';
+  breaks?: StaffWorkBreak[];
+};
+
+export type StaffWorkBreak = {
+  id: number;
+  staff_session_id: number;
+  break_start: string;
+  break_end: string | null;
+  break_minutes: number;
+  break_type: 'tea' | 'lunch' | 'personal' | 'other';
+  remarks: string | null;
 };
 
 export type StaffAttendance = {
@@ -30,15 +39,15 @@ export type StaffAttendance = {
 };
 
 export async function getStaffWorkStatus() {
-  return apiRequest<{ session: StaffWorkSession | null }>("/api/staff/work/status");
+  return apiRequest<{ session: StaffWorkSession | null; today_sessions: StaffWorkSession[] }>("/api/staff/work/status");
 }
 
 export async function startStaffWork() {
   return apiRequest<{ session: StaffWorkSession }>("/api/staff/work/start", { method: "POST" });
 }
 
-export async function pauseStaffWork() {
-  return apiRequest<{ session: StaffWorkSession }>("/api/staff/work/pause", { method: "POST" });
+export async function pauseStaffWork(payload?: { break_type?: 'tea' | 'lunch' | 'personal' | 'other'; remarks?: string }) {
+  return apiRequest<{ session: StaffWorkSession }>("/api/staff/work/pause", { method: "POST", body: payload ?? {} });
 }
 
 export async function resumeStaffWork() {

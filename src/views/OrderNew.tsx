@@ -7,13 +7,6 @@ import CustomerSelectWithAdd from "@/components/CustomerSelectWithAdd";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
 import { toast } from "@/hooks/use-toast";
 import { createOrder } from "@/services/orders";
 
@@ -23,8 +16,6 @@ export default function OrderNew() {
   const queryClient = useQueryClient();
 
   const [customerId, setCustomerId] = useState<string | undefined>(undefined);
-  const [orderType, setOrderType] = useState<string>("Custom Suit");
-  const [deliveryDate, setDeliveryDate] = useState<string>("");
   const [fabric, setFabric] = useState<string>("");
   const [price, setPrice] = useState<string>("");
   const [notes, setNotes] = useState<string>("");
@@ -71,13 +62,11 @@ export default function OrderNew() {
     const p = price.trim() === "" ? 0 : Number(price);
     createMutation.mutate({
       customer_id: Number(customerId),
-      order_type: orderType,
       fabric: fabric || null,
-      delivery_date: deliveryDate || null,
       notes: notes || null,
       items: [
         {
-          garment_type: orderType,
+          garment_type: null,
           quantity: 1,
           price: Number.isFinite(p) ? p : 0,
         },
@@ -105,33 +94,9 @@ export default function OrderNew() {
                 onChange={setCustomerId}
               />
             </div>
-            <div>
-              <label className="text-xs text-muted-foreground mb-1 block">
-                Garment Type *
-              </label>
-              <Select value={orderType} onValueChange={setOrderType}>
-                <SelectTrigger>
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="Custom Suit">Custom Suit</SelectItem>
-                  <SelectItem value="Dress Shirt">Dress Shirt</SelectItem>
-                  <SelectItem value="Dress Pants">Dress Pants</SelectItem>
-                  <SelectItem value="Custom Blazer">Custom Blazer</SelectItem>
-                  <SelectItem value="Alteration">Alteration</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-            <div>
-              <label className="text-xs text-muted-foreground mb-1 block">
-                Delivery Date
-              </label>
-              <Input
-                type="date"
-                value={deliveryDate}
-                onChange={(e) => setDeliveryDate(e.target.value)}
-              />
-            </div>
+            <p className="text-xs text-muted-foreground">
+              Order details are now kept simple and can be refined later.
+            </p>
           </div>
         </SectionCard>
 

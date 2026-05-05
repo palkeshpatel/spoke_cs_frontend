@@ -419,7 +419,6 @@ export default function CustomerDetail() {
                                 <span className="text-sm font-semibold">{o.order_number}</span>
                                 <StatusBadge status={o.status} />
                               </div>
-                              <p className="text-sm text-primary mt-0.5">{o.order_type ?? "—"}</p>
                             </div>
                             <div className="text-right">
                               <p className="text-sm font-bold">${lineTotal.toFixed(2)}</p>
@@ -430,9 +429,6 @@ export default function CustomerDetail() {
                           </div>
                           <div className="text-xs text-muted-foreground space-y-0.5">
                             {o.fabric ? <p>Fabric: {o.fabric}</p> : null}
-                            {o.delivery_date ? (
-                              <p>Delivery: {format(new Date(o.delivery_date), "dd MMM yyyy")}</p>
-                            ) : null}
                             {o.notes ? <p>Notes: {o.notes}</p> : null}
                           </div>
                         </Link>

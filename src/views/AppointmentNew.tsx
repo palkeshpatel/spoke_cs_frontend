@@ -31,7 +31,6 @@ export default function AppointmentNew() {
   const [appointmentDate, setAppointmentDate] = useState<string>("");
   const [appointmentTime, setAppointmentTime] = useState<string>("");
   const [trialDate, setTrialDate] = useState<string>("");
-  const [deliveryDate, setDeliveryDate] = useState<string>("");
   const [durationMinutes, setDurationMinutes] = useState<string>("30");
   const [priority, setPriority] = useState<"low" | "normal" | "high">("normal");
   const [notes, setNotes] = useState<string>("");
@@ -118,7 +117,6 @@ export default function AppointmentNew() {
       appointment_date: appointmentDate,
       appointment_time: time,
       trial_date: trialDate || null,
-      delivery_date: deliveryDate || null,
       duration_minutes: Number(durationMinutes || 0),
       priority,
       status: "confirmed",
@@ -287,15 +285,8 @@ export default function AppointmentNew() {
                   onChange={(e) => setTrialDate(e.target.value)}
                 />
               </div>
-              <div>
-                <label className="text-xs text-muted-foreground mb-1 block">
-                  Delivery Date
-                </label>
-                <Input
-                  type="date"
-                  value={deliveryDate}
-                  onChange={(e) => setDeliveryDate(e.target.value)}
-                />
+              <div className="rounded-lg border border-dashed border-border px-3 py-3 text-xs text-muted-foreground flex items-center">
+                Delivery scheduling has been removed from the form.
               </div>
             </div>
           </div>

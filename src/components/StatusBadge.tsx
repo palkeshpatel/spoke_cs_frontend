@@ -11,6 +11,8 @@ const statusStyles: Record<string, string> = {
   overdue: 'bg-destructive text-destructive-foreground',
   complete: 'bg-foreground text-card',
   incomplete: 'bg-card text-foreground border border-border',
+  active: 'bg-success/10 text-success',
+  on_break: 'bg-primary/10 text-primary',
 };
 
 const priorityStyles: Record<string, string> = {
