@@ -1,5 +1,5 @@
-import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, PieChart, Pie, Cell, LineChart, Line } from 'recharts';
-import { orders, customers, invoices } from '@/data/mockData';
+import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, LineChart, Line } from 'recharts';
+import { customers } from '@/data/mockData';
 
 const monthlyRevenue = [
   { month: 'Oct', revenue: 8200 }, { month: 'Nov', revenue: 9100 },
@@ -68,6 +68,7 @@ export default function Reports() {
               </div>
             ))}
           </div>
+        </div>
       </div>
     </div>
   );

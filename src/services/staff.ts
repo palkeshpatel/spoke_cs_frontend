@@ -38,6 +38,41 @@ export type StaffAttendance = {
   };
 };
 
+export type WorkReportBreak = {
+  id: number;
+  break_type: 'tea' | 'lunch' | 'personal' | 'other';
+  break_start: string;
+  break_end: string | null;
+  break_minutes: number;
+  remarks: string | null;
+};
+
+export type WorkReportSession = {
+  id: number;
+  work_date: string;
+  start_time: string;
+  end_time: string | null;
+  status: 'active' | 'on_break' | 'completed';
+  total_work_minutes: number;
+  total_break_minutes: number;
+  breaks: WorkReportBreak[];
+};
+
+export type WorkReportStaffGroup = {
+  staff_id: number | null;
+  staff: {
+    id: number;
+    name: string;
+    role?: {
+      role_name: string;
+    };
+  } | null;
+  total_sessions: number;
+  total_work_minutes: number;
+  total_break_minutes: number;
+  sessions: WorkReportSession[];
+};
+
 export async function getStaffWorkStatus() {
   return apiRequest<{ session: StaffWorkSession | null; today_sessions: StaffWorkSession[] }>("/api/staff/work/status");
 }
@@ -104,5 +139,5 @@ export async function getActiveStaff() {
 }
 
 export async function getWorkReport(startDate: string, endDate: string) {
-  return apiRequest<{ report: StaffAttendance[] }>(`/api/admin/reports/work?start_date=${startDate}&end_date=${endDate}`);
+  return apiRequest<{ report: WorkReportStaffGroup[] }>(`/api/admin/reports/work?start_date=${startDate}&end_date=${endDate}`);
 }
