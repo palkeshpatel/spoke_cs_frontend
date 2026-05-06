@@ -1,4 +1,4 @@
-import { apiRequest } from "@/services/api";
+import { apiBaseUrl, apiRequest, getAuthToken } from "@/services/api";
 
 export type CustomerLite = {
   id: number;
@@ -13,6 +13,8 @@ export type OrderItemDto = {
   order_id: number;
   garment_type: string | null;
   measurement_id: number | null;
+  icon_path: string | null;
+  note: string | null;
   quantity: number;
   price: string | number;
   created_at: string;
@@ -77,6 +79,8 @@ export async function createOrder(payload: {
   items?: Array<{
     garment_type?: string | null;
     measurement_id?: number | null;
+    icon_path?: string | null;
+    note?: string | null;
     quantity?: number;
     price?: number;
   }>;
@@ -97,6 +101,8 @@ export async function updateOrder(
     items: Array<{
       garment_type?: string | null;
       measurement_id?: number | null;
+      icon_path?: string | null;
+      note?: string | null;
       quantity?: number;
       price?: number;
     }>;
@@ -104,4 +110,63 @@ export async function updateOrder(
   }>,
 ) {
   return apiRequest<OrderDto>(`/api/orders/${id}`, { method: "PUT", body: payload });
+}
+
+type InitUploadResponse = { upload_id: string };
+
+export async function initOrderItemIconUpload(params: { originalName: string; totalChunks: number }) {
+  return apiRequest<InitUploadResponse>("/api/orders/item-icon/upload/init", {
+    method: "POST",
+    body: {
+      original_name: params.originalName,
+      total_chunks: params.totalChunks,
+    },
+  });
+}
+
+export async function uploadOrderItemIconChunk(params: { uploadId: string; chunkIndex: number; chunk: Blob }) {
+  const form = new FormData();
+  form.append("upload_id", params.uploadId);
+  form.append("chunk_index", String(params.chunkIndex));
+  form.append("chunk", params.chunk, `chunk-${params.chunkIndex}.part`);
+
+  const url = `${apiBaseUrl()}/api/orders/item-icon/upload/chunk`;
+  const token = getAuthToken();
+  const res = await fetch(url, {
+    method: "POST",
+    headers: token ? { Authorization: `Bearer ${token}` } : undefined,
+    body: form,
+  });
+
+  if (!res.ok) {
+    const data = await res.json().catch(() => null);
+    const message =
+      typeof data === "object" && data !== null && "message" in data ? String((data as { message?: unknown }).message ?? "") : "";
+    throw { message: message || "Chunk upload failed", status: res.status, details: data } as const;
+  }
+}
+
+export async function completeOrderItemIconUpload(params: { uploadId: string }) {
+  return apiRequest<{ icon_path: string }>("/api/orders/item-icon/upload/complete", {
+    method: "POST",
+    body: { upload_id: params.uploadId },
+  });
+}
+
+export async function uploadOrderItemIcon(params: { blob: Blob; fileName: string }) {
+  const chunkSize = 1024 * 1024;
+  const totalChunks = Math.max(1, Math.ceil(params.blob.size / chunkSize));
+  const init = await initOrderItemIconUpload({
+    originalName: params.fileName,
+    totalChunks,
+  });
+
+  for (let i = 0; i < totalChunks; i++) {
+    const start = i * chunkSize;
+    const end = Math.min(params.blob.size, start + chunkSize);
+    const chunk = params.blob.slice(start, end);
+    await uploadOrderItemIconChunk({ uploadId: init.upload_id, chunkIndex: i, chunk });
+  }
+
+  return completeOrderItemIconUpload({ uploadId: init.upload_id });
 }

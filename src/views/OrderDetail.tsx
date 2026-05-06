@@ -10,7 +10,14 @@ import { toast } from "@/hooks/use-toast";
 import { StatusBadge } from "@/components/StatusBadge";
 import { getOrder, updateOrder } from "@/services/orders";
 
-type ItemDraft = { quantity: string; price: string };
+type ItemDraft = {
+  garment_type: string | null;
+  measurement_id: number | null;
+  icon_path: string | null;
+  note: string | null;
+  quantity: string;
+  price: string;
+};
 
 export default function OrderDetail() {
   const { id } = useParams();
@@ -41,6 +48,10 @@ export default function OrderDetail() {
     setNotesDraft(order.notes ?? "");
     setItemsDraft(
       (order.items ?? []).map((it) => ({
+        garment_type: it.garment_type ?? null,
+        measurement_id: it.measurement_id ?? null,
+        icon_path: it.icon_path ?? null,
+        note: it.note ?? null,
         quantity: String(it.quantity ?? 1),
         price: typeof it.price === "string" ? it.price : String(it.price ?? 0),
       })),
@@ -57,6 +68,10 @@ export default function OrderDetail() {
     const arr: ItemDraft[] = isEditing
       ? itemsDraft
       : items.map((it) => ({
+          garment_type: it.garment_type ?? null,
+          measurement_id: it.measurement_id ?? null,
+          icon_path: it.icon_path ?? null,
+          note: it.note ?? null,
           quantity: String(it.quantity ?? 0),
           price: typeof it.price === "string" ? it.price : String(it.price ?? 0),
         }));
@@ -74,7 +89,10 @@ export default function OrderDetail() {
         const qty = Number(it.quantity);
         const price = Number(it.price);
         return {
-          measurement_id: null,
+          garment_type: it.garment_type,
+          measurement_id: it.measurement_id,
+          icon_path: it.icon_path,
+          note: it.note,
           quantity: Number.isFinite(qty) ? qty : 1,
           price: Number.isFinite(price) ? price : 0,
         };
@@ -199,6 +217,10 @@ export default function OrderDetail() {
             </thead>
             <tbody>
               {(isEditing ? itemsDraft : items.map((it) => ({
+                    garment_type: it.garment_type ?? null,
+                    measurement_id: it.measurement_id ?? null,
+                    icon_path: it.icon_path ?? null,
+                    note: it.note ?? null,
                     quantity: String(it.quantity ?? 1),
                     price: typeof it.price === "string" ? it.price : String(it.price ?? 0),
                   }))
