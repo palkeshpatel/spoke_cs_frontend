@@ -19,6 +19,8 @@ export type DashboardResponse = {
     billing_pending_total?: number;
     billing_overdue_count?: number;
     new_customers_this_month?: number;
+    total_staff?: number;
+    active_staff_sessions?: number;
   };
   recent_orders: Array<{
     id: number;

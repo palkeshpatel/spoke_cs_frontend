@@ -118,7 +118,7 @@ export default function AppointmentList() {
                           {a.customer?.customer_code ?? `C${String(a.customer_id).padStart(3, "0")}`}
                         </span>
                       </div>
-                      <p className="text-sm text-primary">{a.service_type}</p>
+                      <p className="text-sm text-primary font-medium bg-gradient-to-r from-primary/10 to-accent/10 px-2 py-1 rounded-md inline-block">{a.service_type}</p>
                       <div className="flex items-center gap-3 text-xs text-muted-foreground min-w-0 flex-wrap">
                         <span className="inline-flex items-center gap-1 min-w-0">
                           <CalendarIcon className="h-3.5 w-3.5 shrink-0 text-muted-foreground" aria-hidden />
@@ -190,7 +190,7 @@ export default function AppointmentList() {
                 />
               </AppointmentCalendarProvider>
               <p className="mt-3 text-xs text-muted-foreground">
-                Tap a <span className="font-medium text-foreground">brown bar</span> to open that appointment. Day number selects the day for highlighting.
+                Tap an appointment to open it. Day number selects the day for highlighting.
               </p>
             </div>
           </div>

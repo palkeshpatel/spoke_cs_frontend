@@ -37,6 +37,8 @@ export type MeasurementDto = {
   garment_type: string;
   taken_by: number | null;
   notes: string | null;
+  trial_date: string | null;
+  delivery_date: string | null;
   created_at: string;
   updated_at: string;
   customer?: CustomerLite;
@@ -90,6 +92,8 @@ export async function updateMeasurement(
     garment_type: string;
     taken_by: number | null;
     notes: string | null;
+    trial_date: string | null;
+    delivery_date: string | null;
     values: Array<{ field_id: number; value: number | null }>;
   }>,
 ) {
@@ -102,6 +106,8 @@ export async function createMeasurement(payload: {
   garment_type: string;
   taken_by?: number | null;
   notes?: string | null;
+  trial_date?: string | null;
+  delivery_date?: string | null;
   values?: Array<{ field_id: number; value: number | null }>;
 }) {
   const res = await apiRequest<Raw>(`/api/measurements`, { method: "POST", body: payload });

@@ -115,8 +115,8 @@ export function AppointmentCalendarDayCell(props: DayProps) {
                 key={a.id}
                 to={`/appointments/${a.id}`}
                 className={cn(
-                  "relative z-[1] block w-full max-w-full rounded-md border border-primary/30 bg-primary px-2 py-1 text-left text-xs font-medium leading-snug text-primary-foreground shadow-sm",
-                  "transition-opacity hover:opacity-90",
+                  "relative z-[1] block w-full max-w-full rounded-md border border-border bg-gradient-to-r from-primary/10 to-accent/10 px-2 py-1 text-left text-xs font-medium leading-snug text-foreground shadow-sm",
+                  "transition-all hover:scale-[1.02] hover:shadow-md hover:from-primary/20 hover:to-accent/20",
                 )}
                 title={`${a.customer?.name ?? "Customer"} — ${a.service_type}`}
                 onClick={(e) => e.stopPropagation()}

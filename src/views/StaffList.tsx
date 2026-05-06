@@ -9,6 +9,7 @@ import { Input } from "@/components/ui/input";
 import { toast } from "sonner";
 import PageHeader from "@/components/PageHeader";
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
+import { resolvePublicUrl } from "@/services/api";
 
 export default function StaffList() {
   const queryClient = useQueryClient();
@@ -49,7 +50,7 @@ export default function StaffList() {
   return (
     <div className="space-y-6">
       <PageHeader
-        title="Team Management"
+        title="Staff Management"
         subtitle={`${filtered.length} staff members`}
         actions={
           <div className="flex items-center gap-2">
@@ -113,8 +114,8 @@ export default function StaffList() {
               >
                 <div className="flex items-center gap-4">
                   <div className="w-12 h-12 rounded-full border border-border overflow-hidden bg-muted flex items-center justify-center shrink-0 shadow-sm group-hover:border-primary/50 transition-colors">
-                    {s.profile_photo_url ? (
-                      <img src={s.profile_photo_url} alt={s.name} className="w-full h-full object-cover" />
+                    {s.profile_photo_url || s.profile_photo ? (
+                      <img src={resolvePublicUrl(s.profile_photo_url || s.profile_photo)!} alt={s.name} className="w-full h-full object-cover" />
                     ) : (
                       <span className="text-sm font-bold text-primary">{s.name.charAt(0)}</span>
                     )}
@@ -175,8 +176,8 @@ export default function StaffList() {
                 >
                   <div className="flex justify-between items-start mb-4">
                     <div className="w-14 h-14 rounded-full border-2 border-border overflow-hidden bg-muted flex items-center justify-center shrink-0 shadow-md group-hover:border-primary transition-all">
-                      {s.profile_photo_url ? (
-                        <img src={s.profile_photo_url} alt={s.name} className="w-full h-full object-cover" />
+                      {s.profile_photo_url || s.profile_photo ? (
+                        <img src={resolvePublicUrl(s.profile_photo_url || s.profile_photo)!} alt={s.name} className="w-full h-full object-cover" />
                       ) : (
                         <span className="text-xl font-bold text-primary">{s.name.charAt(0)}</span>
                       )}

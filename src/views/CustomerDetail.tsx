@@ -458,7 +458,7 @@ export default function CustomerDetail() {
                             <Clock className="h-5 w-5 text-primary" />
                           </div>
                           <div className="min-w-0">
-                            <p className="font-semibold text-sm truncate">{a.service_type}</p>
+                            <p className="font-semibold text-sm truncate bg-gradient-to-r from-primary/10 to-accent/10 px-2 py-1 rounded-md inline-block">{a.service_type}</p>
                             <p className="text-xs text-muted-foreground">
                               {a.appointment_date ? format(new Date(a.appointment_date), "dd MMM yyyy") : "—"}
                               {a.appointment_time ? ` · ${formatAppointmentTime(a.appointment_time)}` : ""}
@@ -564,6 +564,40 @@ export default function CustomerDetail() {
             </TabsContent>
           </Tabs>
 
+          <SectionCard title="Body Images">
+            <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+              {imageTypes.map((t) => {
+                const image = imagesByType.get(t.key);
+                const src = image ? resolvePublicUrl(image.path) : null;
+                return (
+                  <div key={t.key} className="border border-border rounded-lg p-2 flex flex-col items-center">
+                    <div className="text-xs font-medium w-full truncate text-center mb-1">{t.label}</div>
+                    <div className="relative h-28 sm:h-32 w-full rounded bg-muted overflow-hidden">
+                      {src ? <img src={src} alt={t.label} className="h-full w-full object-cover" /> : null}
+                    </div>
+                    {isEditing ? (
+                      <div className="w-full mt-2">
+                        <Button
+                          type="button"
+                          size="sm"
+                          className="w-full h-7 text-[10px]"
+                          variant="outline"
+                          onClick={() => {
+                            setPendingType(t.key);
+                            fileInputRef.current?.click();
+                          }}
+                          disabled={uploadMutation.isPending}
+                        >
+                          Upload
+                        </Button>
+                      </div>
+                    ) : null}
+                  </div>
+                );
+              })}
+            </div>
+          </SectionCard>
+
           <SectionCard title="Quick Actions">
             <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
               <Button asChild variant="default" className="h-auto min-h-[4.5rem] flex-col gap-1.5 py-3 px-2">
@@ -603,40 +637,6 @@ export default function CustomerDetail() {
                   <span className="text-center text-[11px] font-semibold leading-tight text-muted-foreground">Send Message</span>
                 </Button>
               )}
-            </div>
-          </SectionCard>
-
-          <SectionCard title="Body Images">
-            <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
-              {imageTypes.map((t) => {
-                const image = imagesByType.get(t.key);
-                const src = image ? resolvePublicUrl(image.path) : null;
-                return (
-                  <div key={t.key} className="border border-border rounded-lg p-2 flex flex-col items-center">
-                    <div className="text-xs font-medium w-full truncate text-center mb-1">{t.label}</div>
-                    <div className="relative h-28 sm:h-32 w-full rounded bg-muted overflow-hidden">
-                      {src ? <img src={src} alt={t.label} className="h-full w-full object-cover" /> : null}
-                    </div>
-                    {isEditing ? (
-                      <div className="w-full mt-2">
-                        <Button
-                          type="button"
-                          size="sm"
-                          className="w-full h-7 text-[10px]"
-                          variant="outline"
-                          onClick={() => {
-                            setPendingType(t.key);
-                            fileInputRef.current?.click();
-                          }}
-                          disabled={uploadMutation.isPending}
-                        >
-                          Upload
-                        </Button>
-                      </div>
-                    ) : null}
-                  </div>
-                );
-              })}
             </div>
           </SectionCard>
         </div>

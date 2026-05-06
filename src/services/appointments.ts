@@ -14,8 +14,6 @@ export type AppointmentDto = {
   service_type: string;
   appointment_date: string;
   appointment_time: string | null;
-  trial_date?: string | null;
-  delivery_date?: string | null;
   duration_minutes: number;
   priority: "low" | "normal" | "high";
   status: "pending" | "confirmed" | "completed" | "cancelled";
@@ -56,8 +54,6 @@ export async function createAppointment(payload: {
   service_type: string;
   appointment_date: string;
   appointment_time?: string | null;
-  trial_date?: string | null;
-  delivery_date?: string | null;
   duration_minutes?: number;
   priority?: "low" | "normal" | "high";
   status?: "pending" | "confirmed" | "completed" | "cancelled";
@@ -73,8 +69,6 @@ export async function updateAppointment(
     service_type: string;
     appointment_date: string;
     appointment_time: string | null;
-    trial_date: string | null;
-    delivery_date: string | null;
     duration_minutes: number;
     priority: "low" | "normal" | "high";
     status: "pending" | "confirmed" | "completed" | "cancelled";

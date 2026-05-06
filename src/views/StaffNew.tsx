@@ -2,7 +2,7 @@ import { useState, useEffect, useRef } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Save, ArrowLeft, Loader2, Camera, Shield, User, Mail, Phone, Calendar, Info, Lock } from "lucide-react";
-import { getRoles, saveStaff } from "@/services/staff";
+import { getRoles, saveStaff, uploadStaffProfileImage } from "@/services/staff";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { toast } from "sonner";
@@ -26,8 +26,10 @@ export default function StaffNew() {
     dob: "",
     anniversary_date: "",
     profile_photo: null as File | null,
+    profile_photo_url: "" as string,
   });
   const [photoPreview, setPhotoPreview] = useState<string | null>(null);
+  const [isUploading, setIsUploading] = useState(false);
 
   const { data: roles } = useQuery({ queryKey: ["roles"], queryFn: getRoles });
   
@@ -50,6 +52,7 @@ export default function StaffNew() {
         dob: staffData.dob || "",
         anniversary_date: staffData.anniversary_date || "",
         profile_photo: null,
+        profile_photo_url: staffData.profile_photo || "",
       });
       if (staffData.profile_photo_url) {
         setPhotoPreview(staffData.profile_photo_url);
@@ -79,19 +82,37 @@ export default function StaffNew() {
       toast.error("Please fill in all required fields.");
       return;
     }
-    mutation.mutate({ ...formData, id: isEdit ? parseInt(id!) : undefined });
+    
+    // Prepare data for saving - map profile_photo_url to profile_photo for backend
+    const payload = {
+      ...formData,
+      profile_photo: formData.profile_photo_url || null,
+      id: isEdit ? parseInt(id!) : undefined
+    };
+    
+    mutation.mutate(payload);
   };
 
-  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     if (isAdminStaff) return;
     const file = e.target.files?.[0];
     if (file) {
-      if (file.size > 2 * 1024 * 1024) {
-        toast.error("Image too large. Max size is 2MB.");
+      if (file.size > 5 * 1024 * 1024) { // Increased to 5MB since we use chunks
+        toast.error("Image too large. Max size is 5MB.");
         return;
       }
-      setFormData({ ...formData, profile_photo: file });
-      setPhotoPreview(URL.createObjectURL(file));
+
+      setIsUploading(true);
+      try {
+        const { profile_photo_url } = await uploadStaffProfileImage(file);
+        setFormData({ ...formData, profile_photo: null, profile_photo_url });
+        setPhotoPreview(URL.createObjectURL(file));
+        toast.success("Image uploaded successfully");
+      } catch (error: any) {
+        toast.error(error.message || "Upload failed");
+      } finally {
+        setIsUploading(false);
+      }
     }
   };
 
@@ -133,11 +154,18 @@ export default function StaffNew() {
                 </div>
                 <div className="flex flex-col gap-2 pt-2">
                   <h4 className="text-sm font-bold text-foreground">Profile Picture</h4>
-                  <p className="text-[11px] text-muted-foreground leading-relaxed">Square crop recommended. Supports JPG, PNG. Max 2MB.</p>
-                  <Button type="button" variant="outline" size="sm" className="w-fit h-8 text-xs" disabled={isAdminStaff} onClick={() => profileInputRef.current?.click()}>
-                    {formData.profile_photo ? "Change Image" : "Choose Image"}
+                  <p className="text-[11px] text-muted-foreground leading-relaxed">Square crop recommended. Supports JPG, PNG. Max 5MB.</p>
+                  <Button type="button" variant="outline" size="sm" className="w-fit h-8 text-xs" disabled={isAdminStaff || isUploading} onClick={() => profileInputRef.current?.click()}>
+                    {isUploading ? (
+                      <>
+                        <Loader2 className="w-3 h-3 animate-spin mr-1.5" />
+                        Uploading...
+                      </>
+                    ) : (
+                      formData.profile_photo_url ? "Change Image" : "Choose Image"
+                    )}
                   </Button>
-                  <input ref={profileInputRef} type="file" accept="image/*" onChange={handleFileChange} disabled={isAdminStaff} className="hidden" />
+                  <input ref={profileInputRef} type="file" accept="image/*" onChange={handleFileChange} disabled={isAdminStaff || isUploading} className="hidden" />
                 </div>
               </div>
 

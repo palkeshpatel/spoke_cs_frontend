@@ -40,6 +40,8 @@ export default function MeasurementNew() {
   const [garmentType, setGarmentType] = useState<string>("Suit");
   const [takenBy, setTakenBy] = useState<string>("__none__");
   const [notes, setNotes] = useState<string>("");
+  const [trialDate, setTrialDate] = useState<string>("");
+  const [deliveryDate, setDeliveryDate] = useState<string>("");
   const [valuesDraft, setValuesDraft] = useState<Record<number, string>>({});
   const [isEditing, setIsEditing] = useState<boolean>(false);
 
@@ -49,7 +51,7 @@ export default function MeasurementNew() {
     const cid = params.get("customer_id");
     const gt = params.get("garment_type");
     if (cid) setCustomerId(cid);
-    if (gt === "Suit" || gt === "Shirt" || gt === "Pants") {
+    if (gt === "Body" || gt === "Suit" || gt === "Shirt" || gt === "Pants") {
       setGarmentType(gt);
       setValuesDraft({});
     }
@@ -121,6 +123,8 @@ export default function MeasurementNew() {
       measurement.taken_by ? String(measurement.taken_by) : "__none__",
     );
     setNotes(measurement.notes ?? "");
+    setTrialDate(measurement.trial_date ?? "");
+    setDeliveryDate(measurement.delivery_date ?? "");
   }, [isEditMode, measurement]);
 
   useEffect(() => {
@@ -173,6 +177,8 @@ export default function MeasurementNew() {
       return updateMeasurement(measurementId as number, {
         taken_by: takenBy !== "__none__" ? Number(takenBy) : null,
         notes: notes || null,
+        trial_date: trialDate || null,
+        delivery_date: deliveryDate || null,
         values,
       });
     },
@@ -218,6 +224,8 @@ export default function MeasurementNew() {
       garment_type: garmentType,
       taken_by: takenBy !== "__none__" ? Number(takenBy) : null,
       notes: notes || null,
+      trial_date: trialDate || null,
+      delivery_date: deliveryDate || null,
       values,
     });
   };
@@ -227,18 +235,77 @@ export default function MeasurementNew() {
   };
 
   const handleCopy = async () => {
-    let text = "label,value\n";
-    for (const f of fields) {
-      const val = valuesDraft[f.id] || "";
-      text += `"${f.field_name}","${val}"\n`;
+    if (!customerId || !measurement) {
+      toast({
+        title: "Failed",
+        description: "Measurement data not ready for copy.",
+        variant: "destructive",
+      });
+      return;
     }
+
+    const preferredOrder = ["Body", "Suit", "Shirt", "Pants"] as const;
+    const rows = allMeasurementsQuery.data?.data ?? [];
+    const customerMeasurements = rows.filter((m) => m.customer_id === Number(customerId));
+    const byGarment = new Map(customerMeasurements.map((m) => [m.garment_type.toLowerCase(), m]));
+    if (!byGarment.has(measurement.garment_type.toLowerCase())) {
+      byGarment.set(measurement.garment_type.toLowerCase(), measurement);
+    }
+
     try {
-      await navigator.clipboard.writeText(text);
-      toast({ title: "Copied", description: "Measurements copied as CSV" });
+      const fieldsByGarmentEntries = await Promise.all(
+        preferredOrder.map(async (g) => {
+          const fieldRows = await listMeasurementFields(g);
+          return [g.toLowerCase(), fieldRows] as const;
+        }),
+      );
+      const fieldsByGarment = new Map(fieldsByGarmentEntries);
+
+      const sections: string[] = [];
+      sections.push(`Customer: ${measurement.customer?.name ?? "—"} (${measurement.customer?.customer_code ?? "—"})`);
+      sections.push(`Copied On: ${format(new Date(), "dd-MMM-yyyy hh:mm a")}`);
+      sections.push("");
+
+      for (const garment of preferredOrder) {
+        const record = byGarment.get(garment.toLowerCase());
+        sections.push(`=== ${garment} ===`);
+        if (!record) {
+          sections.push("No measurement available.");
+          sections.push("");
+          continue;
+        }
+
+        const fieldRows = fieldsByGarment.get(garment.toLowerCase()) ?? [];
+        const valuesMap = new Map<number, string>();
+        for (const valueRow of record.values ?? []) {
+          if (typeof valueRow.field_id !== "number") continue;
+          if (valueRow.value === null || valueRow.value === undefined || valueRow.value === "") continue;
+          valuesMap.set(valueRow.field_id, String(valueRow.value));
+        }
+
+        if (fieldRows.length === 0) {
+          sections.push("No fields configured.");
+        } else {
+          for (const fieldRow of fieldRows) {
+            const val = valuesMap.get(fieldRow.id) ?? "-";
+            const unit = fieldRow.unit ? ` ${fieldRow.unit}` : "";
+            sections.push(`${fieldRow.field_name}: ${val}${unit}`);
+          }
+        }
+
+        sections.push(`Taken By: ${record.taker?.name ?? "—"}`);
+        sections.push(`Trial Date: ${record.trial_date ?? "-"}`);
+        sections.push(`Delivery Date: ${record.delivery_date ?? "-"}`);
+        sections.push(`Notes: ${record.notes?.trim() ? record.notes : "-"}`);
+        sections.push("");
+      }
+
+      await navigator.clipboard.writeText(sections.join("\n").trim());
+      toast({ title: "Copied", description: "All garment measurements copied." });
     } catch {
       toast({
         title: "Failed",
-        description: "Failed to copy",
+        description: "Failed to copy all garment measurements.",
         variant: "destructive",
       });
     }
@@ -290,6 +357,8 @@ export default function MeasurementNew() {
               measurement.taken_by ? String(measurement.taken_by) : "__none__",
             );
             setNotes(measurement.notes ?? "");
+            setTrialDate(measurement.trial_date ?? "");
+            setDeliveryDate(measurement.delivery_date ?? "");
             setGarmentType(measurement.garment_type);
             setCustomerId(String(measurement.customer_id));
             const next: Record<number, string> = {};
@@ -360,6 +429,31 @@ export default function MeasurementNew() {
                 </div>
               )}
             </div>
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              <div>
+                <label className="text-xs text-muted-foreground mb-1 block">
+                  Trial Date
+                </label>
+                <Input
+                  type="date"
+                  value={trialDate}
+                  onChange={(e) => setTrialDate(e.target.value)}
+                  disabled={!canEdit}
+                />
+              </div>
+              <div>
+                <label className="text-xs text-muted-foreground mb-1 block">
+                  Delivery Date
+                </label>
+                <Input
+                  type="date"
+                  value={deliveryDate}
+                  onChange={(e) => setDeliveryDate(e.target.value)}
+                  disabled={!canEdit}
+                />
+              </div>
+            </div>
           </div>
         </SectionCard>
 
@@ -397,6 +491,9 @@ export default function MeasurementNew() {
           </label>
           <Tabs value={garmentType} onValueChange={handleGarmentTypeChange}>
             <TabsList className="w-full">
+              <TabsTrigger value="Body" className="flex-1">
+                Body
+              </TabsTrigger>
               <TabsTrigger value="Suit" className="flex-1">
                 Suit
               </TabsTrigger>

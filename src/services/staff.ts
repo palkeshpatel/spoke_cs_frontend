@@ -134,6 +134,40 @@ export async function deleteStaff(id: number) {
   return apiRequest<{ message: string }>(`/api/staff/${id}`, { method: "DELETE" });
 }
 
+export async function uploadStaffProfileImage(file: File) {
+  const CHUNK_SIZE = 512 * 1024; // 512KB chunks
+  const totalChunks = Math.ceil(file.size / CHUNK_SIZE);
+
+  // 1. Init
+  const { upload_id } = await apiRequest<{ upload_id: string }>("/api/staff/profile-image/upload/init", {
+    method: "POST",
+    body: { file_name: file.name, total_chunks: totalChunks },
+  });
+
+  // 2. Upload chunks
+  for (let i = 0; i < totalChunks; i++) {
+    const start = i * CHUNK_SIZE;
+    const end = Math.min(file.size, start + CHUNK_SIZE);
+    const chunk = file.slice(start, end);
+
+    const formData = new FormData();
+    formData.append("upload_id", upload_id);
+    formData.append("chunk_index", String(i));
+    formData.append("chunk", chunk);
+
+    await apiRequest("/api/staff/profile-image/upload/chunk", {
+      method: "POST",
+      body: formData,
+    });
+  }
+
+  // 3. Complete
+  return apiRequest<{ profile_photo_url: string }>("/api/staff/profile-image/upload/complete", {
+    method: "POST",
+    body: { upload_id },
+  });
+}
+
 export async function getActiveStaff() {
   return apiRequest<{ staff: any[] }>("/api/admin/staff/active");
 }

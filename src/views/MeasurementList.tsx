@@ -10,12 +10,13 @@ import { listMeasurements } from "@/services/measurements";
 
 function measurementEntryPath(g: {
   customerId: number;
-  byGarment: Partial<Record<"Suit" | "Shirt" | "Pants", { id: number } | undefined>>;
+  byGarment: Partial<Record<"Body" | "Suit" | "Shirt" | "Pants", { id: number } | undefined>>;
 }): string {
+  const body = g.byGarment.Body;
   const suit = g.byGarment.Suit;
   const shirt = g.byGarment.Shirt;
   const pants = g.byGarment.Pants;
-  const first = suit ?? shirt ?? pants;
+  const first = body ?? suit ?? shirt ?? pants;
   if (first?.id) return `/measurements/${first.id}`;
   return `/measurements/new?customer_id=${g.customerId}`;
 }
@@ -39,7 +40,7 @@ export default function MeasurementList() {
         customerName: string;
         customerCode: string;
         latestUpdatedAt: string;
-        byGarment: Partial<Record<"Suit" | "Shirt" | "Pants", (typeof measurements)[number]>>;
+        byGarment: Partial<Record<"Body" | "Suit" | "Shirt" | "Pants", (typeof measurements)[number]>>;
       }
     >();
 
@@ -50,7 +51,7 @@ export default function MeasurementList() {
       const customerCode = m.customer?.customer_code ?? "";
       const updatedAt = m.updated_at;
 
-      const garment = m.garment_type as "Suit" | "Shirt" | "Pants";
+      const garment = m.garment_type as "Body" | "Suit" | "Shirt" | "Pants";
       const byGarment = existing?.byGarment ?? {};
       const currentForGarment = byGarment[garment];
       if (!currentForGarment || Number(m.id) > Number(currentForGarment.id)) {
@@ -141,7 +142,7 @@ export default function MeasurementList() {
                 className="flex flex-wrap items-center gap-2"
                 aria-label="Which garment types have measurements (indicators only; click the card to open)"
               >
-                {(["Suit", "Shirt", "Pants"] as const).map((garment) => {
+                {(["Body", "Suit", "Shirt", "Pants"] as const).map((garment) => {
                   const has = !!g.byGarment[garment];
                   return (
                     <span

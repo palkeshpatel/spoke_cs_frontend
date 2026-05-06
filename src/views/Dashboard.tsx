@@ -12,6 +12,8 @@ const IMG = {
   measurements: "https://images.unsplash.com/photo-1558171813-3c29a3c0f55b?auto=format&fit=crop&w=900&q=80",
   billing: "https://images.unsplash.com/photo-1558618666-fcd25c85cd64?auto=format&fit=crop&w=900&q=80",
   customers: "https://images.unsplash.com/photo-1507679799987-c73779587ccf?auto=format&fit=crop&w=900&q=80",
+  staff: "https://images.unsplash.com/photo-1497366216548-37526070297c?auto=format&fit=crop&w=900&q=80",
+  activity: "https://images.unsplash.com/photo-1460925895917-afdab827c52f?auto=format&fit=crop&w=900&q=80",
 } as const;
 
 function formatMoney(n: number) {
@@ -27,9 +29,9 @@ type QuickTileProps = {
   icon: ReactNode;
   iconClass: string;
   leftLabel: string;
-  leftValue: string | number;
+  leftValue: ReactNode;
   rightLabel: string;
-  rightValue: string | number;
+  rightValue: ReactNode;
 };
 
 function QuickAccessTile({ to, title, description, image, imageAlt, icon, iconClass, leftLabel, leftValue, rightLabel, rightValue }: QuickTileProps) {
@@ -154,6 +156,8 @@ export default function Dashboard() {
     const overdue = Number(s?.billing_overdue_count ?? 0);
     const customers = Number(s?.total_customers ?? 0);
     const newThisMonth = Number(s?.new_customers_this_month ?? 0);
+    const totalStaff = Number(s?.total_staff ?? 0);
+    const activeStaff = Number(s?.active_staff_sessions ?? 0);
 
     return {
       todayAppts,
@@ -164,6 +168,8 @@ export default function Dashboard() {
       overdue,
       customers,
       newThisMonth,
+      totalStaff,
+      activeStaff,
     };
   }, [s, todaysAppointments.length]);
 
@@ -198,7 +204,7 @@ export default function Dashboard() {
       )}
 
       <section>
-        <h2 className="text-lg font-semibold text-foreground mb-4">Welcome back</h2>
+        <h2 className="text-lg font-semibold text-foreground mb-4">Welcome Back</h2>
         {dashboardQuery.isPending ? (
           <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
             {Array.from({ length: 4 }).map((_, i) => (
@@ -226,7 +232,7 @@ export default function Dashboard() {
       </section>
 
       <section>
-        <h2 className="text-lg font-semibold text-foreground mb-4">Quick access</h2>
+        <h2 className="text-lg font-semibold text-foreground mb-4">Quick Access</h2>
         {dashboardQuery.isPending ? (
           <div className="grid md:grid-cols-2 gap-4 sm:gap-6">
             {Array.from({ length: 4 }).map((_, i) => (
@@ -287,6 +293,41 @@ export default function Dashboard() {
               rightLabel="New"
               rightValue={tiles.newThisMonth}
             />
+            {isAdmin && (
+              <>
+                <QuickAccessTile
+                  to="/staff"
+                  title="Staff Management"
+                  description="Manage team & roles"
+                  image={IMG.staff}
+                  imageAlt="Office team"
+                  icon={<Users className="h-5 w-5" />}
+                  iconClass="bg-indigo-600"
+                  leftLabel="Total Staff"
+                  leftValue={tiles.totalStaff}
+                  rightLabel="Active"
+                  rightValue={tiles.totalStaff > 0 ? tiles.totalStaff : 0}
+                />
+                <QuickAccessTile
+                  to="/staff-monitoring"
+                  title="Staff Activity Monitor"
+                  description="Live activity tracking"
+                  image={IMG.activity}
+                  imageAlt="Activity monitor"
+                  icon={<TrendingUp className="h-5 w-5" />}
+                  iconClass="bg-rose-600"
+                  leftLabel="Live"
+                  leftValue={
+                    <span className="flex items-center gap-1.5">
+                      <span className={cn("h-2 w-2 rounded-full animate-pulse", tiles.activeStaff > 0 ? "bg-emerald-500" : "bg-muted-foreground/40")} />
+                      {tiles.activeStaff}
+                    </span>
+                  }
+                  rightLabel="Sessions"
+                  rightValue={tiles.activeStaff}
+                />
+              </>
+            )}
           </div>
         ) : null}
       </section>

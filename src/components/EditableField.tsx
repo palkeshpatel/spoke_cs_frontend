@@ -110,7 +110,7 @@ export default function EditableField({ label, value, isEditing, onChange, type 
           onChange={e => onChange?.(e.target.value)}
           className="text-sm"
         />
-        {unit && <span className="text-xs text-primary font-medium bg-primary/10 px-2 py-1 rounded">{unit}</span>}
+        {unit && <span className="text-xs text-primary font-medium bg-gradient-to-r from-primary/10 to-accent/10 px-2 py-1 rounded-md">{unit}</span>}
       </div>
     </div>
   );

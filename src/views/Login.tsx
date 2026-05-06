@@ -105,7 +105,7 @@ export default function Login() {
   const signInSuccess = () => {
     toast({
       title: "Signed in",
-      description: "Welcome back.",
+      description: "Welcome Back.",
     });
     navigate(postLoginPath(location.state), { replace: true });
   };

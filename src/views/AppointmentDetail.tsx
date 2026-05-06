@@ -25,7 +25,6 @@ type AppointmentForm = {
   serviceType: string;
   appointmentDate: string;
   appointmentTime: string;
-  trialDate: string;
   durationMinutes: string;
   status: "pending" | "confirmed" | "completed" | "cancelled";
   priority: "low" | "normal" | "high";
@@ -60,7 +59,6 @@ export default function AppointmentDetail() {
       serviceType: appointment.service_type,
       appointmentDate: toDateInputValue(appointment.appointment_date),
       appointmentTime: appointment.appointment_time ? appointment.appointment_time.slice(0, 5) : "",
-      trialDate: toDateInputValue(appointment.trial_date ?? ""),
       durationMinutes: String(appointment.duration_minutes ?? 0),
       status: appointment.status,
       priority: appointment.priority,
@@ -162,7 +160,6 @@ export default function AppointmentDetail() {
             service_type: form.serviceType,
             appointment_date: form.appointmentDate,
             appointment_time: form.appointmentTime ? `${form.appointmentTime}:00` : null,
-            trial_date: form.trialDate ? form.trialDate : null,
             duration_minutes: Number(form.durationMinutes || 0),
             status: form.status,
             priority: form.priority,
@@ -198,7 +195,7 @@ export default function AppointmentDetail() {
               ) : (
                 <p className="text-xs text-muted-foreground mt-1">—</p>
               )}
-              <p className="text-sm text-primary mt-0.5">{form.serviceType}</p>
+              <p className="text-sm text-primary font-medium bg-gradient-to-r from-primary/10 to-accent/10 px-2 py-1 rounded-md inline-block">{form.serviceType}</p>
             </div>
           </div>
           <div className="border-t border-border pt-4 space-y-4">
@@ -218,18 +215,6 @@ export default function AppointmentDetail() {
                 onChange={(v) => updateForm("durationMinutes", v)}
                 unit="min"
               />
-            </div>
-            <div className="grid grid-cols-2 gap-4">
-              <EditableField
-                label="Trial Date"
-                value={form.trialDate}
-                isEditing={isEditing}
-                type="date"
-                onChange={(v) => updateForm("trialDate", v)}
-              />
-              <div className="rounded-lg border border-dashed border-border px-3 py-3 text-xs text-muted-foreground flex items-center">
-                Delivery date removed
-              </div>
             </div>
           </div>
           <div className="border-t border-border pt-4 mt-4 flex items-center justify-between flex-wrap gap-2">
