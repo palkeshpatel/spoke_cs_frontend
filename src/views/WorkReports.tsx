@@ -86,27 +86,37 @@ export default function WorkReports() {
   const handleExportCSV = () => {
     if (report.length === 0) return;
 
+    const csvSafe = (value: unknown) => {
+      const text = String(value ?? "");
+      const escaped = text.replace(/"/g, '""');
+      return `"${escaped}"`;
+    };
+
     const headers = ["Staff", "Role", "Date", "Start", "End", "Work Minutes", "Break Minutes", "Break Details", "Status"];
     const rows = report.flatMap((group) =>
       group.sessions.map((session) => [
-        group.staff?.name ?? "—",
+        group.staff?.name ?? "-",
         group.staff?.role?.role_name ?? "Staff",
         session.work_date,
-        session.start_time ? new Date(session.start_time).toLocaleTimeString() : "—",
-        session.end_time ? new Date(session.end_time).toLocaleTimeString() : "Running",
+        formatClockTime(session.start_time),
+        formatClockTime(session.end_time),
         session.total_work_minutes,
         session.total_break_minutes,
         session.breaks.length
           ? session.breaks
               .map((b) => `${formatBreakLabel(b.break_type)} ${b.break_minutes}m`)
               .join(" | ")
-          : "—",
+          : "-",
         session.status,
       ]),
     );
 
-    const csvContent = [headers, ...rows].map((e) => e.join(",")).join("\n");
-    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    const csvContent = [headers, ...rows]
+      .map((row) => row.map(csvSafe).join(","))
+      .join("\r\n");
+
+    // BOM helps Excel on Windows detect UTF-8 correctly.
+    const blob = new Blob(["\uFEFF", csvContent], { type: "text/csv;charset=utf-8;" });
     const url = URL.createObjectURL(blob);
     const link = document.createElement("a");
     link.setAttribute("href", url);
