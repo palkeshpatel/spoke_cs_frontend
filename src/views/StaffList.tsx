@@ -102,57 +102,71 @@ export default function StaffList() {
             {filtered.map((s: any) => {
               const roleName = s.role_record?.role_name || s.role || 'Staff';
               const isAdminStaff = roleName.toLowerCase() === 'admin';
-              const RowWrapper = isAdminStaff ? 'div' : Link;
-
-              return (
-              <RowWrapper
-                key={s.id}
-                {...(!isAdminStaff ? { to: `/staff/edit/${s.id}` } : {})}
-                className={`flex flex-col sm:flex-row sm:items-center sm:justify-between p-4 transition-all group gap-4 ${
-                  isAdminStaff ? 'cursor-not-allowed bg-muted/20 opacity-80' : 'cursor-pointer hover:bg-muted/50'
-                }`}
-              >
-                <div className="flex items-center gap-4">
-                  <div className="w-12 h-12 rounded-full border border-border overflow-hidden bg-muted flex items-center justify-center shrink-0 shadow-sm group-hover:border-primary/50 transition-colors">
-                    {s.profile_photo_url || s.profile_photo ? (
-                      <img src={resolvePublicUrl(s.profile_photo_url || s.profile_photo)!} alt={s.name} className="w-full h-full object-cover" />
-                    ) : (
-                      <span className="text-sm font-bold text-primary">{s.name.charAt(0)}</span>
-                    )}
-                  </div>
-                  <div className="flex flex-col">
-                    <span className="font-semibold text-foreground group-hover:text-primary transition-colors">{s.name}</span>
-                    <div className="flex items-center gap-3 mt-0.5">
-                      <span className="flex items-center gap-1 text-[11px] text-muted-foreground">
-                        <Mail className="w-3 h-3" /> {s.email}
-                      </span>
-                      {s.phone && (
-                        <span className="flex items-center gap-1 text-[11px] text-muted-foreground">
-                          <Plus className="w-2.5 h-2.5" /> {s.phone}
-                        </span>
+              const rowContent = (
+                <>
+                  <div className="flex items-center gap-4">
+                    <div className="w-12 h-12 rounded-full border border-border overflow-hidden bg-muted flex items-center justify-center shrink-0 shadow-sm group-hover:border-primary/50 transition-colors">
+                      {s.profile_photo_url || s.profile_photo ? (
+                        <img src={resolvePublicUrl(s.profile_photo_url || s.profile_photo)!} alt={s.name} className="w-full h-full object-cover" />
+                      ) : (
+                        <span className="text-sm font-bold text-primary">{s.name.charAt(0)}</span>
                       )}
                     </div>
+                    <div className="flex flex-col">
+                      <span className="font-semibold text-foreground group-hover:text-primary transition-colors">{s.name}</span>
+                      <div className="flex items-center gap-3 mt-0.5">
+                        <span className="flex items-center gap-1 text-[11px] text-muted-foreground">
+                          <Mail className="w-3 h-3" /> {s.email}
+                        </span>
+                        {s.phone && (
+                          <span className="flex items-center gap-1 text-[11px] text-muted-foreground">
+                            <Plus className="w-2.5 h-2.5" /> {s.phone}
+                          </span>
+                        )}
+                      </div>
+                    </div>
                   </div>
-                </div>
-                
-                <div className="flex items-center justify-between sm:justify-end gap-6">
-                  <Badge variant="secondary" className={`px-2.5 py-0.5 rounded-full text-[11px] font-bold ${
-                    isAdminStaff
-                      ? 'bg-muted text-muted-foreground border-border'
-                      : 'bg-primary/5 text-primary border-primary/10'
-                  }`}>
-                    {isAdminStaff ? <Lock className="w-3 h-3 mr-1.5" /> : <Shield className="w-3 h-3 mr-1.5" />}
-                    {roleName}
-                  </Badge>
                   
-                  <div className="flex items-center gap-2 pr-2">
-                    <div className={`w-1.5 h-1.5 rounded-full ${s.status ? 'bg-green-500 shadow-[0_0_8px_rgba(34,197,94,0.3)]' : 'bg-red-400'}`} />
-                    <span className="text-[11px] font-medium text-muted-foreground uppercase tracking-tight">
-                      {s.status ? 'Active' : 'On Leave'}
-                    </span>
+                  <div className="flex items-center justify-between sm:justify-end gap-6">
+                    <Badge variant="secondary" className={`px-2.5 py-0.5 rounded-full text-[11px] font-bold ${
+                      isAdminStaff
+                        ? 'bg-muted text-muted-foreground border-border'
+                        : 'bg-primary/5 text-primary border-primary/10'
+                    }`}>
+                      {isAdminStaff ? <Lock className="w-3 h-3 mr-1.5" /> : <Shield className="w-3 h-3 mr-1.5" />}
+                      {roleName}
+                    </Badge>
+                    
+                    <div className="flex items-center gap-2 pr-2">
+                      <div className={`w-1.5 h-1.5 rounded-full ${s.status ? 'bg-green-500 shadow-[0_0_8px_rgba(34,197,94,0.3)]' : 'bg-red-400'}`} />
+                      <span className="text-[11px] font-medium text-muted-foreground uppercase tracking-tight">
+                        {s.status ? 'Active' : 'On Leave'}
+                      </span>
+                    </div>
                   </div>
-                </div>
-              </RowWrapper>
+                </>
+              );
+
+              const rowClassName = `flex flex-col sm:flex-row sm:items-center sm:justify-between p-4 transition-all group gap-4 ${
+                isAdminStaff ? 'cursor-not-allowed bg-muted/20 opacity-80' : 'cursor-pointer hover:bg-muted/50'
+              }`;
+
+              if (isAdminStaff) {
+                return (
+                  <div key={s.id} className={rowClassName}>
+                    {rowContent}
+                  </div>
+                );
+              }
+
+              return (
+                <Link
+                  key={s.id}
+                  to={`/staff/edit/${s.id}`}
+                  className={rowClassName}
+                >
+                  {rowContent}
+                </Link>
               );
             })}
           </div>
@@ -162,51 +176,65 @@ export default function StaffList() {
               {filtered.map((s: any) => {
                 const roleName = s.role_record?.role_name || s.role || 'Staff';
                 const isAdminStaff = roleName.toLowerCase() === 'admin';
-                const CardWrapper = isAdminStaff ? 'div' : Link;
+                const cardContent = (
+                  <>
+                    <div className="flex justify-between items-start mb-4">
+                      <div className="w-14 h-14 rounded-full border-2 border-border overflow-hidden bg-muted flex items-center justify-center shrink-0 shadow-md group-hover:border-primary transition-all">
+                        {s.profile_photo_url || s.profile_photo ? (
+                          <img src={resolvePublicUrl(s.profile_photo_url || s.profile_photo)!} alt={s.name} className="w-full h-full object-cover" />
+                        ) : (
+                          <span className="text-xl font-bold text-primary">{s.name.charAt(0)}</span>
+                        )}
+                      </div>
+                      <div className="flex flex-col items-end gap-2">
+                        <div className={`w-2.5 h-2.5 rounded-full ${s.status ? 'bg-green-500 shadow-[0_0_8px_rgba(34,197,94,0.4)]' : 'bg-red-400'}`} />
+                        <Badge variant="outline" className={`text-[10px] font-bold ${
+                          isAdminStaff
+                            ? 'border-border bg-muted text-muted-foreground'
+                            : 'border-primary/20 bg-primary/5 text-primary'
+                        }`}>
+                          {isAdminStaff && <Lock className="w-3 h-3 mr-1" />}
+                          {roleName}
+                        </Badge>
+                      </div>
+                    </div>
 
-                return (
-                <CardWrapper
-                  key={s.id}
-                  {...(!isAdminStaff ? { to: `/staff/edit/${s.id}` } : {})}
-                  className={`bg-card rounded-xl border border-border p-5 transition-all group relative card-shadow border-t-4 block ${
-                    isAdminStaff
-                      ? 'border-t-muted cursor-not-allowed opacity-80'
-                      : 'border-t-primary/20 cursor-pointer hover:bg-muted/40'
-                  }`}
-                >
-                  <div className="flex justify-between items-start mb-4">
-                    <div className="w-14 h-14 rounded-full border-2 border-border overflow-hidden bg-muted flex items-center justify-center shrink-0 shadow-md group-hover:border-primary transition-all">
-                      {s.profile_photo_url || s.profile_photo ? (
-                        <img src={resolvePublicUrl(s.profile_photo_url || s.profile_photo)!} alt={s.name} className="w-full h-full object-cover" />
-                      ) : (
-                        <span className="text-xl font-bold text-primary">{s.name.charAt(0)}</span>
+                    <div className="space-y-1">
+                      <p className="font-bold text-foreground text-lg truncate group-hover:text-primary transition-colors">{s.name}</p>
+                      <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
+                        <Mail className="w-3.5 h-3.5" /> <span className="truncate">{s.email}</span>
+                      </div>
+                      {s.phone && (
+                        <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
+                          <Phone className="w-3.5 h-3.5" /> <span>{s.phone}</span>
+                        </div>
                       )}
                     </div>
-                    <div className="flex flex-col items-end gap-2">
-                      <div className={`w-2.5 h-2.5 rounded-full ${s.status ? 'bg-green-500 shadow-[0_0_8px_rgba(34,197,94,0.4)]' : 'bg-red-400'}`} />
-                      <Badge variant="outline" className={`text-[10px] font-bold ${
-                        isAdminStaff
-                          ? 'border-border bg-muted text-muted-foreground'
-                          : 'border-primary/20 bg-primary/5 text-primary'
-                      }`}>
-                        {isAdminStaff && <Lock className="w-3 h-3 mr-1" />}
-                        {roleName}
-                      </Badge>
-                    </div>
-                  </div>
+                  </>
+                );
 
-                  <div className="space-y-1">
-                    <p className="font-bold text-foreground text-lg truncate group-hover:text-primary transition-colors">{s.name}</p>
-                    <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
-                      <Mail className="w-3.5 h-3.5" /> <span className="truncate">{s.email}</span>
+                const cardClassName = `bg-card rounded-xl border border-border p-5 transition-all group relative card-shadow border-t-4 block ${
+                  isAdminStaff
+                    ? 'border-t-muted cursor-not-allowed opacity-80'
+                    : 'border-t-primary/20 cursor-pointer hover:bg-muted/40'
+                }`;
+
+                if (isAdminStaff) {
+                  return (
+                    <div key={s.id} className={cardClassName}>
+                      {cardContent}
                     </div>
-                    {s.phone && (
-                      <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
-                        <Phone className="w-3.5 h-3.5" /> <span>{s.phone}</span>
-                      </div>
-                    )}
-                  </div>
-                </CardWrapper>
+                  );
+                }
+
+                return (
+                  <Link
+                    key={s.id}
+                    to={`/staff/edit/${s.id}`}
+                    className={cardClassName}
+                  >
+                    {cardContent}
+                  </Link>
                 );
               })}
             </div>
