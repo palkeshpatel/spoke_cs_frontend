@@ -8,6 +8,8 @@ export type CustomerLite = {
   email: string | null;
 };
 
+
+
 export type AppointmentDto = {
   id: number;
   customer_id: number;
