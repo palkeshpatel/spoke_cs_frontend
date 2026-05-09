@@ -31,6 +31,14 @@ export type OrderStatusHistoryDto = {
   updated_at: string;
 };
 
+export type OrderCustomizationDto = {
+  id: number;
+  order_id: number;
+  option_id: number;
+  price_modifier: string | number;
+  note: string | null;
+};
+
 export type OrderDto = {
   id: number;
   order_number: string;
@@ -46,6 +54,7 @@ export type OrderDto = {
   customer?: CustomerLite;
   items?: OrderItemDto[];
   status_history?: OrderStatusHistoryDto[];
+  customizations?: OrderCustomizationDto[];
 };
 
 export type Paginated<T> = {
@@ -84,6 +93,11 @@ export async function createOrder(payload: {
     quantity?: number;
     price?: number;
   }>;
+  customizations?: Array<{
+    option_id: number;
+    price_modifier: number;
+    note: string | null;
+  }>;
 }) {
   return apiRequest<OrderDto>("/api/orders", { method: "POST", body: payload });
 }
@@ -107,6 +121,11 @@ export async function updateOrder(
       price?: number;
     }>;
     status_note: string | null;
+    customizations: Array<{
+      option_id: number;
+      price_modifier: number;
+      note: string | null;
+    }>;
   }>,
 ) {
   return apiRequest<OrderDto>(`/api/orders/${id}`, { method: "PUT", body: payload });
