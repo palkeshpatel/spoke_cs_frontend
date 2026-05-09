@@ -39,6 +39,7 @@ export type MeasurementDto = {
   notes: string | null;
   trial_date: string | null;
   delivery_date: string | null;
+  measurement_json?: Record<string, Record<string, string | null>> | null;
   created_at: string;
   updated_at: string;
   customer?: CustomerLite;
@@ -54,17 +55,49 @@ export type Paginated<T> = {
 };
 
 type Raw = Record<string, unknown>;
+const GARMENTS = ["Body", "Suit", "Shirt", "Pants"] as const;
 
 const normalizeMeasurement = (raw: Raw): MeasurementDto => {
-  const values = (raw.values as MeasurementValueDto[] | undefined) ?? (raw.measurement_values as MeasurementValueDto[] | undefined) ?? [];
+  const values =
+    (raw.values as MeasurementValueDto[] | undefined) ??
+    (raw.measurement_values as MeasurementValueDto[] | undefined) ??
+    [];
   return {
     ...(raw as unknown as MeasurementDto),
     values,
+    garment_type: String(raw.garment_type ?? "Body"),
   };
 };
 
 const normalizePaginatedMeasurements = (raw: Raw): Paginated<MeasurementDto> => {
-  const data = Array.isArray(raw.data) ? (raw.data as Raw[]).map(normalizeMeasurement) : [];
+  const rows = Array.isArray(raw.data) ? (raw.data as Raw[]) : [];
+  const data: MeasurementDto[] = [];
+
+  for (const row of rows) {
+    // New backend model: one row per customer with measurement_json.
+    if (!row.garment_type && row.measurement_json && typeof row.measurement_json === "object") {
+      const measurementJson = row.measurement_json as Record<string, unknown>;
+      for (const garment of GARMENTS) {
+        const garmentData = measurementJson[garment];
+        if (!garmentData || typeof garmentData !== "object") continue;
+        const hasAnyValue = Object.values(garmentData as Record<string, unknown>).some(
+          (v) => v !== null && v !== undefined && String(v).trim() !== "",
+        );
+        if (!hasAnyValue) continue;
+        data.push(
+          normalizeMeasurement({
+            ...row,
+            garment_type: garment,
+            values: [],
+          }),
+        );
+      }
+      continue;
+    }
+
+    data.push(normalizeMeasurement(row));
+  }
+
   return {
     ...(raw as unknown as Paginated<MeasurementDto>),
     data,
@@ -95,6 +128,7 @@ export async function updateMeasurement(
     trial_date: string | null;
     delivery_date: string | null;
     values: Array<{ field_id: number; value: number | null }>;
+    measurement_json: Record<string, Record<string, string | null>>;
   }>,
 ) {
   const res = await apiRequest<Raw>(`/api/measurements/${id}`, { method: "PUT", body: payload });
@@ -109,6 +143,7 @@ export async function createMeasurement(payload: {
   trial_date?: string | null;
   delivery_date?: string | null;
   values?: Array<{ field_id: number; value: number | null }>;
+  measurement_json?: Record<string, Record<string, string | null>>;
 }) {
   const res = await apiRequest<Raw>(`/api/measurements`, { method: "POST", body: payload });
   return normalizeMeasurement(res);

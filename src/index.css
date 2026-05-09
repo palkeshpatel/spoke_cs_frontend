@@ -87,6 +87,20 @@
     size: auto;
   }
 
+  html,
+  body,
+  #root {
+    height: auto !important;
+    overflow: visible !important;
+  }
+
+  .h-screen,
+  .overflow-hidden,
+  .overflow-y-auto {
+    height: auto !important;
+    overflow: visible !important;
+  }
+
   body {
     background: white !important;
   }
@@ -114,4 +128,75 @@
     -webkit-print-color-adjust: exact;
     print-color-adjust: exact;
   }
+
+  .screen-only-measurement {
+    display: none !important;
+  }
+
+  .print-only-measurement {
+    display: block !important;
+    color: #111827;
+  }
+
+  .print-measurement-header {
+    margin-bottom: 16px;
+  }
+
+  .print-measurement-header h1 {
+    font-size: 20px;
+    font-weight: 700;
+    margin: 0 0 8px;
+  }
+
+  .print-measurement-header p {
+    margin: 2px 0;
+    font-size: 12px;
+  }
+
+  .print-garment-block {
+    margin: 0 0 12px;
+    border: 1px solid #d1d5db;
+    border-radius: 6px;
+    padding: 10px;
+    break-inside: auto;
+    page-break-inside: auto;
+  }
+
+  .print-garment-block h2 {
+    margin: 0 0 8px;
+    font-size: 15px;
+    font-weight: 700;
+  }
+
+  .print-garment-block p {
+    margin: 0;
+    font-size: 12px;
+  }
+
+  .print-garment-block table {
+    width: 100%;
+    border-collapse: collapse;
+    page-break-inside: auto;
+  }
+
+  .print-garment-block th,
+  .print-garment-block td {
+    border: 1px solid #e5e7eb;
+    padding: 4px 6px;
+    text-align: left;
+    font-size: 12px;
+    vertical-align: top;
+    page-break-inside: avoid;
+    break-inside: avoid;
+  }
+
+  .print-garment-block th {
+    width: 45%;
+    font-weight: 600;
+    background: #f9fafb;
+  }
+}
+
+.print-only-measurement {
+  display: none;
 }
