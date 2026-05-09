@@ -1,14 +1,20 @@
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState, useRef } from "react";
 import { format } from "date-fns";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { useParams } from "react-router-dom";
+import { useParams, useNavigate } from "react-router-dom";
 import PageHeader from "@/components/PageHeader";
 import SectionCard from "@/components/SectionCard";
 import EditableField from "@/components/EditableField";
 import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
+import { Button } from "@/components/ui/button";
 import { toast } from "@/hooks/use-toast";
 import { StatusBadge } from "@/components/StatusBadge";
-import { getOrder, updateOrder } from "@/services/orders";
+import { getOrder, updateOrder, uploadOrderItemIcon } from "@/services/orders";
+import { getCustomer, uploadCustomerBodyImage } from "@/services/customers";
+import { resolvePublicUrl } from "@/services/api";
+import { FileImage, Loader2, Plus, Trash2 } from "lucide-react";
+import { OrderCustomizationDialog } from "@/components/OrderCustomizationDialog";
 
 type ItemDraft = {
   garment_type: string | null;
@@ -28,8 +34,45 @@ export default function OrderDetail() {
   const [fabricDraft, setFabricDraft] = useState("");
   const [trialDateDraft, setTrialDateDraft] = useState("");
   const [statusDraft, setStatusDraft] = useState<"pending" | "in_progress" | "trial" | "completed" | "delivered">("pending");
+  const [priceDraft, setPriceDraft] = useState("");
   const [notesDraft, setNotesDraft] = useState("");
   const [itemsDraft, setItemsDraft] = useState<ItemDraft[]>([]);
+  const fileInputRefs = useRef<Array<HTMLInputElement | null>>([]);
+  const bodyImageRefs = useRef<Record<string, HTMLInputElement | null>>({});
+  const [uploadingIndex, setUploadingIndex] = useState<number | null>(null);
+
+  const [customizationModalOpen, setCustomizationModalOpen] = useState(false);
+  const [selectedCustomizations, setSelectedCustomizations] = useState<Record<number, { priceModifier: number, note: string }>>({});
+
+  const updateItemField = (index: number, field: keyof ItemDraft, value: string | null) => {
+    setItemsDraft((prev) => prev.map((x, i) => (i === index ? { ...x, [field]: value } : x)));
+  };
+
+  const addItemRow = () => {
+    setItemsDraft((prev) => [...prev, { garment_type: null, measurement_id: null, icon_path: null, note: "", quantity: "1", price: "0" }]);
+  };
+
+  const removeItemRow = (index: number) => {
+    setItemsDraft((prev) => prev.filter((_, i) => i !== index));
+  };
+
+  const selectIconFile = (index: number) => {
+    fileInputRefs.current[index]?.click();
+  };
+
+  const onRowFileChange = async (index: number, file: File | null) => {
+    if (!file) return;
+    setUploadingIndex(index);
+    try {
+      const uploaded = await uploadOrderItemIcon({ blob: file, fileName: file.name });
+      updateItemField(index, "icon_path", uploaded.icon_path);
+      toast({ title: "Image uploaded" });
+    } catch (err: unknown) {
+      toast({ title: "Upload failed", variant: "destructive" });
+    } finally {
+      setUploadingIndex(null);
+    }
+  };
 
   const orderQuery = useQuery({
     queryKey: ["orders", "detail", orderId],
@@ -40,11 +83,58 @@ export default function OrderDetail() {
   const order = orderQuery.data;
   const items = useMemo(() => order?.items ?? [], [order?.items]);
 
+  const customerQuery = useQuery({
+    queryKey: ["customers", "detail", order?.customer_id],
+    queryFn: () => getCustomer(order!.customer_id),
+    enabled: !!order?.customer_id,
+  });
+
+  const bodyImageUploadMutation = useMutation({
+    mutationFn: async (params: { imageType: string; file: File }) =>
+      uploadCustomerBodyImage({
+        customerId: order!.customer_id,
+        imageType: params.imageType,
+        blob: params.file,
+        fileName: params.file.name,
+      }),
+    onSuccess: async () => {
+      await queryClient.invalidateQueries({ queryKey: ["customers", "detail", order?.customer_id] });
+      toast({ title: "Image uploaded", description: "Client body image uploaded successfully." });
+    },
+    onError: () => toast({ title: "Upload failed", variant: "destructive" }),
+  });
+
+  const imageTypes = [
+    { key: "full_body", label: "Full Photo" },
+    { key: "portrait", label: "Short Photo" },
+    { key: "front_body", label: "Front Body" },
+    { key: "side_body", label: "Side Body" },
+    { key: "shoulder", label: "Shoulder" },
+  ];
+
+  const bodyImagesByType = useMemo(() => {
+    const map = new Map<string, { id: number; path: string }>();
+    for (const img of customerQuery.data?.bodyImages ?? []) {
+      map.set(img.image_type, { id: img.id, path: img.image_path });
+    }
+    return map;
+  }, [customerQuery.data?.bodyImages]);
+
+  const openBodyImagePicker = (type: string) => {
+    bodyImageRefs.current[type]?.click();
+  };
+
+  const handleBodyImagePick = (type: string, file: File | null) => {
+    if (!file) return;
+    bodyImageUploadMutation.mutate({ imageType: type, file });
+  };
+
   const initDraft = useCallback(() => {
     if (!order) return;
     setFabricDraft(order.fabric ?? "");
     setTrialDateDraft(order.trial_date ?? "");
     setStatusDraft(order.status ?? "pending");
+    setPriceDraft(typeof order.items?.[0]?.price === "string" ? order.items[0].price : String(order.items?.[0]?.price ?? 0));
     setNotesDraft(order.notes ?? "");
     setItemsDraft(
       (order.items ?? []).map((it) => ({
@@ -52,10 +142,18 @@ export default function OrderDetail() {
         measurement_id: it.measurement_id ?? null,
         icon_path: it.icon_path ?? null,
         note: it.note ?? null,
-        quantity: String(it.quantity ?? 1),
-        price: typeof it.price === "string" ? it.price : String(it.price ?? 0),
+        quantity: String(1),
+        price: "0",
       })),
     );
+
+    const custMap: Record<number, { priceModifier: number, note: string }> = {};
+    if (order.customizations) {
+      order.customizations.forEach((c: any) => {
+        custMap[c.option_id] = { priceModifier: Number(c.price_modifier), note: c.note || "" };
+      });
+    }
+    setSelectedCustomizations(custMap);
   }, [order]);
 
   useEffect(() => {
@@ -64,37 +162,16 @@ export default function OrderDetail() {
     initDraft();
   }, [initDraft, isEditing, order]);
 
-  const total = useMemo(() => {
-    const arr: ItemDraft[] = isEditing
-      ? itemsDraft
-      : items.map((it) => ({
-          garment_type: it.garment_type ?? null,
-          measurement_id: it.measurement_id ?? null,
-          icon_path: it.icon_path ?? null,
-          note: it.note ?? null,
-          quantity: String(it.quantity ?? 0),
-          price: typeof it.price === "string" ? it.price : String(it.price ?? 0),
-        }));
-
-    return arr.reduce((sum, it) => {
-      const qty = Number(it.quantity ?? 0);
-      const price = Number(it.price ?? 0);
-      return sum + (Number.isFinite(qty) ? qty : 0) * (Number.isFinite(price) ? price : 0);
-    }, 0);
-  }, [isEditing, items, itemsDraft]);
-
   const saveMutation = useMutation({
     mutationFn: async () => {
-      const nextItems = itemsDraft.map((it) => {
-        const qty = Number(it.quantity);
-        const price = Number(it.price);
+      const nextItems = itemsDraft.map((it, i) => {
         return {
           garment_type: it.garment_type,
           measurement_id: it.measurement_id,
           icon_path: it.icon_path,
           note: it.note,
-          quantity: Number.isFinite(qty) ? qty : 1,
-          price: Number.isFinite(price) ? price : 0,
+          quantity: 1,
+          price: i === 0 ? Number(priceDraft) : 0,
         };
       });
 
@@ -104,6 +181,11 @@ export default function OrderDetail() {
         status: statusDraft,
         notes: notesDraft || null,
         items: nextItems,
+        customizations: Object.entries(selectedCustomizations).map(([optId, data]) => ({
+          option_id: Number(optId),
+          price_modifier: Number(data.priceModifier),
+          note: data.note || null,
+        })),
       });
     },
     onSuccess: async () => {
@@ -150,7 +232,7 @@ export default function OrderDetail() {
       />
 
       <div className="grid md:grid-cols-2 gap-4 sm:gap-6 mb-6">
-        <SectionCard title="Order Information">
+        <SectionCard title="Order Details">
           <div className="space-y-4">
             <div className="flex items-center justify-between flex-wrap gap-2">
               <EditableField label="Order Number" value={order.order_number} isEditing={false} onChange={() => {}} />
@@ -159,111 +241,222 @@ export default function OrderDetail() {
 
             <EditableField label="Customer" value={order.customer?.name ?? "—"} isEditing={false} onChange={() => {}} />
 
-            <div>
-              <p className="text-xs text-muted-foreground mb-1">Trial Date</p>
-              {isEditing ? (
-                <Input type="date" value={trialDateDraft} onChange={(e) => setTrialDateDraft(e.target.value)} className="text-sm" />
-              ) : (
-                <p className="text-sm font-medium text-foreground">
-                  {order.trial_date ? format(new Date(order.trial_date), "dd-MMM-yyyy") : "—"}
-                </p>
+            <div className="grid grid-cols-2 gap-4">
+              <EditableField
+                label="Status"
+                value={isEditing ? statusDraft : order.status}
+                isEditing={isEditing}
+                type="select"
+                options={[
+                  { value: "pending", label: "pending" },
+                  { value: "in_progress", label: "in_progress" },
+                  { value: "trial", label: "trial" },
+                  { value: "completed", label: "completed" },
+                  { value: "delivered", label: "delivered" },
+                ]}
+                onChange={(v) => setStatusDraft(v as typeof statusDraft)}
+              />
+              {(isEditing ? statusDraft === "trial" : order.status === "trial") && (
+                <div>
+                  <p className="text-xs text-muted-foreground mb-1">Trial Date</p>
+                  {isEditing ? (
+                    <Input type="date" value={trialDateDraft} onChange={(e) => setTrialDateDraft(e.target.value)} className="text-sm" />
+                  ) : (
+                    <p className="text-sm font-medium text-foreground">
+                      {order.trial_date ? format(new Date(order.trial_date), "dd-MMM-yyyy") : "—"}
+                    </p>
+                  )}
+                </div>
               )}
             </div>
 
-            <EditableField
-              label="Status"
-              value={isEditing ? statusDraft : order.status}
-              isEditing={isEditing}
-              type="select"
-              options={[
-                { value: "pending", label: "pending" },
-                { value: "in_progress", label: "in_progress" },
-                { value: "trial", label: "trial" },
-                { value: "completed", label: "completed" },
-                { value: "delivered", label: "delivered" },
-              ]}
-              onChange={(v) => setStatusDraft(v as typeof statusDraft)}
-            />
+            <p className="text-xs text-muted-foreground pt-2">
+              Order details are now kept simple and can be refined later.
+            </p>
+
+            <div className="space-y-2 rounded-xl border border-border p-3 sm:p-4">
+              {isEditing ? (
+                <>
+                  {itemsDraft.map((item, index) => (
+                    <div key={index} className="flex flex-col sm:flex-row gap-2 sm:items-center">
+                      <Button
+                        type="button"
+                        variant="outline"
+                        size="icon"
+                        onClick={() => selectIconFile(index)}
+                        className="h-10 w-10 shrink-0"
+                        title="Upload image"
+                      >
+                        {uploadingIndex === index ? (
+                          <Loader2 className="h-4 w-4 animate-spin" />
+                        ) : item.icon_path ? (
+                          <img src={resolvePublicUrl(item.icon_path) ?? ""} alt="Icon" className="h-full w-full rounded object-cover" />
+                        ) : (
+                          <FileImage className="h-4 w-4" />
+                        )}
+                      </Button>
+                      <input
+                        ref={(el) => {
+                          fileInputRefs.current[index] = el;
+                        }}
+                        type="file"
+                        accept="image/*"
+                        className="hidden"
+                        onChange={(e) => {
+                          const file = e.target.files?.[0] ?? null;
+                          onRowFileChange(index, file);
+                          e.currentTarget.value = "";
+                        }}
+                      />
+                      <Input
+                        placeholder="Note"
+                        value={item.note ?? ""}
+                        onChange={(e) => updateItemField(index, "note", e.target.value)}
+                        className="flex-1"
+                      />
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="icon"
+                        onClick={() => removeItemRow(index)}
+                        disabled={itemsDraft.length <= 1}
+                        className="h-10 w-10 shrink-0 text-destructive hover:text-destructive"
+                      >
+                        <Trash2 className="h-4 w-4" />
+                      </Button>
+                    </div>
+                  ))}
+                  <Button type="button" variant="outline" size="sm" onClick={addItemRow} className="w-full sm:w-auto">
+                    <Plus className="h-4 w-4 mr-1" /> Add Row
+                  </Button>
+                </>
+              ) : (
+                <>
+                  {items.length === 0 ? (
+                    <p className="text-sm text-muted-foreground">No items.</p>
+                  ) : (
+                    items.map((item, i) => (
+                      <div key={i} className="flex items-start gap-4 p-2 border border-border rounded-xl bg-muted/10">
+                        <div className="w-12 h-12 shrink-0 rounded-lg bg-muted/30 flex items-center justify-center overflow-hidden border border-border">
+                          {item.icon_path ? (
+                            <img src={resolvePublicUrl(item.icon_path) ?? ""} alt="Icon" className="w-full h-full object-cover" />
+                          ) : (
+                            <FileImage className="h-5 w-5 text-muted-foreground" />
+                          )}
+                        </div>
+                        <div className="min-w-0 flex-1">
+                          <p className="text-sm text-foreground">{item.note || "No note"}</p>
+                        </div>
+                      </div>
+                    ))
+                  )}
+                </>
+              )}
+            </div>
           </div>
         </SectionCard>
 
-        <SectionCard title="Fabric & Notes">
+        <SectionCard title="Fabric & Style">
           <div className="space-y-4">
-            <EditableField
-              label="Fabric"
-              value={isEditing ? fabricDraft : order.fabric ?? "—"}
-              isEditing={isEditing}
-              onChange={(v) => setFabricDraft(v)}
-            />
-            <EditableField
-              label="Notes"
-              value={isEditing ? notesDraft : order.notes ?? "No notes"}
-              isEditing={isEditing}
-              type="textarea"
-              onChange={(v) => setNotesDraft(v)}
-            />
+            <div>
+              <label className="text-xs text-muted-foreground mb-1 block">Fabric</label>
+              {isEditing ? (
+                 <Input value={fabricDraft} onChange={(e) => setFabricDraft(e.target.value)} />
+              ) : (
+                 <p className="text-sm font-medium">{order.fabric ?? "—"}</p>
+              )}
+            </div>
+            <div>
+              <label className="text-xs text-muted-foreground mb-1 block">Price ($)</label>
+              {isEditing ? (
+                 <Input type="number" value={priceDraft} onChange={(e) => setPriceDraft(e.target.value)} />
+              ) : (
+                 <p className="text-sm font-medium">${Number(order.items?.[0]?.price ?? 0).toFixed(2)}</p>
+              )}
+            </div>
+            <div>
+              <label className="text-xs text-muted-foreground mb-1 block">Notes</label>
+              {isEditing ? (
+                 <Textarea value={notesDraft} onChange={(e) => setNotesDraft(e.target.value)} rows={3} />
+              ) : (
+                 <p className="text-sm font-medium">{order.notes ?? "No notes"}</p>
+              )}
+            </div>
+            
+            <div className="pt-2 flex justify-end">
+              <button
+                type="button"
+                onClick={() => setCustomizationModalOpen(true)}
+                className="text-sm font-medium text-primary hover:underline flex items-center gap-1.5 transition-colors"
+              >
+                Advance Customisation
+                <span className="flex items-center justify-center w-4 h-4 rounded-full border border-primary text-[10px] font-bold">?</span>
+              </button>
+            </div>
           </div>
         </SectionCard>
       </div>
 
-      <SectionCard title="Items">
-        <div className="overflow-x-auto">
-          <table className="w-full mb-4">
-            <thead>
-              <tr className="border-b border-border">
-                <th className="text-left text-xs font-medium text-muted-foreground py-2">Qty</th>
-                <th className="text-right text-xs font-medium text-muted-foreground py-2">Price</th>
-              </tr>
-            </thead>
-            <tbody>
-              {(isEditing ? itemsDraft : items.map((it) => ({
-                    garment_type: it.garment_type ?? null,
-                    measurement_id: it.measurement_id ?? null,
-                    icon_path: it.icon_path ?? null,
-                    note: it.note ?? null,
-                    quantity: String(it.quantity ?? 1),
-                    price: typeof it.price === "string" ? it.price : String(it.price ?? 0),
-                  }))
-              ).map((item, i) => (
-                <tr key={i} className="border-b border-border last:border-0">
-                  <td className="text-sm py-2">
-                    {isEditing ? (
-                      <Input
-                        type="number"
-                        value={item.quantity}
-                        onChange={(e) => setItemsDraft((prev) => prev.map((x, idx) => (idx === i ? { ...x, quantity: e.target.value } : x)))}
-                        className="h-9 w-24"
-                      />
+      <SectionCard title="Add Images Section (Client Selfy Pics)">
+        <div className="space-y-3">
+          <p className="text-xs text-muted-foreground">Body Images</p>
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3">
+            {imageTypes.map((type) => {
+              const existing = bodyImagesByType.get(type.key);
+              const preview = resolvePublicUrl(existing?.path ?? null);
+              const isUploading = bodyImageUploadMutation.isPending && bodyImageUploadMutation.variables?.imageType === type.key;
+
+              return (
+                <div key={type.key} className="rounded-xl border border-border p-3 space-y-2">
+                  <p className="text-xs font-medium text-muted-foreground">{type.label}</p>
+                  <button
+                    type="button"
+                    onClick={() => openBodyImagePicker(type.key)}
+                    className="w-full h-28 rounded-lg border border-dashed border-border bg-muted/20 flex items-center justify-center overflow-hidden hover:bg-muted/40 transition-colors"
+                  >
+                    {isUploading ? (
+                      <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" />
+                    ) : preview ? (
+                      <img src={preview} alt={type.label} className="h-full w-full object-cover" />
                     ) : (
-                      item.quantity
-                    )}
-                  </td>
-                  <td className="text-sm py-2 text-right">
-                    {isEditing ? (
-                      <div className="flex justify-end">
-                        <Input
-                          type="number"
-                          value={item.price}
-                          onChange={(e) => setItemsDraft((prev) => prev.map((x, idx) => (idx === i ? { ...x, price: e.target.value } : x)))}
-                          className="h-9 w-28 text-right"
-                        />
+                      <div className="flex flex-col items-center gap-1 text-muted-foreground">
+                        <FileImage className="h-4 w-4" />
+                        <span className="text-[11px]">Upload</span>
                       </div>
-                    ) : (
-                      `$${(Number(item.price) * Number(item.quantity)).toFixed(2)}`
                     )}
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-        <div className="flex justify-end border-t border-border pt-3">
-          <div className="text-right">
-            <p className="text-sm text-muted-foreground">Total</p>
-            <p className="text-xl font-bold">${total.toFixed(2)}</p>
+                  </button>
+                  <input
+                    ref={(el) => {
+                      bodyImageRefs.current[type.key] = el;
+                    }}
+                    type="file"
+                    accept="image/*"
+                    className="hidden"
+                    onChange={(e) => {
+                      const file = e.target.files?.[0] ?? null;
+                      handleBodyImagePick(type.key, file);
+                      e.currentTarget.value = "";
+                    }}
+                  />
+                </div>
+              );
+            })}
           </div>
         </div>
       </SectionCard>
+
+      <OrderCustomizationDialog
+        open={customizationModalOpen}
+        onOpenChange={setCustomizationModalOpen}
+        selectedOptions={selectedCustomizations}
+        onSelectionChange={(s) => {
+          if (!isEditing) {
+            toast({ title: "Read-only mode", description: "Click Edit to change customisations.", variant: "destructive" });
+            return;
+          }
+          setSelectedCustomizations(s);
+        }}
+      />
     </div>
   );
 }

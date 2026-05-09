@@ -34,14 +34,14 @@ export default function PageHeader({
         {backTo && (
           <button
             type="button"
-            onClick={() => navigate(backTo)}
+            onClick={() => navigate(-1)}
             className="p-1.5 rounded-lg hover:bg-card transition-colors shrink-0 print:hidden"
           >
             <ArrowLeft className="h-5 w-5 text-muted-foreground" />
           </button>
         )}
         <div className="min-w-0">
-          <h1 className="text-xl sm:text-2xl font-bold text-foreground truncate">{title}</h1>
+          <h1 className="text-xl sm:text-2xl font-bold text-primary truncate">{title}</h1>
           {subtitle && <p className="text-sm text-muted-foreground truncate">{subtitle}</p>}
         </div>
       </div>

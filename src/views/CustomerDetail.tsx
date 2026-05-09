@@ -377,6 +377,29 @@ export default function CustomerDetail() {
               </div>
             </div>
           </SectionCard>
+
+          <SectionCard title="Loyalty Program">
+            <div className="space-y-4">
+              <div className="flex justify-between items-center">
+                <span className="text-sm text-muted-foreground">Points Balance</span>
+                <span className="font-bold text-lg text-primary">{customer.loyalty?.points ?? 0}</span>
+              </div>
+              <div className="flex justify-between items-center">
+                <span className="text-sm text-muted-foreground">Total Spent</span>
+                <span className="font-bold">${Number(customer.loyalty?.total_spent ?? 0).toFixed(2)}</span>
+              </div>
+              <div className="flex justify-between items-center">
+                <span className="text-sm text-muted-foreground">Last Visit</span>
+                <span className="font-medium">{customer.loyalty?.last_visit ? format(new Date(customer.loyalty.last_visit), "dd-MMM-yyyy") : "—"}</span>
+              </div>
+              {customer.vip_status ? (
+                <div className="pt-2 border-t border-border flex items-center justify-between">
+                  <span className="text-sm font-semibold">Status</span>
+                  <span className="bg-primary/10 text-primary text-xs px-2 py-1 rounded font-bold uppercase tracking-wider">VIP</span>
+                </div>
+              ) : null}
+            </div>
+          </SectionCard>
         </div>
 
         {/* Right column: tabs, quick actions under tab panel, then body images */}
@@ -600,7 +623,7 @@ export default function CustomerDetail() {
 
           <SectionCard title="Quick Actions">
             <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
-              <Button asChild variant="default" className="h-auto min-h-[4.5rem] flex-col gap-1.5 py-3 px-2">
+              <Button asChild variant="outline" className="h-auto min-h-[4.5rem] flex-col gap-1.5 py-3 px-2">
                 <Link to={`/appointments/new?customer_id=${customerId}`}>
                   <Calendar className="h-5 w-5 shrink-0" />
                   <span className="text-center text-[11px] font-semibold leading-tight">New Appointment</span>

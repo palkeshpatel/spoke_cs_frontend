@@ -12,6 +12,7 @@ import { toast } from "@/hooks/use-toast";
 import { createOrder, uploadOrderItemIcon } from "@/services/orders";
 import { resolvePublicUrl } from "@/services/api";
 import { getCustomer, uploadCustomerBodyImage } from "@/services/customers";
+import { OrderCustomizationDialog } from "@/components/OrderCustomizationDialog";
 
 type ItemDetailRow = {
   icon_path: string | null;
@@ -28,9 +29,14 @@ export default function OrderNew() {
   const [fabric, setFabric] = useState<string>("");
   const [price, setPrice] = useState<string>("");
   const [notes, setNotes] = useState<string>("");
+  const [status, setStatus] = useState<"pending" | "in_progress" | "trial" | "completed" | "delivered">("pending");
+  const [trialDate, setTrialDate] = useState<string>("");
   const [detailRows, setDetailRows] = useState<ItemDetailRow[]>([{ icon_path: null, note: "", isUploading: false }]);
   const fileInputRefs = useRef<Array<HTMLInputElement | null>>([]);
   const bodyImageRefs = useRef<Record<string, HTMLInputElement | null>>({});
+
+  const [customizationModalOpen, setCustomizationModalOpen] = useState(false);
+  const [selectedCustomizations, setSelectedCustomizations] = useState<Record<number, { priceModifier: number, note: string }>>({});
 
   const selectedCustomerId = customerId ? Number(customerId) : NaN;
 
@@ -194,12 +200,19 @@ export default function OrderNew() {
       customer_id: Number(customerId),
       fabric: fabric || null,
       notes: notes || null,
+      status: status,
+      trial_date: status === "trial" && trialDate ? trialDate : null,
       items: rows.map((row, index) => ({
         garment_type: null,
         quantity: 1,
         price: index === 0 && Number.isFinite(p) ? p : 0,
         icon_path: row.icon_path,
         note: row.note.trim() || null,
+      })),
+      customizations: Object.entries(selectedCustomizations).map(([optId, data]) => ({
+        option_id: Number(optId),
+        price_modifier: Number(data.priceModifier),
+        note: data.note || null,
       })),
     });
   };
@@ -224,6 +237,30 @@ export default function OrderNew() {
                 onChange={setCustomerId}
               />
             </div>
+            
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <label className="text-xs text-muted-foreground mb-1 block">Status</label>
+                <select
+                  value={status}
+                  onChange={(e) => setStatus(e.target.value as any)}
+                  className="flex h-10 w-full items-center justify-between rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                >
+                  <option value="pending">pending</option>
+                  <option value="in_progress">in_progress</option>
+                  <option value="trial">trial</option>
+                  <option value="completed">completed</option>
+                  <option value="delivered">delivered</option>
+                </select>
+              </div>
+              {status === "trial" && (
+                <div>
+                  <label className="text-xs text-muted-foreground mb-1 block">Trial Date</label>
+                  <Input type="date" value={trialDate} onChange={(e) => setTrialDate(e.target.value)} />
+                </div>
+              )}
+            </div>
+
             <p className="text-xs text-muted-foreground">
               Order details are now kept simple and can be refined later.
             </p>
@@ -322,6 +359,17 @@ export default function OrderNew() {
                 onChange={(e) => setNotes(e.target.value)}
               />
             </div>
+            
+            <div className="pt-2 flex justify-end">
+              <button
+                type="button"
+                onClick={() => setCustomizationModalOpen(true)}
+                className="text-sm font-medium text-primary hover:underline flex items-center gap-1.5 transition-colors"
+              >
+                Advance Customisation
+                <span className="flex items-center justify-center w-4 h-4 rounded-full border border-primary text-[10px] font-bold">?</span>
+              </button>
+            </div>
           </div>
         </SectionCard>
       </div>
@@ -382,6 +430,13 @@ export default function OrderNew() {
           {createMutation.isPending ? "Creating..." : "Create Order"}
         </Button>
       </div>
+
+      <OrderCustomizationDialog
+        open={customizationModalOpen}
+        onOpenChange={setCustomizationModalOpen}
+        selectedOptions={selectedCustomizations}
+        onSelectionChange={setSelectedCustomizations}
+      />
     </div>
   );
 }

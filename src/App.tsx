@@ -32,6 +32,7 @@ import StaffList from "@/views/StaffList";
 import StaffNew from "@/views/StaffNew";
 import RoleList from "@/views/RoleList";
 import RoleDetail from "@/views/RoleDetail";
+import CustomizationSettings from "@/views/CustomizationSettings";
 
 const queryClient = new QueryClient();
 
@@ -114,6 +115,7 @@ const App = () => (
               <Route path="/settings/roles" element={<RoleList />} />
               <Route path="/settings/roles/new" element={<RoleDetail />} />
               <Route path="/settings/roles/edit/:id" element={<RoleDetail />} />
+              <Route path="/settings/customizations" element={<CustomizationSettings />} />
               <Route path="/settings" element={<SettingsPage />} />
               <Route path="*" element={<NotFound />} />
             </Route>

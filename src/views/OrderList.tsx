@@ -65,6 +65,11 @@ export default function OrderList() {
                 <LayoutGrid className="h-4 w-4" />
               </ToggleGroupItem>
             </ToggleGroup>
+            <Button asChild size="sm" variant="outline">
+              <Link to="/settings/customizations">
+                Customisations
+              </Link>
+            </Button>
             <Button asChild size="sm">
               <Link to="/orders/new">
                 <Plus className="h-4 w-4 mr-1" /> Add Order
