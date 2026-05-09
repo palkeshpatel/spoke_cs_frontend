@@ -130,20 +130,10 @@ export async function uploadOrderItemIconChunk(params: { uploadId: string; chunk
   form.append("chunk_index", String(params.chunkIndex));
   form.append("chunk", params.chunk, `chunk-${params.chunkIndex}.part`);
 
-  const url = `${apiBaseUrl()}/api/orders/item-icon/upload/chunk`;
-  const token = getAuthToken();
-  const res = await fetch(url, {
+  return apiRequest("/api/orders/item-icon/upload/chunk", {
     method: "POST",
-    headers: token ? { Authorization: `Bearer ${token}` } : undefined,
     body: form,
   });
-
-  if (!res.ok) {
-    const data = await res.json().catch(() => null);
-    const message =
-      typeof data === "object" && data !== null && "message" in data ? String((data as { message?: unknown }).message ?? "") : "";
-    throw { message: message || "Chunk upload failed", status: res.status, details: data } as const;
-  }
 }
 
 export async function completeOrderItemIconUpload(params: { uploadId: string }) {

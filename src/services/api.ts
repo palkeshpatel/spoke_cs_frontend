@@ -67,7 +67,7 @@ export async function apiRequest<TResponse>(
     Accept: "application/json",
   };
 
-  if (options?.body !== undefined) {
+  if (options?.body !== undefined && !(options.body instanceof FormData)) {
     headers["Content-Type"] = "application/json";
   }
 
@@ -79,7 +79,9 @@ export async function apiRequest<TResponse>(
   const res = await fetch(url, {
     method,
     headers,
-    body: options?.body !== undefined ? JSON.stringify(options.body) : undefined,
+    body: options?.body !== undefined 
+      ? (options.body instanceof FormData ? options.body : JSON.stringify(options.body)) 
+      : undefined,
     signal: options?.signal,
   });
 

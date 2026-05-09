@@ -131,20 +131,10 @@ export async function uploadCustomerBodyImageChunk(params: {
   form.append("chunk_index", String(params.chunkIndex));
   form.append("chunk", params.chunk, `chunk-${params.chunkIndex}.part`);
 
-  const url = `${apiBaseUrl()}/api/customers/${params.customerId}/body-images/upload/chunk`;
-  const token = getAuthToken();
-  const res = await fetch(url, {
+  return apiRequest(`/api/customers/${params.customerId}/body-images/upload/chunk`, {
     method: "POST",
-    headers: token ? { Authorization: `Bearer ${token}` } : undefined,
     body: form,
   });
-
-  if (!res.ok) {
-    const data = await res.json().catch(() => null);
-    const message =
-      typeof data === "object" && data !== null && "message" in data ? String((data as { message?: unknown }).message ?? "") : "";
-    throw { message: message || "Chunk upload failed", status: res.status, details: data } as const;
-  }
 }
 
 export async function completeCustomerBodyImageUpload(params: { customerId: number; uploadId: string }) {
@@ -181,29 +171,11 @@ export async function deleteCustomerBodyImage(params: { customerId: number; imag
 export async function uploadCustomerProfileImage(params: { customerId: number; blob: Blob; fileName?: string }) {
   const form = new FormData();
   form.append("image", params.blob, params.fileName ?? "profile.jpg");
-  const url = `${apiBaseUrl()}/api/customers/${params.customerId}/profile-image`;
-  const token = getAuthToken();
-  const res = await fetch(url, {
+  
+  const res = await apiRequest<CustomerApiResponse>(`/api/customers/${params.customerId}/profile-image`, {
     method: "POST",
-    headers: token ? { Authorization: `Bearer ${token}`, Accept: "application/json" } : { Accept: "application/json" },
     body: form,
   });
-
-  const contentType = res.headers.get("content-type") ?? "";
-  const isJson = contentType.includes("application/json");
-  const data = isJson ? await res.json().catch(() => null) : await res.text().catch(() => null);
-
-  if (!res.ok) {
-    if (res.status === 401 && getAuthToken()) {
-      clearAuthToken();
-      if (typeof window !== "undefined" && !window.location.pathname.startsWith("/login")) {
-        window.location.assign("/login");
-      }
-    }
-    const message =
-      typeof data === "object" && data !== null && "message" in data ? String((data as { message?: unknown }).message ?? "") : "";
-    throw { message: message || "Profile image upload failed", status: res.status, details: data } as const;
-  }
-
-  return normalizeCustomer(data as CustomerApiResponse);
+  
+  return normalizeCustomer(res);
 }
