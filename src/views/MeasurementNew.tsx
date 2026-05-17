@@ -32,6 +32,14 @@ type GarmentDraft = {
 };
 const GARMENT_TYPES: GarmentType[] = ["Body", "Suit", "Shirt", "Pants"];
 
+const formatDateString = (str: string | null | undefined): string => {
+  if (!str) return "";
+  if (str.includes("T")) {
+    return str.split("T")[0];
+  }
+  return str.substring(0, 10);
+};
+
 export default function MeasurementNew() {
   const navigate = useNavigate();
   const location = useLocation();
@@ -48,19 +56,7 @@ export default function MeasurementNew() {
   const [deliveryDate, setDeliveryDate] = useState<string>("");
   const [valuesDraft, setValuesDraft] = useState<Record<number, string>>({});
   const [isEditing, setIsEditing] = useState<boolean>(false);
-  const [draftByGarment, setDraftByGarment] = useState<
-    Partial<Record<GarmentType, GarmentDraft>>
-  >({});
 
-  const buildCurrentGarmentObject = () => {
-    const garmentObj: Record<string, string | null> = {};
-    for (const f of fields) {
-      const raw = valuesDraft[f.id] ?? "";
-      const clean = raw.trim();
-      garmentObj[f.field_name] = clean === "" ? null : clean;
-    }
-    return garmentObj;
-  };
 
   useEffect(() => {
     if (isEditMode) return;
@@ -159,26 +155,47 @@ export default function MeasurementNew() {
     enabled: !!customerId,
   });
 
-  const fieldsQuery = useQuery({
-    queryKey: ["measurement-fields", garmentType],
-    queryFn: () => listMeasurementFields(garmentType),
+  const allFieldsQuery = useQuery({
+    queryKey: ["measurement-fields-all"],
+    queryFn: () => listMeasurementFields(),
   });
 
-  const fields = useMemo(() => fieldsQuery.data ?? [], [fieldsQuery.data]);
+  const allFields = useMemo(() => allFieldsQuery.data ?? [], [allFieldsQuery.data]);
+
+  const fieldsByGarment = useMemo(() => {
+    const groups: Record<string, typeof allFields> = {
+      Body: [],
+      Suit: [],
+      Shirt: [],
+      Pants: [],
+    };
+    for (const f of allFields) {
+      if (groups[f.garment_type]) {
+        groups[f.garment_type].push(f);
+      }
+    }
+    return groups;
+  }, [allFields]);
+
+  const buildMeasurementJson = () => {
+    const json: Record<string, Record<string, string | null>> = {
+      Body: {},
+      Suit: {},
+      Shirt: {},
+      Pants: {},
+    };
+    for (const f of allFields) {
+      const raw = valuesDraft[f.id] ?? "";
+      const clean = raw.trim();
+      if (!json[f.garment_type]) {
+        json[f.garment_type] = {};
+      }
+      json[f.garment_type][f.field_name] = clean === "" ? null : clean;
+    }
+    return json;
+  };
 
   const handleGarmentTypeChange = (v: string) => {
-    const currentKey = garmentType as GarmentType;
-    setDraftByGarment((prev) => ({
-      ...prev,
-      [currentKey]: {
-        takenBy,
-        notes,
-        trialDate,
-        deliveryDate,
-        valuesDraft: { ...valuesDraft },
-        measurementJson: buildCurrentGarmentObject(),
-      },
-    }));
     setGarmentType(v);
   };
 
@@ -194,23 +211,15 @@ export default function MeasurementNew() {
     if (!customerId) return measurement ?? null;
     const rows = allMeasurementsQuery.data?.data;
     if (!rows) {
-      if (
-        measurement &&
-        measurement.customer_id === Number(customerId) &&
-        measurement.garment_type.toLowerCase() === garmentType.toLowerCase()
-      ) {
+      if (measurement && measurement.customer_id === Number(customerId)) {
         return measurement;
       }
       return null;
     }
     return (
-      rows.find(
-        (m) =>
-          m.customer_id === Number(customerId) &&
-          m.garment_type.toLowerCase() === garmentType.toLowerCase(),
-      ) ?? null
+      rows.find((m) => m.customer_id === Number(customerId)) ?? null
     );
-  }, [allMeasurementsQuery.data, customerId, garmentType, isEditMode, measurement]);
+  }, [allMeasurementsQuery.data, customerId, isEditMode, measurement]);
 
   useEffect(() => {
     if (!isEditMode) {
@@ -225,16 +234,6 @@ export default function MeasurementNew() {
   useEffect(() => {
     if (!isEditMode) return;
     if (!customerId) return;
-    const draft = draftByGarment[garmentType as GarmentType];
-    if (draft) {
-      setTakenBy(draft.takenBy);
-      setNotes(draft.notes);
-      setTrialDate(draft.trialDate);
-      setDeliveryDate(draft.deliveryDate);
-      setValuesDraft(draft.valuesDraft);
-      return;
-    }
-
     if (!currentGarmentMeasurement) {
       setTakenBy("__none__");
       setNotes("");
@@ -250,54 +249,40 @@ export default function MeasurementNew() {
         : "__none__",
     );
     setNotes(currentGarmentMeasurement.notes ?? "");
-    setTrialDate(currentGarmentMeasurement.trial_date ?? "");
-    setDeliveryDate(currentGarmentMeasurement.delivery_date ?? "");
-  }, [
-    currentGarmentMeasurement,
-    customerId,
-    draftByGarment,
-    garmentType,
-    isEditMode,
-  ]);
+    setTrialDate(formatDateString(currentGarmentMeasurement.trial_date));
+    setDeliveryDate(formatDateString(currentGarmentMeasurement.delivery_date));
+  }, [currentGarmentMeasurement, customerId, isEditMode]);
 
   useEffect(() => {
     if (!isEditMode) return;
     if (!customerId) return;
-    if (draftByGarment[garmentType as GarmentType]) return;
-    if (fields.length === 0) return;
+    if (allFields.length === 0) return;
+    if (!currentGarmentMeasurement) return;
+
     const next: Record<number, string> = {};
     const valuesByFieldId = new Map<number, string>();
-    for (const v of currentGarmentMeasurement?.values ?? []) {
+    for (const v of currentGarmentMeasurement.values ?? []) {
       if (typeof v.field_id !== "number") continue;
       if (v.value === null || v.value === undefined) continue;
       valuesByFieldId.set(v.field_id, String(v.value));
     }
-    for (const f of fields) {
+
+    for (const f of allFields) {
       const direct = valuesByFieldId.get(f.id);
       if (direct !== undefined) {
         next[f.id] = direct;
         continue;
       }
-      const fromJson =
-        currentGarmentMeasurement?.measurement_json?.[garmentType]?.[f.field_name];
-      next[f.id] =
-        fromJson === null || fromJson === undefined ? "" : String(fromJson);
+      const fromJson = currentGarmentMeasurement.measurement_json?.[f.garment_type]?.[f.field_name];
+      next[f.id] = fromJson === null || fromJson === undefined ? "" : String(fromJson);
     }
     setValuesDraft(next);
-  }, [
-    currentGarmentMeasurement,
-    customerId,
-    draftByGarment,
-    fields,
-    garmentType,
-    isEditMode,
-  ]);
+  }, [currentGarmentMeasurement, customerId, allFields, isEditMode]);
 
   const createMutation = useMutation({
     mutationFn: createMeasurement,
     onSuccess: async (created) => {
       await queryClient.invalidateQueries({ queryKey: ["measurements"] });
-      setDraftByGarment({});
       toast({
         title: "Measurement created",
         description: `Measurement #${created.id} created.`,
@@ -324,11 +309,6 @@ export default function MeasurementNew() {
       await queryClient.invalidateQueries({ queryKey: ["measurements"] });
       await queryClient.invalidateQueries({
         queryKey: ["measurements", "detail", measurementId],
-      });
-      setDraftByGarment((prev) => {
-        const next = { ...prev };
-        delete next[garmentType as GarmentType];
-        return next;
       });
       toast({ title: "Saved", description: "Measurement updated." });
       setIsEditing(false);
@@ -374,12 +354,6 @@ export default function MeasurementNew() {
       return;
     }
 
-    const mergedJson: Record<string, Record<string, string | null>> = {};
-    for (const [g, draft] of Object.entries(draftByGarment) as [GarmentType, GarmentDraft][]) {
-      mergedJson[g] = draft.measurementJson;
-    }
-    mergedJson[garmentType] = buildCurrentGarmentObject();
-
     createMutation.mutate({
       customer_id: Number(customerId),
       garment_type: garmentType,
@@ -387,7 +361,7 @@ export default function MeasurementNew() {
       notes: notes || null,
       trial_date: trialDate || null,
       delivery_date: deliveryDate || null,
-      measurement_json: mergedJson,
+      measurement_json: buildMeasurementJson(),
     });
   };
 
@@ -476,19 +450,8 @@ export default function MeasurementNew() {
 
   const canEdit = !isEditMode || isEditing;
   const mergedMeasurementJson = useMemo(() => {
-    const baseJson =
-      measurement?.measurement_json && typeof measurement.measurement_json === "object"
-        ? (measurement.measurement_json as Record<string, Record<string, string | null>>)
-        : {};
-    const mergedJson: Record<string, Record<string, string | null>> = { ...baseJson };
-    for (const [g, draft] of Object.entries(draftByGarment) as [GarmentType, GarmentDraft][]) {
-      mergedJson[g] = draft.measurementJson;
-    }
-    if (isEditMode) {
-      mergedJson[garmentType] = buildCurrentGarmentObject();
-    }
-    return mergedJson;
-  }, [draftByGarment, garmentType, isEditMode, measurement?.measurement_json, fields, valuesDraft]);
+    return buildMeasurementJson();
+  }, [allFields, valuesDraft]);
 
   const printSections = useMemo(
     () =>
@@ -542,7 +505,6 @@ export default function MeasurementNew() {
               </Button>
             }
             onCancel={() => {
-              setDraftByGarment({});
               if (!currentGarmentMeasurement) {
                 setTakenBy("__none__");
                 setNotes("");
@@ -558,8 +520,8 @@ export default function MeasurementNew() {
                   : "__none__",
               );
               setNotes(currentGarmentMeasurement.notes ?? "");
-              setTrialDate(currentGarmentMeasurement.trial_date ?? "");
-              setDeliveryDate(currentGarmentMeasurement.delivery_date ?? "");
+              setTrialDate(formatDateString(currentGarmentMeasurement.trial_date));
+              setDeliveryDate(formatDateString(currentGarmentMeasurement.delivery_date));
               const next: Record<number, string> = {};
               const valuesByFieldId = new Map<number, string>();
               for (const v of currentGarmentMeasurement.values ?? []) {
@@ -567,20 +529,14 @@ export default function MeasurementNew() {
                 if (v.value === null || v.value === undefined) continue;
                 valuesByFieldId.set(v.field_id, String(v.value));
               }
-              for (const f of fields) {
+              for (const f of allFields) {
                 const direct = valuesByFieldId.get(f.id);
                 if (direct !== undefined) {
                   next[f.id] = direct;
                   continue;
                 }
-                const fromJson =
-                  currentGarmentMeasurement?.measurement_json?.[garmentType]?.[
-                    f.field_name
-                  ];
-                next[f.id] =
-                  fromJson === null || fromJson === undefined
-                    ? ""
-                    : String(fromJson);
+                const fromJson = currentGarmentMeasurement?.measurement_json?.[f.garment_type]?.[f.field_name];
+                next[f.id] = fromJson === null || fromJson === undefined ? "" : String(fromJson);
               }
               setValuesDraft(next);
               setIsEditing(false);
@@ -603,18 +559,6 @@ export default function MeasurementNew() {
                 return;
               }
 
-              const baseJson =
-                measurement?.measurement_json && typeof measurement.measurement_json === "object"
-                  ? { ...measurement.measurement_json }
-                  : {};
-              const mergedJson: Record<string, Record<string, string | null>> = {
-                ...baseJson,
-              };
-              for (const [g, draft] of Object.entries(draftByGarment) as [GarmentType, GarmentDraft][]) {
-                mergedJson[g] = draft.measurementJson;
-              }
-              mergedJson[garmentType] = buildCurrentGarmentObject();
-
               const payload = {
                 customer_id: Number(customerId),
                 garment_type: garmentType,
@@ -622,7 +566,7 @@ export default function MeasurementNew() {
                 notes: notes || null,
                 trial_date: trialDate || null,
                 delivery_date: deliveryDate || null,
-                measurement_json: mergedJson,
+                measurement_json: buildMeasurementJson(),
               };
 
               if (!currentGarmentMeasurement) {
@@ -747,33 +691,70 @@ export default function MeasurementNew() {
               </TabsList>
             </Tabs>
           </div>
-          {fieldsQuery.isLoading ? (
+          {allFieldsQuery.isLoading ? (
             <div className="text-sm text-muted-foreground">Loading fields...</div>
-          ) : fields.length === 0 ? (
+          ) : allFields.length === 0 ? (
             <div className="text-sm text-muted-foreground">
-              No fields configured for {garmentType}
+              No fields configured
             </div>
           ) : (
-            <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
-              {fields.map((f) => (
-                <div key={f.id} className="space-y-1">
-                  <div className="text-xs text-muted-foreground">
-                    {f.field_name}
-                  </div>
-                  <Input
-                    type="number"
-                    value={valuesDraft[f.id] ?? ""}
-                    onChange={(e) =>
-                      setValuesDraft((prev) => ({
-                        ...prev,
-                        [f.id]: e.target.value,
-                      }))
-                    }
-                    placeholder={f.unit}
-                    disabled={!canEdit}
-                  />
+            <div className="space-y-6">
+              {garmentType === "Body" ? (
+                (Object.keys(fieldsByGarment) as GarmentType[]).map((g) => {
+                  const grpFields = fieldsByGarment[g] ?? [];
+                  if (grpFields.length === 0) return null;
+                  return (
+                    <div key={g} className="space-y-3">
+                      <h3 className="text-sm font-semibold border-b border-border pb-1 text-primary">
+                        {g === "Body" ? "Body Measurements" : `${g} Details`}
+                      </h3>
+                      <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
+                        {grpFields.map((f) => (
+                          <div key={f.id} className="space-y-1">
+                            <div className="text-xs text-muted-foreground">
+                              {f.field_name}
+                            </div>
+                            <Input
+                              type="number"
+                              value={valuesDraft[f.id] ?? ""}
+                              onChange={(e) =>
+                                setValuesDraft((prev) => ({
+                                  ...prev,
+                                  [f.id]: e.target.value,
+                                }))
+                              }
+                              placeholder={f.unit}
+                              disabled={!canEdit}
+                            />
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  );
+                })
+              ) : (
+                <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
+                  {(fieldsByGarment[garmentType as GarmentType] ?? []).map((f) => (
+                    <div key={f.id} className="space-y-1">
+                      <div className="text-xs text-muted-foreground">
+                        {f.field_name}
+                      </div>
+                      <Input
+                        type="number"
+                        value={valuesDraft[f.id] ?? ""}
+                        onChange={(e) =>
+                          setValuesDraft((prev) => ({
+                            ...prev,
+                            [f.id]: e.target.value,
+                          }))
+                        }
+                        placeholder={f.unit}
+                        disabled={!canEdit}
+                      />
+                    </div>
+                  ))}
                 </div>
-              ))}
+              )}
             </div>
           )}
         </SectionCard>
