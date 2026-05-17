@@ -1,6 +1,6 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState, useRef } from "react";
 import { format } from "date-fns";
-import { Copy, Printer } from "lucide-react";
+import { Copy, Printer, FileImage, Loader2 } from "lucide-react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useLocation, useNavigate, useParams } from "react-router-dom";
 import PageHeader from "@/components/PageHeader";
@@ -11,7 +11,8 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { toast } from "@/hooks/use-toast";
-import { listCustomers } from "@/services/customers";
+import { listCustomers, getCustomer, uploadCustomerBodyImage } from "@/services/customers";
+import { resolvePublicUrl } from "@/services/api";
 import {
   createMeasurement,
   getMeasurement,
@@ -72,6 +73,78 @@ export default function MeasurementNew() {
       setValuesDraft({});
     }
   }, [isEditMode, location.search]);
+
+  const bodyImageRefs = useRef<Record<string, HTMLInputElement | null>>({});
+
+  const selectedCustomerId = customerId ? Number(customerId) : NaN;
+
+  const customerQuery = useQuery({
+    queryKey: ["customers", "detail", selectedCustomerId],
+    queryFn: () => getCustomer(selectedCustomerId),
+    enabled: Number.isFinite(selectedCustomerId),
+  });
+
+  const bodyImageUploadMutation = useMutation({
+    mutationFn: async (params: { imageType: string; file: File }) =>
+      uploadCustomerBodyImage({
+        customerId: selectedCustomerId,
+        imageType: params.imageType,
+        blob: params.file,
+        fileName: params.file.name,
+      }),
+    onSuccess: async () => {
+      await queryClient.invalidateQueries({ queryKey: ["customers", "detail", selectedCustomerId] });
+      toast({
+        title: "Image uploaded",
+        description: "Client body image uploaded successfully.",
+      });
+    },
+    onError: (err: unknown) => {
+      const message =
+        typeof err === "object" && err !== null && "message" in err
+          ? String((err as { message?: unknown }).message ?? "")
+          : "";
+      toast({
+        title: "Upload failed",
+        description: message || "Unable to upload body image.",
+        variant: "destructive",
+      });
+    },
+  });
+
+  const imageTypes = [
+    { key: "full_body", label: "Full Photo" },
+    { key: "portrait", label: "Short Photo" },
+    { key: "front_body", label: "Front Body" },
+    { key: "side_body", label: "Side Body" },
+    { key: "shoulder", label: "Shoulder" },
+    { key: "back", label: "Back (Body Back)" },
+  ];
+
+  const bodyImagesByType = useMemo(() => {
+    const map = new Map<string, { id: number; path: string }>();
+    for (const img of customerQuery.data?.bodyImages ?? []) {
+      map.set(img.image_type, { id: img.id, path: img.image_path });
+    }
+    return map;
+  }, [customerQuery.data?.bodyImages]);
+
+  const openBodyImagePicker = (type: string) => {
+    if (!Number.isFinite(selectedCustomerId)) {
+      toast({
+        title: "Select customer first",
+        description: "Please select customer before uploading images.",
+        variant: "destructive",
+      });
+      return;
+    }
+    bodyImageRefs.current[type]?.click();
+  };
+
+  const handleBodyImagePick = (type: string, file: File | null) => {
+    if (!file) return;
+    bodyImageUploadMutation.mutate({ imageType: type, file });
+  };
 
   // Customers query — shared cache key with CustomerSelectWithAdd, no duplicate API call
   const customersQuery = useQuery({
@@ -703,6 +776,54 @@ export default function MeasurementNew() {
               ))}
             </div>
           )}
+        </SectionCard>
+
+        <SectionCard title="Add Images Section (Client Selfy Pics)" className="mb-6">
+          <div className="space-y-3">
+            <p className="text-xs text-muted-foreground">Body Images</p>
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-6 gap-3">
+              {imageTypes.map((type) => {
+                const existing = bodyImagesByType.get(type.key);
+                const preview = resolvePublicUrl(existing?.path ?? null);
+                const isUploading = bodyImageUploadMutation.isPending && bodyImageUploadMutation.variables?.imageType === type.key;
+
+                return (
+                  <div key={type.key} className="rounded-xl border border-border p-3 space-y-2">
+                    <p className="text-xs font-medium text-muted-foreground">{type.label}</p>
+                    <button
+                      type="button"
+                      onClick={() => openBodyImagePicker(type.key)}
+                      className="w-full h-28 rounded-lg border border-dashed border-border bg-muted/20 flex items-center justify-center overflow-hidden hover:bg-muted/40 transition-colors"
+                    >
+                      {isUploading ? (
+                        <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" />
+                      ) : preview ? (
+                        <img src={preview} alt={type.label} className="h-full w-full object-cover" />
+                      ) : (
+                        <div className="flex flex-col items-center gap-1 text-muted-foreground">
+                          <FileImage className="h-4 w-4" />
+                          <span className="text-[11px]">Upload</span>
+                        </div>
+                      )}
+                    </button>
+                    <input
+                      ref={(el) => {
+                        bodyImageRefs.current[type.key] = el;
+                      }}
+                      type="file"
+                      accept="image/*"
+                      className="hidden"
+                      onChange={(e) => {
+                        const file = e.target.files?.[0] ?? null;
+                        handleBodyImagePick(type.key, file);
+                        e.currentTarget.value = "";
+                      }}
+                    />
+                  </div>
+                );
+              })}
+            </div>
+          </div>
         </SectionCard>
 
         {!isEditMode ? (
