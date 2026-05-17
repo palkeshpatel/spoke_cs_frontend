@@ -125,11 +125,15 @@ export default function CustomerSelectWithAdd({
       toast({ title: "Name required", description: "Enter the customer's name.", variant: "destructive" });
       return;
     }
-    if (!isValidEmail(newEmail)) {
+    if (newEmail && !isValidEmail(newEmail)) {
       toast({ title: "Valid email required", description: "Enter a valid email address.", variant: "destructive" });
       return;
     }
-    if (existingByEmail) {
+    if (!newPhone.trim()) {
+      toast({ title: "Phone required", description: "Enter a phone number.", variant: "destructive" });
+      return;
+    }
+    if (newEmail && existingByEmail) {
       toast({ title: "Email already exists", description: "Select the existing customer instead.", variant: "destructive" });
       return;
     }
@@ -177,7 +181,7 @@ export default function CustomerSelectWithAdd({
           <div className="grid grid-cols-2 gap-2">
             <div>
               <label className="text-xs font-medium text-muted-foreground mb-1 block">
-                Email <span className="text-destructive">*</span>
+                Email
               </label>
               <Input
                 type="email"
@@ -189,7 +193,9 @@ export default function CustomerSelectWithAdd({
               />
             </div>
             <div>
-              <label className="text-xs font-medium text-muted-foreground mb-1 block">Phone</label>
+              <label className="text-xs font-medium text-muted-foreground mb-1 block">
+                Phone <span className="text-destructive">*</span>
+              </label>
               <Input
                 type="tel"
                 value={newPhone}

@@ -283,6 +283,24 @@ export default function MeasurementNew() {
       return;
     }
 
+    if (!trialDate) {
+      toast({
+        title: "Trial Date required",
+        description: "Please select a trial date.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    if (!deliveryDate) {
+      toast({
+        title: "Delivery Date required",
+        description: "Please select a delivery date.",
+        variant: "destructive",
+      });
+      return;
+    }
+
     const mergedJson: Record<string, Record<string, string | null>> = {};
     for (const [g, draft] of Object.entries(draftByGarment) as [GarmentType, GarmentDraft][]) {
       mergedJson[g] = draft.measurementJson;
@@ -495,6 +513,23 @@ export default function MeasurementNew() {
               setIsEditing(false);
             }}
             onSave={() => {
+              if (!trialDate) {
+                toast({
+                  title: "Trial Date required",
+                  description: "Please select a trial date.",
+                  variant: "destructive",
+                });
+                return;
+              }
+              if (!deliveryDate) {
+                toast({
+                  title: "Delivery Date required",
+                  description: "Please select a delivery date.",
+                  variant: "destructive",
+                });
+                return;
+              }
+
               const baseJson =
                 measurement?.measurement_json && typeof measurement.measurement_json === "object"
                   ? { ...measurement.measurement_json }
@@ -566,7 +601,7 @@ export default function MeasurementNew() {
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <div>
                   <label className="text-xs text-muted-foreground mb-1 block">
-                    Trial Date
+                    Trial Date *
                   </label>
                   <Input
                     type="date"
@@ -577,7 +612,7 @@ export default function MeasurementNew() {
                 </div>
                 <div>
                   <label className="text-xs text-muted-foreground mb-1 block">
-                    Delivery Date
+                    Delivery Date *
                   </label>
                   <Input
                     type="date"

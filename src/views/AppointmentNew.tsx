@@ -109,6 +109,15 @@ export default function AppointmentNew() {
       return;
     }
 
+    if (!appointmentTime) {
+      toast({
+        title: "Time required",
+        description: "Please select a time.",
+        variant: "destructive",
+      });
+      return;
+    }
+
     const time = appointmentTime ? `${appointmentTime}:00` : null;
     createMutation.mutate({
       customer_id: Number(customerId),
@@ -219,7 +228,7 @@ export default function AppointmentNew() {
               </div>
               <div>
                 <label className="text-xs text-muted-foreground mb-1 block">
-                  Time
+                  Time *
                 </label>
                 <Input
                   type="time"
