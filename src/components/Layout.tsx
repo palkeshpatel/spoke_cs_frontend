@@ -40,6 +40,7 @@ export default function Layout() {
     { path: '/', label: 'Dashboard', icon: LayoutDashboard },
     { path: '/customers', label: 'Customers', icon: Users, permission: 'manage_customers' },
     { path: '/appointments', label: 'Appointments', icon: Calendar, permission: 'manage_appointments' },
+    { path: '/calendar', label: 'Calendar', icon: Calendar, permission: 'manage_appointments' },
     { path: '/measurements', label: 'Measurements', icon: Ruler, permission: 'manage_measurements' },
     { path: '/orders', label: 'Orders', icon: Package, permission: 'manage_orders' },
     { path: '/billing', label: 'Billing', icon: Receipt, permission: 'manage_billing' }, 

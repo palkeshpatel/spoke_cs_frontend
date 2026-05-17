@@ -25,6 +25,11 @@ export default function StaffNew() {
     phone: "",
     dob: "",
     anniversary_date: "",
+    bank_account_details: "",
+    pan_card: "",
+    adhar_card: "",
+    salary_amount: "",
+    salary_date_range: "",
     profile_photo: null as File | null,
     profile_photo_url: "" as string,
   });
@@ -51,6 +56,11 @@ export default function StaffNew() {
         phone: staffData.phone || "",
         dob: staffData.dob || "",
         anniversary_date: staffData.anniversary_date || "",
+        bank_account_details: staffData.bank_account_details || "",
+        pan_card: staffData.pan_card || "",
+        adhar_card: staffData.adhar_card || "",
+        salary_amount: staffData.salary_amount || "",
+        salary_date_range: staffData.salary_date_range || "",
         profile_photo: null,
         profile_photo_url: staffData.profile_photo || "",
       });
@@ -252,6 +262,37 @@ export default function StaffNew() {
             </div>
           </div>
         </div>
+
+        <SectionCard title="Additional Details" className="mt-6">
+          <div className="grid md:grid-cols-2 gap-4 sm:gap-6">
+            <div className="space-y-4">
+              <div>
+                <label className="text-xs font-bold text-muted-foreground mb-1.5 block uppercase tracking-wider">Bank Account Details</label>
+                <Input disabled={isAdminStaff} value={formData.bank_account_details} onChange={(e) => setFormData({ ...formData, bank_account_details: e.target.value })} placeholder="Bank Name, Account No, IFSC..." className="h-10" />
+              </div>
+              <div>
+                <label className="text-xs font-bold text-muted-foreground mb-1.5 block uppercase tracking-wider">PAN Card</label>
+                <Input disabled={isAdminStaff} value={formData.pan_card} onChange={(e) => setFormData({ ...formData, pan_card: e.target.value })} placeholder="ABCDE1234F" className="h-10" />
+              </div>
+            </div>
+            <div className="space-y-4">
+              <div>
+                <label className="text-xs font-bold text-muted-foreground mb-1.5 block uppercase tracking-wider">Aadhar Card</label>
+                <Input disabled={isAdminStaff} value={formData.adhar_card} onChange={(e) => setFormData({ ...formData, adhar_card: e.target.value })} placeholder="1234 5678 9012" className="h-10" />
+              </div>
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="text-xs font-bold text-muted-foreground mb-1.5 block uppercase tracking-wider">Salary Amount</label>
+                  <Input disabled={isAdminStaff} value={formData.salary_amount} onChange={(e) => setFormData({ ...formData, salary_amount: e.target.value })} placeholder="e.g. 50000" className="h-10" />
+                </div>
+                <div>
+                  <label className="text-xs font-bold text-muted-foreground mb-1.5 block uppercase tracking-wider">Salary Date Range</label>
+                  <Input disabled={isAdminStaff} value={formData.salary_date_range} onChange={(e) => setFormData({ ...formData, salary_date_range: e.target.value })} placeholder="e.g. 1st-5th of Month" className="h-10" />
+                </div>
+              </div>
+            </div>
+          </div>
+        </SectionCard>
 
         <div className="flex gap-3 justify-end pt-8 border-t border-border mt-8">
           <Button variant="outline" type="button" onClick={() => navigate("/staff")} className="h-11 px-8 rounded-lg">

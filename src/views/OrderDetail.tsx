@@ -33,6 +33,7 @@ export default function OrderDetail() {
   const [isEditing, setIsEditing] = useState(false);
   const [fabricDraft, setFabricDraft] = useState("");
   const [trialDateDraft, setTrialDateDraft] = useState("");
+  const [deliveryDateDraft, setDeliveryDateDraft] = useState("");
   const [statusDraft, setStatusDraft] = useState<"pending" | "in_progress" | "trial" | "completed" | "delivered">("pending");
   const [priceDraft, setPriceDraft] = useState("");
   const [notesDraft, setNotesDraft] = useState("");
@@ -134,6 +135,7 @@ export default function OrderDetail() {
     if (!order) return;
     setFabricDraft(order.fabric ?? "");
     setTrialDateDraft(order.trial_date ?? "");
+    setDeliveryDateDraft(order.delivery_date ?? "");
     setStatusDraft(order.status ?? "pending");
     setPriceDraft(typeof order.items?.[0]?.price === "string" ? order.items[0].price : String(order.items?.[0]?.price ?? 0));
     setNotesDraft(order.notes ?? "");
@@ -179,6 +181,7 @@ export default function OrderDetail() {
       return updateOrder(orderId, {
         fabric: fabricDraft || null,
         trial_date: trialDateDraft || null,
+        delivery_date: deliveryDateDraft || null,
         status: statusDraft,
         notes: notesDraft || null,
         items: nextItems,
@@ -236,11 +239,11 @@ export default function OrderDetail() {
         <SectionCard title="Order Details">
           <div className="space-y-4">
             <div className="flex items-center justify-between flex-wrap gap-2">
-              <EditableField label="Order Number" value={order.order_number} isEditing={false} onChange={() => {}} />
+              <EditableField label="Order Number" value={order.order_number} isEditing={false} onChange={() => { }} />
               <StatusBadge status={isEditing ? statusDraft : order.status} />
             </div>
 
-            <EditableField label="Customer" value={order.customer?.name ?? "—"} isEditing={false} onChange={() => {}} />
+            <EditableField label="Customer" value={order.customer?.name ?? "—"} isEditing={false} onChange={() => { }} />
 
             <div className="grid grid-cols-2 gap-4">
               <EditableField
@@ -257,18 +260,29 @@ export default function OrderDetail() {
                 ]}
                 onChange={(v) => setStatusDraft(v as typeof statusDraft)}
               />
-              {(isEditing ? statusDraft === "trial" : order.status === "trial") && (
-                <div>
-                  <p className="text-xs text-muted-foreground mb-1">Trial Date</p>
-                  {isEditing ? (
-                    <Input type="date" value={trialDateDraft} onChange={(e) => setTrialDateDraft(e.target.value)} className="text-sm" />
-                  ) : (
-                    <p className="text-sm font-medium text-foreground">
-                      {order.trial_date ? format(new Date(order.trial_date), "dd-MMM-yyyy") : "—"}
-                    </p>
-                  )}
-                </div>
-              )}
+            </div>
+
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <p className="text-xs text-muted-foreground mb-1">Trial Date</p>
+                {isEditing ? (
+                  <Input type="date" value={trialDateDraft} onChange={(e) => setTrialDateDraft(e.target.value)} className="text-sm" />
+                ) : (
+                  <p className="text-sm font-medium text-foreground">
+                    {order.trial_date ? format(new Date(order.trial_date), "dd-MMM-yyyy") : "—"}
+                  </p>
+                )}
+              </div>
+              <div>
+                <p className="text-xs text-muted-foreground mb-1">Delivery Date</p>
+                {isEditing ? (
+                  <Input type="date" value={deliveryDateDraft} onChange={(e) => setDeliveryDateDraft(e.target.value)} className="text-sm" />
+                ) : (
+                  <p className="text-sm font-medium text-foreground">
+                    {order.delivery_date ? format(new Date(order.delivery_date), "dd-MMM-yyyy") : "—"}
+                  </p>
+                )}
+              </div>
             </div>
 
             <p className="text-xs text-muted-foreground pt-2">
@@ -331,7 +345,7 @@ export default function OrderDetail() {
                     </div>
                   ))}
                   <Button type="button" variant="outline" size="sm" onClick={addItemRow} className="w-full sm:w-auto">
-                    <Plus className="h-4 w-4 mr-1" /> Add Row
+                    <Plus className="h-4 w-4 mr-1" /> Add
                   </Button>
                 </>
               ) : (
@@ -363,33 +377,17 @@ export default function OrderDetail() {
           </div>
         </SectionCard>
 
-        <SectionCard title="Fabric & Style">
+        <SectionCard title="Notes">
           <div className="space-y-4">
+
             <div>
-              <label className="text-xs text-muted-foreground mb-1 block">Fabric</label>
               {isEditing ? (
-                 <Input value={fabricDraft} onChange={(e) => setFabricDraft(e.target.value)} />
+                <Textarea value={notesDraft} onChange={(e) => setNotesDraft(e.target.value)} rows={3} />
               ) : (
-                 <p className="text-sm font-medium">{order.fabric ?? "—"}</p>
+                <p className="text-sm font-medium">{order.notes ?? "No notes"}</p>
               )}
             </div>
-            <div>
-              <label className="text-xs text-muted-foreground mb-1 block">Price ($)</label>
-              {isEditing ? (
-                 <Input type="number" value={priceDraft} onChange={(e) => setPriceDraft(e.target.value)} />
-              ) : (
-                 <p className="text-sm font-medium">${Number(order.items?.[0]?.price ?? 0).toFixed(2)}</p>
-              )}
-            </div>
-            <div>
-              <label className="text-xs text-muted-foreground mb-1 block">Notes</label>
-              {isEditing ? (
-                 <Textarea value={notesDraft} onChange={(e) => setNotesDraft(e.target.value)} rows={3} />
-              ) : (
-                 <p className="text-sm font-medium">{order.notes ?? "No notes"}</p>
-              )}
-            </div>
-            
+
             <div className="pt-2 flex justify-end">
               <button
                 type="button"

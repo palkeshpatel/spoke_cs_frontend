@@ -31,6 +31,7 @@ export default function OrderNew() {
   const [notes, setNotes] = useState<string>("");
   const [status, setStatus] = useState<"pending" | "in_progress" | "trial" | "completed" | "delivered">("pending");
   const [trialDate, setTrialDate] = useState<string>("");
+  const [deliveryDate, setDeliveryDate] = useState<string>("");
   const [detailRows, setDetailRows] = useState<ItemDetailRow[]>([{ icon_path: null, note: "", isUploading: false }]);
   const fileInputRefs = useRef<Array<HTMLInputElement | null>>([]);
   const bodyImageRefs = useRef<Record<string, HTMLInputElement | null>>({});
@@ -202,7 +203,8 @@ export default function OrderNew() {
       fabric: fabric || null,
       notes: notes || null,
       status: status,
-      trial_date: status === "trial" && trialDate ? trialDate : null,
+      trial_date: trialDate || null,
+      delivery_date: deliveryDate || null,
       items: rows.map((row, index) => ({
         garment_type: null,
         quantity: 1,
@@ -238,7 +240,7 @@ export default function OrderNew() {
                 onChange={setCustomerId}
               />
             </div>
-            
+
             <div className="grid grid-cols-2 gap-4">
               <div>
                 <label className="text-xs text-muted-foreground mb-1 block">Status</label>
@@ -254,12 +256,17 @@ export default function OrderNew() {
                   <option value="delivered">delivered</option>
                 </select>
               </div>
-              {status === "trial" && (
-                <div>
-                  <label className="text-xs text-muted-foreground mb-1 block">Trial Date</label>
-                  <Input type="date" value={trialDate} onChange={(e) => setTrialDate(e.target.value)} />
-                </div>
-              )}
+            </div>
+
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <label className="text-xs text-muted-foreground mb-1 block">Trial Date</label>
+                <Input type="date" value={trialDate} onChange={(e) => setTrialDate(e.target.value)} />
+              </div>
+              <div>
+                <label className="text-xs text-muted-foreground mb-1 block">Delivery Date</label>
+                <Input type="date" value={deliveryDate} onChange={(e) => setDeliveryDate(e.target.value)} />
+              </div>
             </div>
 
             <p className="text-xs text-muted-foreground">
@@ -323,39 +330,16 @@ export default function OrderNew() {
 
               <Button type="button" variant="outline" size="sm" onClick={addDetailRow} className="w-full sm:w-auto">
                 <Plus className="h-4 w-4 mr-1" />
-                Add Row
+                Add
               </Button>
             </div>
           </div>
         </SectionCard>
 
-        <SectionCard title="Fabric & Style">
+        <SectionCard title="Notes">
           <div className="space-y-4">
+
             <div>
-              <label className="text-xs text-muted-foreground mb-1 block">
-                Fabric
-              </label>
-              <Input
-                placeholder="e.g. Italian Wool - Navy Blue"
-                value={fabric}
-                onChange={(e) => setFabric(e.target.value)}
-              />
-            </div>
-            <div>
-              <label className="text-xs text-muted-foreground mb-1 block">
-                Price ($)
-              </label>
-              <Input
-                type="number"
-                placeholder="0.00"
-                value={price}
-                onChange={(e) => setPrice(e.target.value)}
-              />
-            </div>
-            <div>
-              <label className="text-xs text-muted-foreground mb-1 block">
-                Notes
-              </label>
               <Textarea
                 placeholder="Add order notes..."
                 rows={3}
@@ -363,7 +347,7 @@ export default function OrderNew() {
                 onChange={(e) => setNotes(e.target.value)}
               />
             </div>
-            
+
             <div className="pt-2 flex justify-end">
               <button
                 type="button"
