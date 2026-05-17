@@ -13,7 +13,7 @@ import { StatusBadge } from "@/components/StatusBadge";
 import { getOrder, updateOrder, uploadOrderItemIcon } from "@/services/orders";
 import { getCustomer, uploadCustomerBodyImage } from "@/services/customers";
 import { resolvePublicUrl } from "@/services/api";
-import { FileImage, Loader2, Plus, Trash2 } from "lucide-react";
+import { Camera, FileImage, Loader2, Plus, Trash2 } from "lucide-react";
 import { OrderCustomizationDialog } from "@/components/OrderCustomizationDialog";
 
 type ItemDraft = {
@@ -280,22 +280,25 @@ export default function OrderDetail() {
                 <>
                   {itemsDraft.map((item, index) => (
                     <div key={index} className="flex flex-col sm:flex-row gap-2 sm:items-center">
-                      <Button
-                        type="button"
-                        variant="outline"
-                        size="icon"
-                        onClick={() => selectIconFile(index)}
-                        className="h-10 w-10 shrink-0"
-                        title="Upload image"
-                      >
-                        {uploadingIndex === index ? (
-                          <Loader2 className="h-4 w-4 animate-spin" />
-                        ) : item.icon_path ? (
-                          <img src={resolvePublicUrl(item.icon_path) ?? ""} alt="Icon" className="h-full w-full rounded object-cover" />
-                        ) : (
-                          <FileImage className="h-4 w-4" />
-                        )}
-                      </Button>
+                      <div className="flex items-center gap-2">
+                        <span className="text-sm font-medium text-muted-foreground w-6 text-center">{index + 1}.</span>
+                        <Button
+                          type="button"
+                          variant="outline"
+                          size="icon"
+                          onClick={() => selectIconFile(index)}
+                          className="h-10 w-10 shrink-0"
+                          title="Upload image"
+                        >
+                          {uploadingIndex === index ? (
+                            <Loader2 className="h-4 w-4 animate-spin" />
+                          ) : item.icon_path ? (
+                            <img src={resolvePublicUrl(item.icon_path) ?? ""} alt="Icon" className="h-full w-full rounded object-cover" />
+                          ) : (
+                            <Camera className="h-4 w-4" />
+                          )}
+                        </Button>
+                      </div>
                       <input
                         ref={(el) => {
                           fileInputRefs.current[index] = el;
@@ -338,12 +341,15 @@ export default function OrderDetail() {
                   ) : (
                     items.map((item, i) => (
                       <div key={i} className="flex items-start gap-4 p-2 border border-border rounded-xl bg-muted/10">
-                        <div className="w-12 h-12 shrink-0 rounded-lg bg-muted/30 flex items-center justify-center overflow-hidden border border-border">
-                          {item.icon_path ? (
-                            <img src={resolvePublicUrl(item.icon_path) ?? ""} alt="Icon" className="w-full h-full object-cover" />
-                          ) : (
-                            <FileImage className="h-5 w-5 text-muted-foreground" />
-                          )}
+                        <div className="flex items-center gap-2">
+                          <span className="text-sm font-medium text-muted-foreground w-6 text-center">{i + 1}.</span>
+                          <div className="w-12 h-12 shrink-0 rounded-lg bg-muted/30 flex items-center justify-center overflow-hidden border border-border">
+                            {item.icon_path ? (
+                              <img src={resolvePublicUrl(item.icon_path) ?? ""} alt="Icon" className="w-full h-full object-cover" />
+                            ) : (
+                              <Camera className="h-5 w-5 text-muted-foreground" />
+                            )}
+                          </div>
                         </div>
                         <div className="min-w-0 flex-1">
                           <p className="text-sm text-foreground">{item.note || "No note"}</p>

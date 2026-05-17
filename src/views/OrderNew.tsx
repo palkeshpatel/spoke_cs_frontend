@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useLocation, useNavigate } from "react-router-dom";
-import { FileImage, Loader2, Plus, Trash2 } from "lucide-react";
+import { Camera, FileImage, Loader2, Plus, Trash2 } from "lucide-react";
 import PageHeader from "@/components/PageHeader";
 import SectionCard from "@/components/SectionCard";
 import CustomerSelectWithAdd from "@/components/CustomerSelectWithAdd";
@@ -269,22 +269,25 @@ export default function OrderNew() {
             <div className="space-y-2 rounded-xl border border-border p-3 sm:p-4">
               {detailRows.map((row, index) => (
                 <div key={index} className="flex flex-col sm:flex-row gap-2 sm:items-center">
-                  <Button
-                    type="button"
-                    variant="outline"
-                    size="icon"
-                    onClick={() => selectIconFile(index)}
-                    className="h-10 w-10 shrink-0"
-                    title="Upload image"
-                  >
-                    {row.isUploading ? (
-                      <Loader2 className="h-4 w-4 animate-spin" />
-                    ) : row.icon_path ? (
-                      <img src={resolvePublicUrl(row.icon_path) ?? ""} alt="Icon" className="h-full w-full rounded object-cover" />
-                    ) : (
-                      <FileImage className="h-4 w-4" />
-                    )}
-                  </Button>
+                  <div className="flex items-center gap-2">
+                    <span className="text-sm font-medium text-muted-foreground w-6 text-center">{index + 1}.</span>
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="icon"
+                      onClick={() => selectIconFile(index)}
+                      className="h-10 w-10 shrink-0"
+                      title="Upload image"
+                    >
+                      {row.isUploading ? (
+                        <Loader2 className="h-4 w-4 animate-spin" />
+                      ) : row.icon_path ? (
+                        <img src={resolvePublicUrl(row.icon_path) ?? ""} alt="Icon" className="h-full w-full rounded object-cover" />
+                      ) : (
+                        <Camera className="h-4 w-4" />
+                      )}
+                    </Button>
+                  </div>
                   <input
                     ref={(el) => {
                       fileInputRefs.current[index] = el;
