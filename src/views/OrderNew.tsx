@@ -157,6 +157,7 @@ export default function OrderNew() {
     { key: "front_body", label: "Front Body" },
     { key: "side_body", label: "Side Body" },
     { key: "shoulder", label: "Shoulder" },
+    { key: "back", label: "Back (Body Back)" },
   ];
 
   const bodyImagesByType = useMemo(() => {
@@ -377,7 +378,7 @@ export default function OrderNew() {
       <SectionCard title="Add Images Section (Client Selfy Pics)">
         <div className="space-y-3">
           <p className="text-xs text-muted-foreground">Body Images</p>
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-6 gap-3">
             {imageTypes.map((type) => {
               const existing = bodyImagesByType.get(type.key);
               const preview = resolvePublicUrl(existing?.path ?? null);
