@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { Link, Outlet, useLocation, useNavigate } from 'react-router-dom';
 import {
   LayoutDashboard, Users, Calendar, Ruler, Package, Receipt,
-  BarChart3, Settings, ChevronLeft, ChevronRight, ChevronDown, Scissors, Menu, X, LogOut, Shield
+  BarChart3, Settings, ChevronLeft, ChevronRight, ChevronDown, Scissors, Menu, X, LogOut, Shield, Bell
 } from 'lucide-react';
 import { logout as logoutApi } from '@/services/auth';
 
@@ -14,6 +14,7 @@ import { useQuery } from '@tanstack/react-query';
 export default function Layout() {
   const { data: userData } = useQuery({ queryKey: ['me'], queryFn: getMe });
   const user = userData?.user;
+  const notificationCount = userData?.notification_count ?? 0;
   const roleData = user?.role_record || user?.roleRecord;
   const roleName = (roleData?.role_name || (typeof user?.role === 'string' ? user.role : 'staff')).toLowerCase();
   const isAdmin = roleName === 'admin';
@@ -38,6 +39,7 @@ export default function Layout() {
 
   const primaryNavItems = [
     { path: '/', label: 'Dashboard', icon: LayoutDashboard },
+    { path: '/wishes', label: 'Wishes', icon: Bell },
     { path: '/customers', label: 'Customers', icon: Users, permission: 'manage_customers' },
     { path: '/appointments', label: 'Appointments', icon: Calendar, permission: 'manage_appointments' },
     { path: '/calendar', label: 'Calendar', icon: Calendar, permission: 'manage_appointments' },
@@ -142,6 +144,11 @@ export default function Layout() {
               >
                 <item.icon className="h-4.5 w-4.5 shrink-0" />
                 {!collapsed && <span>{item.label}</span>}
+                {!collapsed && item.path === '/wishes' && notificationCount > 0 && (
+                  <span className="ml-auto inline-flex min-w-6 items-center justify-center rounded-full bg-primary px-2 py-0.5 text-[11px] font-semibold text-primary-foreground">
+                    {notificationCount}
+                  </span>
+                )}
               </Link>
             );
           })}

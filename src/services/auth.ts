@@ -22,9 +22,28 @@ export type AuthUser = {
   roleRecord?: Role;
 };
 
+export type WishNotification = {
+  id: number;
+  recipient_user_id: number;
+  source_user_id: number;
+  notification_type: "birthday" | "anniversary";
+  event_date: string;
+  title: string;
+  body: string;
+  read_at: string | null;
+  is_read: boolean;
+  source_user: {
+    id: number;
+    name: string;
+    role_name: string | null;
+  } | null;
+};
+
 export type AuthResponse = {
   token: string;
   user: AuthUser;
+  notification_count: number;
+  today_wishes: WishNotification[];
 };
 
 export async function loginWithPassword(email: string, password: string, remember = true) {
@@ -56,7 +75,7 @@ export async function verifyOtp(email: string, otp: string, remember = true) {
 }
 
 export async function getMe() {
-  return apiRequest<{ user: AuthUser }>("/api/auth/me");
+  return apiRequest<{ user: AuthUser; notification_count: number; today_wishes: WishNotification[] }>("/api/auth/me");
 }
 
 export async function logout() {

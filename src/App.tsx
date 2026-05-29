@@ -34,6 +34,7 @@ import RoleList from "@/views/RoleList";
 import RoleDetail from "@/views/RoleDetail";
 import CustomizationSettings from "@/views/CustomizationSettings";
 import CalendarView from "@/views/CalendarView";
+import Wishes from "@/views/Wishes";
 
 const queryClient = new QueryClient();
 
@@ -105,6 +106,7 @@ const App = () => (
               <Route path="/orders/new" element={<OrderNew />} />
               <Route path="/orders/:id" element={<OrderDetail />} />
               <Route path="/calendar" element={<CalendarView />} />
+              <Route path="/wishes" element={<Wishes />} />
               <Route path="/billing" element={<BillingList />} />
               <Route path="/billing/new" element={<InvoiceNew />} />
               <Route path="/billing/:id" element={<BillingDetail />} />

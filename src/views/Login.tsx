@@ -19,6 +19,7 @@ import {
   loginWithPassword,
   requestOtp,
   verifyOtp as verifyOtpApi,
+  type AuthResponse,
 } from "@/services/auth";
 import tailorBg from "@/assets/tailor-bg.jpg";
 
@@ -66,9 +67,10 @@ export default function Login() {
     let cancelled = false;
     (async () => {
       try {
-        await getMe();
-        if (!cancelled)
+        const me = await getMe();
+        if (!cancelled) {
           navigate(postLoginPath(location.state), { replace: true });
+        }
       } catch {
         clearAuthToken();
         if (!cancelled) setSessionBootstrap("ready");
@@ -102,12 +104,19 @@ export default function Login() {
     setOtpCooldown(0);
   }, [email, method]);
 
-  const signInSuccess = () => {
+  const signInSuccess = (auth: AuthResponse) => {
     toast({
       title: "Signed in",
-      description: "Welcome Back.",
+      description: auth.today_wishes.length > 0
+        ? `Welcome back. ${auth.today_wishes.length} wish${auth.today_wishes.length > 1 ? "es" : ""} ready for today.`
+        : "Welcome Back.",
     });
-    navigate(postLoginPath(location.state), { replace: true });
+    const returnTo = postLoginPath(location.state);
+    if (auth.today_wishes.length > 0) {
+      navigate("/wishes", { replace: true, state: { returnTo } });
+      return;
+    }
+    navigate(returnTo, { replace: true });
   };
 
   const handlePasswordSubmit = async (e: React.FormEvent) => {
@@ -131,8 +140,8 @@ export default function Login() {
 
     try {
       setIsSubmitting(true);
-      await loginWithPassword(email.trim(), password, remember);
-      signInSuccess();
+      const auth = await loginWithPassword(email.trim(), password, remember);
+      signInSuccess(auth);
     } catch (err: unknown) {
       toast({
         title: "Login failed",
@@ -197,8 +206,8 @@ export default function Login() {
 
     try {
       setIsSubmitting(true);
-      await verifyOtpApi(email.trim(), otp, remember);
-      signInSuccess();
+      const auth = await verifyOtpApi(email.trim(), otp, remember);
+      signInSuccess(auth);
     } catch (err: unknown) {
       toast({
         title: "OTP verify failed",
