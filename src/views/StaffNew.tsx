@@ -10,6 +10,19 @@ import { apiRequest } from "@/services/api";
 import PageHeader from "@/components/PageHeader";
 import SectionCard from "@/components/SectionCard";
 
+function splitLegacyBankDetails(value: string) {
+  return value
+    .split(/[\n,|/]+/)
+    .map((part) =>
+      part
+        .replace(/^bank\s*name\s*[:\-]?\s*/i, "")
+        .replace(/^account\s*(?:no|number)\.?\s*[:\-]?\s*/i, "")
+        .replace(/^ifsc\s*[:\-]?\s*/i, "")
+        .trim(),
+    )
+    .filter(Boolean);
+}
+
 export default function StaffNew() {
   const { id } = useParams();
   const navigate = useNavigate();
@@ -26,6 +39,9 @@ export default function StaffNew() {
     dob: "",
     anniversary_date: "",
     bank_account_details: "",
+    bank_name: "",
+    account_no: "",
+    ifsc: "",
     pan_card: "",
     adhar_card: "",
     salary_amount: "",
@@ -48,6 +64,7 @@ export default function StaffNew() {
 
   useEffect(() => {
     if (staffData) {
+      const legacyBankParts = splitLegacyBankDetails(staffData.bank_account_details || "");
       setFormData({
         name: staffData.name,
         email: staffData.email,
@@ -57,6 +74,9 @@ export default function StaffNew() {
         dob: staffData.dob || "",
         anniversary_date: staffData.anniversary_date || "",
         bank_account_details: staffData.bank_account_details || "",
+        bank_name: staffData.bank_name || legacyBankParts[0] || "",
+        account_no: staffData.account_no || legacyBankParts[1] || "",
+        ifsc: staffData.ifsc || legacyBankParts[2] || "",
         pan_card: staffData.pan_card || "",
         adhar_card: staffData.adhar_card || "",
         salary_amount: staffData.salary_amount || "",
@@ -94,8 +114,15 @@ export default function StaffNew() {
     }
     
     // Prepare data for saving - map profile_photo_url to profile_photo for backend
+    const bankAccountDetails = [
+      formData.bank_name ? `Bank Name: ${formData.bank_name}` : "",
+      formData.account_no ? `Account No: ${formData.account_no}` : "",
+      formData.ifsc ? `IFSC: ${formData.ifsc}` : "",
+    ].filter(Boolean).join(" | ");
+
     const payload = {
       ...formData,
+      bank_account_details: bankAccountDetails || formData.bank_account_details || null,
       profile_photo: formData.profile_photo_url || null,
       id: isEdit ? parseInt(id!) : undefined
     };
@@ -267,8 +294,16 @@ export default function StaffNew() {
           <div className="grid md:grid-cols-2 gap-4 sm:gap-6">
             <div className="space-y-4">
               <div>
-                <label className="text-xs font-bold text-muted-foreground mb-1.5 block uppercase tracking-wider">Bank Account Details</label>
-                <Input disabled={isAdminStaff} value={formData.bank_account_details} onChange={(e) => setFormData({ ...formData, bank_account_details: e.target.value })} placeholder="Bank Name, Account No, IFSC..." className="h-10" />
+                <label className="text-xs font-bold text-muted-foreground mb-1.5 block uppercase tracking-wider">Bank Name</label>
+                <Input disabled={isAdminStaff} value={formData.bank_name} onChange={(e) => setFormData({ ...formData, bank_name: e.target.value })} placeholder="HDFC Bank" className="h-10" />
+              </div>
+              <div>
+                <label className="text-xs font-bold text-muted-foreground mb-1.5 block uppercase tracking-wider">Account No</label>
+                <Input disabled={isAdminStaff} value={formData.account_no} onChange={(e) => setFormData({ ...formData, account_no: e.target.value })} placeholder="123456789012" className="h-10" />
+              </div>
+              <div>
+                <label className="text-xs font-bold text-muted-foreground mb-1.5 block uppercase tracking-wider">IFSC</label>
+                <Input disabled={isAdminStaff} value={formData.ifsc} onChange={(e) => setFormData({ ...formData, ifsc: e.target.value.toUpperCase() })} placeholder="HDFC0001234" className="h-10 uppercase" />
               </div>
               <div>
                 <label className="text-xs font-bold text-muted-foreground mb-1.5 block uppercase tracking-wider">PAN Card</label>
