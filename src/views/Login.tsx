@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import type { Location } from "react-router-dom";
 import { useLocation, useNavigate } from "react-router-dom";
-import { Scissors } from "lucide-react";
+import { Eye, EyeOff, Scissors } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -13,7 +13,7 @@ import {
   InputOTPSlot,
 } from "@/components/ui/input-otp";
 import { toast } from "@/hooks/use-toast";
-import { clearAuthToken, getAuthToken } from "@/services/api";
+import { apiRequest, clearAuthToken, getAuthToken } from "@/services/api";
 import {
   getMe,
   loginWithPassword,
@@ -32,6 +32,7 @@ function postLoginPath(state: unknown): string {
 }
 
 export default function Login() {
+  type Branch = { id: number; name: string; code: string };
   const navigate = useNavigate();
   const location = useLocation();
   const [sessionBootstrap, setSessionBootstrap] = useState<
@@ -42,11 +43,14 @@ export default function Login() {
   const [method, setMethod] = useState<"password" | "otp">("password");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
   const [remember, setRemember] = useState(false);
   const [otpStep, setOtpStep] = useState<"request" | "verify">("request");
   const [otp, setOtp] = useState("");
   const [otpCooldown, setOtpCooldown] = useState(0);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [branches, setBranches] = useState<Branch[]>([]);
+  const [selectedBranchId, setSelectedBranchId] = useState<number | null>(null);
 
   const isEmailValid = useMemo(
     () => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim()),
@@ -56,6 +60,26 @@ export default function Login() {
     typeof err === "object" && err !== null && "message" in err
       ? String((err as { message?: unknown }).message ?? "")
       : "";
+
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      try {
+        const list = await apiRequest<Branch[]>("/api/branches", { auth: false });
+        if (cancelled) return;
+        setBranches(list);
+        if (list.length > 0) {
+          setSelectedBranchId((prev) => prev ?? list[0].id);
+        }
+      } catch {
+        if (cancelled) return;
+        setBranches([]);
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, []);
 
   useEffect(() => {
     if (sessionBootstrap !== "checking") return;
@@ -91,6 +115,7 @@ export default function Login() {
 
   useEffect(() => {
     setPassword("");
+    setShowPassword(false);
     setOtp("");
     setOtpStep("request");
     setOtpCooldown(0);
@@ -137,10 +162,18 @@ export default function Login() {
       });
       return;
     }
+    if (!selectedBranchId) {
+      toast({
+        title: "Branch required",
+        description: "Please select your branch.",
+        variant: "destructive",
+      });
+      return;
+    }
 
     try {
       setIsSubmitting(true);
-      const auth = await loginWithPassword(email.trim(), password, remember);
+      const auth = await loginWithPassword(email.trim(), password, selectedBranchId, remember);
       signInSuccess(auth);
     } catch (err: unknown) {
       toast({
@@ -163,10 +196,18 @@ export default function Login() {
       return;
     }
     if (otpCooldown > 0) return;
+    if (!selectedBranchId) {
+      toast({
+        title: "Branch required",
+        description: "Please select your branch.",
+        variant: "destructive",
+      });
+      return;
+    }
 
     try {
       setIsSubmitting(true);
-      const res = await requestOtp(email.trim());
+      const res = await requestOtp(email.trim(), selectedBranchId);
       setOtpStep("verify");
       setOtpCooldown(30);
       toast({
@@ -203,10 +244,18 @@ export default function Login() {
       });
       return;
     }
+    if (!selectedBranchId) {
+      toast({
+        title: "Branch required",
+        description: "Please select your branch.",
+        variant: "destructive",
+      });
+      return;
+    }
 
     try {
       setIsSubmitting(true);
-      const auth = await verifyOtpApi(email.trim(), otp, remember);
+      const auth = await verifyOtpApi(email.trim(), otp, selectedBranchId, remember);
       signInSuccess(auth);
     } catch (err: unknown) {
       toast({
@@ -293,9 +342,24 @@ export default function Login() {
               <TabsContent value="password" className="mt-6">
                 <form onSubmit={handlePasswordSubmit} className="space-y-5">
                   <div className="space-y-2">
-                    <Label htmlFor="email">Email</Label>
+                    <Label htmlFor="branch_id">Branch</Label>
+                    <select
+                      id="branch_id"
+                      className="w-full h-10 rounded-md border border-input bg-muted/50 px-3 text-sm"
+                      value={selectedBranchId ?? ""}
+                      onChange={(e) => setSelectedBranchId(e.target.value ? Number(e.target.value) : null)}
+                      required
+                    >
+                      <option value="" disabled>Select branch</option>
+                      {branches.map((b) => (
+                        <option key={b.id} value={b.id}>{b.name}</option>
+                      ))}
+                    </select>
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="email_password">Email</Label>
                     <Input
-                      id="email"
+                      id="email_password"
                       type="email"
                       value={email}
                       onChange={(e) => setEmail(e.target.value)}
@@ -307,15 +371,30 @@ export default function Login() {
 
                   <div className="space-y-2">
                     <Label htmlFor="password">Password</Label>
-                    <Input
-                      id="password"
-                      type="password"
-                      value={password}
-                      onChange={(e) => setPassword(e.target.value)}
-                      placeholder="••••••••"
-                      className="bg-muted/50"
-                      required
-                    />
+                    <div className="relative">
+                      <Input
+                        id="password"
+                        type={showPassword ? "text" : "password"}
+                        value={password}
+                        onChange={(e) => setPassword(e.target.value)}
+                        placeholder="••••••••"
+                        className="bg-muted/50 pr-10"
+                        required
+                      />
+                      <button
+                        type="button"
+                        tabIndex={-1}
+                        onClick={() => setShowPassword((v) => !v)}
+                        className="absolute right-2 top-1/2 -translate-y-1/2 rounded-md p-1.5 text-muted-foreground hover:text-foreground focus:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                        aria-label={showPassword ? "Hide password" : "Show password"}
+                      >
+                        {showPassword ? (
+                          <EyeOff className="h-4 w-4" />
+                        ) : (
+                          <Eye className="h-4 w-4" />
+                        )}
+                      </button>
+                    </div>
                   </div>
 
                   <div className="flex items-center gap-2">
@@ -351,6 +430,21 @@ export default function Login() {
                   }
                   className="space-y-5"
                 >
+                  <div className="space-y-2">
+                    <Label htmlFor="branch_id_otp">Branch</Label>
+                    <select
+                      id="branch_id_otp"
+                      className="w-full h-10 rounded-md border border-input bg-muted/50 px-3 text-sm"
+                      value={selectedBranchId ?? ""}
+                      onChange={(e) => setSelectedBranchId(e.target.value ? Number(e.target.value) : null)}
+                      required
+                    >
+                      <option value="" disabled>Select branch</option>
+                      {branches.map((b) => (
+                        <option key={b.id} value={b.id}>{b.name}</option>
+                      ))}
+                    </select>
+                  </div>
                   <div className="space-y-2">
                     <Label htmlFor="otp_email">Email</Label>
                     <Input

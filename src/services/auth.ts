@@ -1,4 +1,4 @@
-import { apiRequest, clearAuthToken, setAuthToken } from "@/services/api";
+import { apiRequest, clearAuthToken, setAuthToken, setSessionBranch } from "@/services/api";
 
 export type Permission = {
   id: number;
@@ -14,6 +14,7 @@ export type Role = {
 
 export type AuthUser = {
   id: number;
+  branch_id?: number | null;
   name: string;
   email: string;
   role_id: number | null;
@@ -42,40 +43,52 @@ export type WishNotification = {
 export type AuthResponse = {
   token: string;
   user: AuthUser;
+  branch?: {
+    id: number;
+    name: string;
+    code: string;
+  } | null;
   notification_count: number;
   today_wishes: WishNotification[];
 };
 
-export async function loginWithPassword(email: string, password: string, remember = true) {
+export async function loginWithPassword(email: string, password: string, branchId: number, remember = true) {
   const res = await apiRequest<AuthResponse>("/api/auth/login", {
     method: "POST",
     auth: false,
-    body: { email, password },
+    body: { email, password, branch_id: branchId },
   });
   setAuthToken(res.token, remember);
+  setSessionBranch(res.branch ?? null, remember);
   return res;
 }
 
-export async function requestOtp(email: string) {
+export async function requestOtp(email: string, branchId: number) {
   return apiRequest<{ ok: boolean; message: string; debug_otp?: string }>("/api/auth/request-otp", {
     method: "POST",
     auth: false,
-    body: { email },
+    body: { email, branch_id: branchId },
   });
 }
 
-export async function verifyOtp(email: string, otp: string, remember = true) {
+export async function verifyOtp(email: string, otp: string, branchId: number, remember = true) {
   const res = await apiRequest<AuthResponse>("/api/auth/verify-otp", {
     method: "POST",
     auth: false,
-    body: { email, otp },
+    body: { email, otp, branch_id: branchId },
   });
   setAuthToken(res.token, remember);
+  setSessionBranch(res.branch ?? null, remember);
   return res;
 }
 
 export async function getMe() {
-  return apiRequest<{ user: AuthUser; notification_count: number; today_wishes: WishNotification[] }>("/api/auth/me");
+  return apiRequest<{
+    user: AuthUser;
+    branch?: { id: number; name: string; code: string } | null;
+    notification_count: number;
+    today_wishes: WishNotification[];
+  }>("/api/auth/me");
 }
 
 export async function logout() {

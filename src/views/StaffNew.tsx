@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { Save, ArrowLeft, Loader2, Camera, Shield, User, Mail, Phone, Calendar, Info, Lock } from "lucide-react";
+import { Save, ArrowLeft, Loader2, Camera, Shield, User, Mail, Phone, Calendar, Info, Lock, Eye, EyeOff } from "lucide-react";
 import { getRoles, saveStaff, uploadStaffProfileImage } from "@/services/staff";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -51,6 +51,7 @@ export default function StaffNew() {
   });
   const [photoPreview, setPhotoPreview] = useState<string | null>(null);
   const [isUploading, setIsUploading] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
 
   const { data: roles } = useQuery({ queryKey: ["roles"], queryFn: getRoles });
   
@@ -112,6 +113,10 @@ export default function StaffNew() {
       toast.error("Please fill in all required fields.");
       return;
     }
+    if (formData.password.trim() && formData.password.trim().length < 6) {
+      toast.error("Password must be at least 6 characters.");
+      return;
+    }
     
     // Prepare data for saving - map profile_photo_url to profile_photo for backend
     const bankAccountDetails = [
@@ -124,8 +129,12 @@ export default function StaffNew() {
       ...formData,
       bank_account_details: bankAccountDetails || formData.bank_account_details || null,
       profile_photo: formData.profile_photo_url || null,
-      id: isEdit ? parseInt(id!) : undefined
+      id: isEdit ? parseInt(id!) : undefined,
     };
+
+    if (isEdit && !formData.password.trim()) {
+      delete (payload as { password?: string }).password;
+    }
     
     mutation.mutate(payload);
   };
@@ -228,10 +237,51 @@ export default function StaffNew() {
                 </div>
               </div>
 
-              {!isEdit && (
+              {!isEdit ? (
                 <div>
                   <label className="text-xs font-bold text-muted-foreground mb-1.5 block uppercase tracking-wider">System Password *</label>
-                  <Input required={!isEdit} type="password" value={formData.password} onChange={(e) => setFormData({ ...formData, password: e.target.value })} placeholder="Minimum 6 characters" className="h-10" />
+                  <div className="relative">
+                    <Input
+                      required
+                      type={showPassword ? "text" : "password"}
+                      value={formData.password}
+                      onChange={(e) => setFormData({ ...formData, password: e.target.value })}
+                      placeholder="Minimum 6 characters"
+                      className="h-10 pr-10"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setShowPassword((v) => !v)}
+                      className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+                      aria-label={showPassword ? "Hide password" : "Show password"}
+                    >
+                      {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                    </button>
+                  </div>
+                  <p className="text-[11px] text-muted-foreground mt-1.5">Share this password with the staff member for login.</p>
+                </div>
+              ) : (
+                <div>
+                  <label className="text-xs font-bold text-muted-foreground mb-1.5 block uppercase tracking-wider">Reset Password</label>
+                  <div className="relative">
+                    <Input
+                      type={showPassword ? "text" : "password"}
+                      disabled={isAdminStaff}
+                      value={formData.password}
+                      onChange={(e) => setFormData({ ...formData, password: e.target.value })}
+                      placeholder="Leave blank to keep current password"
+                      className="h-10 pr-10"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setShowPassword((v) => !v)}
+                      className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+                      aria-label={showPassword ? "Hide password" : "Show password"}
+                    >
+                      {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                    </button>
+                  </div>
+                  <p className="text-[11px] text-muted-foreground mt-1.5">Set a new login password if the staff member forgot theirs.</p>
                 </div>
               )}
             </div>

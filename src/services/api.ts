@@ -21,6 +21,7 @@ export const apiBaseUrl = () => {
 };
 
 export const tokenStorageKey = "tm_token";
+export const branchStorageKey = "tm_branch";
 
 export const getAuthToken = () => {
   if (typeof window === "undefined") return null;
@@ -41,6 +42,43 @@ export const setAuthToken = (token: string, remember = true) => {
 export const clearAuthToken = () => {
   window.localStorage.removeItem(tokenStorageKey);
   window.sessionStorage.removeItem(tokenStorageKey);
+  window.localStorage.removeItem(branchStorageKey);
+  window.sessionStorage.removeItem(branchStorageKey);
+};
+
+export type SessionBranch = {
+  id: number;
+  name: string;
+  code: string;
+};
+
+export const setSessionBranch = (branch: SessionBranch | null, remember = true) => {
+  if (branch === null) {
+    window.localStorage.removeItem(branchStorageKey);
+    window.sessionStorage.removeItem(branchStorageKey);
+    return;
+  }
+  const raw = JSON.stringify(branch);
+  if (remember) {
+    window.localStorage.setItem(branchStorageKey, raw);
+    window.sessionStorage.removeItem(branchStorageKey);
+    return;
+  }
+  window.sessionStorage.setItem(branchStorageKey, raw);
+  window.localStorage.removeItem(branchStorageKey);
+};
+
+export const getSessionBranch = (): SessionBranch | null => {
+  if (typeof window === "undefined") return null;
+  const raw = window.localStorage.getItem(branchStorageKey) ?? window.sessionStorage.getItem(branchStorageKey);
+  if (!raw) return null;
+  try {
+    const parsed = JSON.parse(raw) as SessionBranch;
+    if (!parsed || typeof parsed.id !== "number") return null;
+    return parsed;
+  } catch {
+    return null;
+  }
 };
 
 /** Full URL for public paths returned by the API (e.g. `/uploads/...`) or absolute URLs. */

@@ -5,6 +5,7 @@ import {
   BarChart3, Settings, ChevronLeft, ChevronRight, ChevronDown, Scissors, Menu, X, LogOut, Shield, Bell
 } from 'lucide-react';
 import { logout as logoutApi } from '@/services/auth';
+import { getSessionBranch } from '@/services/api';
 
 // Dynamic navItems moved inside Layout component
 
@@ -15,6 +16,7 @@ export default function Layout() {
   const { data: userData } = useQuery({ queryKey: ['me'], queryFn: getMe });
   const user = userData?.user;
   const notificationCount = userData?.notification_count ?? 0;
+  const currentBranch = getSessionBranch();
   const roleData = user?.role_record || user?.roleRecord;
   const roleName = (roleData?.role_name || (typeof user?.role === 'string' ? user.role : 'staff')).toLowerCase();
   const isAdmin = roleName === 'admin';
@@ -130,6 +132,11 @@ export default function Layout() {
         </div>
 
         <nav className="flex-1 py-1.5 px-2 space-y-0.5 overflow-y-auto">
+          {currentBranch && !collapsed && (
+            <div className="mb-1 rounded-lg border border-sidebar-hover px-2.5 py-1.5 text-xs text-sidebar-muted">
+              Branch: <span className="text-sidebar-fg font-semibold">{currentBranch.name}</span>
+            </div>
+          )}
           {primaryNavItems.map(item => {
             const isActive = isNavItemActive(item.path);
             return (
