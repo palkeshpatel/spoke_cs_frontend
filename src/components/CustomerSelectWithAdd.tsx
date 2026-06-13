@@ -14,6 +14,8 @@ import { Input } from "@/components/ui/input";
 import { toast } from "@/hooks/use-toast";
 import { createCustomer, listCustomers } from "@/services/customers";
 import { isValidEmail } from "@/lib/utils";
+import { PhoneInput } from "@/components/PhoneInput";
+import { isValidPhone10, phoneToStorage } from "@/lib/phone";
 import { cn } from "@/lib/utils";
 import {
   Command,
@@ -96,7 +98,7 @@ export default function CustomerSelectWithAdd({
       createCustomer({
         name: newName.trim(),
         email: newEmail.trim(),
-        phone: newPhone.trim() || null,
+        phone: phoneToStorage(newPhone) || null,
       }),
     onSuccess: async (created) => {
       await queryClient.invalidateQueries({ queryKey: ["customers"] });
@@ -130,7 +132,11 @@ export default function CustomerSelectWithAdd({
       return;
     }
     if (!newPhone.trim()) {
-      toast({ title: "Phone required", description: "Enter a phone number.", variant: "destructive" });
+      toast({ title: "Phone required", description: "Enter a 10-digit phone number.", variant: "destructive" });
+      return;
+    }
+    if (!isValidPhone10(newPhone)) {
+      toast({ title: "Invalid phone", description: "Phone must be exactly 10 digits (XXX-XXX-XXXX).", variant: "destructive" });
       return;
     }
     if (newEmail && existingByEmail) {
@@ -196,11 +202,9 @@ export default function CustomerSelectWithAdd({
               <label className="text-xs font-medium text-muted-foreground mb-1 block">
                 Phone <span className="text-destructive">*</span>
               </label>
-              <Input
-                type="tel"
+              <PhoneInput
                 value={newPhone}
-                onChange={(e) => setNewPhone(e.target.value)}
-                placeholder="+91 ..."
+                onChange={setNewPhone}
                 className="h-9 text-sm bg-background"
                 onKeyDown={(e) => e.key === "Enter" && handleSave()}
               />

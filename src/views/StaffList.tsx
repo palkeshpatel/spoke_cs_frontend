@@ -10,6 +10,7 @@ import { toast } from "sonner";
 import PageHeader from "@/components/PageHeader";
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 import { resolvePublicUrl } from "@/services/api";
+import { formatPhoneDisplay } from "@/lib/phone";
 
 export default function StaffList() {
   const queryClient = useQueryClient();
@@ -120,7 +121,7 @@ export default function StaffList() {
                         </span>
                         {s.phone && (
                           <span className="flex items-center gap-1 text-[11px] text-muted-foreground">
-                            <Plus className="w-2.5 h-2.5" /> {s.phone}
+                            <Plus className="w-2.5 h-2.5" /> {formatPhoneDisplay(s.phone)}
                           </span>
                         )}
                       </div>
@@ -206,7 +207,7 @@ export default function StaffList() {
                       </div>
                       {s.phone && (
                         <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
-                          <Phone className="w-3.5 h-3.5" /> <span>{s.phone}</span>
+                          <Phone className="w-3.5 h-3.5" /> <span>{formatPhoneDisplay(s.phone)}</span>
                         </div>
                       )}
                     </div>

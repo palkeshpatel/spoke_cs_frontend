@@ -1,8 +1,11 @@
-import type { ReactNode } from "react";
+import type { ComponentProps, ReactNode } from "react";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { format } from "date-fns";
+import { PhoneInput } from "@/components/PhoneInput";
+import { DatePickerField } from "@/components/DatePickerField";
+import { formatPhoneDisplay } from "@/lib/phone";
 import {
   User,
   Phone,
@@ -23,7 +26,7 @@ interface EditableFieldProps {
   value: string | number;
   isEditing: boolean;
   onChange?: (value: string) => void;
-  type?: 'text' | 'textarea' | 'select' | 'number' | 'date';
+  type?: 'text' | 'textarea' | 'select' | 'number' | 'date' | 'phone';
   options?: { value: string; label: string }[];
   unit?: string;
 }
@@ -59,7 +62,9 @@ export default function EditableField({ label, value, isEditing, onChange, type 
 
   if (!isEditing) {
     let displayValue = value;
-    if (type === 'date' && typeof value === 'string' && value) {
+    if (type === "phone") {
+      displayValue = formatPhoneDisplay(String(value));
+    } else if (type === 'date' && typeof value === 'string' && value) {
       try {
         displayValue = format(new Date(value), 'dd-MMM-yyyy');
       } catch (e) {
@@ -100,12 +105,30 @@ export default function EditableField({ label, value, isEditing, onChange, type 
     );
   }
 
+  if (type === "phone") {
+    return (
+      <div>
+        {renderLabel()}
+        <PhoneInput value={String(value)} onChange={(v) => onChange?.(v)} className="text-sm" />
+      </div>
+    );
+  }
+
+  if (type === "date") {
+    return (
+      <div>
+        {renderLabel()}
+        <DatePickerField value={String(value)} onChange={(v) => onChange?.(v)} className="text-sm" />
+      </div>
+    );
+  }
+
   return (
     <div>
       {renderLabel()}
       <div className="flex items-center gap-2">
         <Input
-          type={type === 'number' ? 'number' : type === 'date' ? 'date' : 'text'}
+          type={type === 'number' ? 'number' : 'text'}
           value={String(value)}
           onChange={e => onChange?.(e.target.value)}
           className="text-sm"

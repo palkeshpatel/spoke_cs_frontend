@@ -6,6 +6,7 @@ import { format } from "date-fns";
 import PageHeader from "@/components/PageHeader";
 import SectionCard from "@/components/SectionCard";
 import EditableField from "@/components/EditableField";
+import { isValidPhone10, phoneFromStorage, phoneToStorage } from "@/lib/phone";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
 import { PriorityBadge, StatusBadge } from "@/components/StatusBadge";
@@ -165,7 +166,7 @@ export default function CustomerDetail() {
     if (!customer) return;
     setForm({
       name: customer.name ?? "",
-      phone: customer.phone ?? "",
+      phone: phoneFromStorage(customer.phone),
       email: customer.email ?? "",
       address: customer.address ?? "",
       birthday: customer.birthday ? (customer.birthday.includes('T') ? customer.birthday.split('T')[0] : customer.birthday) : "",
@@ -177,10 +178,13 @@ export default function CustomerDetail() {
   const updateForm = (key: keyof typeof form, val: string) => setForm((f) => ({ ...f, [key]: val }));
 
   const saveMutation = useMutation({
-    mutationFn: () =>
-      updateCustomer(customerId, {
+    mutationFn: () => {
+      if (form.phone.trim() && !isValidPhone10(form.phone)) {
+        throw new Error("Phone must be exactly 10 digits (XXX-XXX-XXXX).");
+      }
+      return updateCustomer(customerId, {
         name: form.name,
-        phone: form.phone || null,
+        phone: phoneToStorage(form.phone) || null,
         email: form.email || null,
         address: form.address || null,
         birthday: form.birthday || null,
@@ -188,7 +192,8 @@ export default function CustomerDetail() {
           fit_preference: form.fitPreference || null,
           notes: form.notes || null,
         },
-      }),
+      });
+    },
     onSuccess: async () => {
       await queryClient.invalidateQueries({ queryKey: ["customers"] });
       toast({ title: "Saved", description: "Customer updated." });
@@ -370,7 +375,7 @@ export default function CustomerDetail() {
               <h3 className="text-sm font-semibold mb-3">Contact Information</h3>
               <div className="space-y-4">
                 <EditableField label="Name" value={isEditing ? form.name : customer.name} isEditing={isEditing} onChange={(v) => updateForm("name", v)} />
-                <EditableField label="Phone" value={isEditing ? form.phone : customer.phone ?? ""} isEditing={isEditing} onChange={(v) => updateForm("phone", v)} />
+                <EditableField label="Phone" value={isEditing ? form.phone : phoneFromStorage(customer.phone)} isEditing={isEditing} type="phone" onChange={(v) => updateForm("phone", v)} />
                 <EditableField label="Email" value={isEditing ? form.email : customer.email ?? ""} isEditing={isEditing} onChange={(v) => updateForm("email", v)} />
                 <EditableField label="Address" value={isEditing ? form.address : customer.address ?? ""} isEditing={isEditing} onChange={(v) => updateForm("address", v)} />
                 <EditableField label="Birth Date" value={isEditing ? form.birthday : (customer.birthday ? (customer.birthday.includes('T') ? customer.birthday.split('T')[0] : customer.birthday) : "")} isEditing={isEditing} type="date" onChange={(v) => updateForm("birthday", v)} />

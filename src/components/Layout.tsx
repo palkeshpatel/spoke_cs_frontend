@@ -11,16 +11,14 @@ import { getSessionBranch } from '@/services/api';
 
 import { getMe } from '@/services/auth';
 import { useQuery } from '@tanstack/react-query';
+import { canAccessPath, canViewNavItem } from '@/lib/permissions';
+import Unauthorized from '@/views/Unauthorized';
 
 export default function Layout() {
-  const { data: userData } = useQuery({ queryKey: ['me'], queryFn: getMe });
+  const { data: userData, isLoading: isUserLoading } = useQuery({ queryKey: ['me'], queryFn: getMe });
   const user = userData?.user;
   const notificationCount = userData?.notification_count ?? 0;
   const currentBranch = getSessionBranch();
-  const roleData = user?.role_record || user?.roleRecord;
-  const roleName = (roleData?.role_name || (typeof user?.role === 'string' ? user.role : 'staff')).toLowerCase();
-  const isAdmin = roleName === 'admin';
-  const isManager = roleName === 'manager';
 
   const [collapsed, setCollapsed] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
@@ -33,11 +31,8 @@ export default function Layout() {
   const location = useLocation();
   const navigate = useNavigate();
 
-  const canViewItem = (item: { permission?: string }) => {
-    if (!item.permission) return true;
-    if (isAdmin) return true;
-    return roleData?.permissions?.some((p: any) => p.permission_name === item.permission);
-  };
+  const canViewItem = (item: { permission?: string }) => canViewNavItem(user, item.permission);
+  const routeAllowed = canAccessPath(user, location.pathname);
 
   const primaryNavItems = [
     { path: '/', label: 'Dashboard', icon: LayoutDashboard },
@@ -264,7 +259,15 @@ export default function Layout() {
 
         <main className="flex-1 overflow-y-auto">
           <div className="p-4 sm:p-6 max-w-7xl mx-auto">
-            <Outlet />
+            {isUserLoading ? (
+              <div className="flex min-h-[40vh] items-center justify-center text-sm text-muted-foreground animate-pulse">
+                Loading…
+              </div>
+            ) : !routeAllowed ? (
+              <Unauthorized />
+            ) : (
+              <Outlet />
+            )}
           </div>
         </main>
       </div>

@@ -84,7 +84,7 @@ export default function SettingsPage() {
         <SectionCard title="Shop Information" onEdit={!isEditing ? () => setIsEditing(true) : undefined}>
           <div className="space-y-4">
             <EditableField label="Shop Name" value={form.shopName} isEditing={isEditing} onChange={v => update('shopName', v)} />
-            <EditableField label="Phone" value={form.phone} isEditing={isEditing} onChange={v => update('phone', v)} />
+            <EditableField label="Phone" value={form.phone} isEditing={isEditing} type="phone" onChange={v => update('phone', v)} />
             <EditableField label="Email" value={form.email} isEditing={isEditing} onChange={v => update('email', v)} />
             <EditableField label="Address" value={form.address} isEditing={isEditing} onChange={v => update('address', v)} />
           </div>

@@ -1,10 +1,13 @@
 import { useState, useEffect, useRef } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { Save, ArrowLeft, Loader2, Camera, Shield, User, Mail, Phone, Calendar, Info, Lock, Eye, EyeOff } from "lucide-react";
+import { Save, Loader2, Camera, Shield, User, Mail, Phone, Info, Lock, Eye, EyeOff } from "lucide-react";
 import { getRoles, saveStaff, uploadStaffProfileImage } from "@/services/staff";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { PhoneInput } from "@/components/PhoneInput";
+import { DatePickerField } from "@/components/DatePickerField";
+import { isValidPhone10, phoneFromStorage, phoneToStorage } from "@/lib/phone";
 import { toast } from "sonner";
 import { apiRequest } from "@/services/api";
 import PageHeader from "@/components/PageHeader";
@@ -71,7 +74,7 @@ export default function StaffNew() {
         email: staffData.email,
         password: "",
         role_id: staffData.role_id?.toString() || "",
-        phone: staffData.phone || "",
+        phone: phoneFromStorage(staffData.phone),
         dob: staffData.dob || "",
         anniversary_date: staffData.anniversary_date || "",
         bank_account_details: staffData.bank_account_details || "",
@@ -117,6 +120,10 @@ export default function StaffNew() {
       toast.error("Password must be at least 6 characters.");
       return;
     }
+    if (formData.phone.trim() && !isValidPhone10(formData.phone)) {
+      toast.error("Phone number must be exactly 10 digits (XXX-XXX-XXXX).");
+      return;
+    }
     
     // Prepare data for saving - map profile_photo_url to profile_photo for backend
     const bankAccountDetails = [
@@ -127,6 +134,7 @@ export default function StaffNew() {
 
     const payload = {
       ...formData,
+      phone: phoneToStorage(formData.phone) || null,
       bank_account_details: bankAccountDetails || formData.bank_account_details || null,
       profile_photo: formData.profile_photo_url || null,
       id: isEdit ? parseInt(id!) : undefined,
@@ -231,8 +239,13 @@ export default function StaffNew() {
                 <div>
                   <label className="text-xs font-bold text-muted-foreground mb-1.5 block uppercase tracking-wider">Contact Phone</label>
                   <div className="relative">
-                    <Phone className="absolute left-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground" />
-                    <Input type="tel" disabled={isAdminStaff} value={formData.phone} onChange={(e) => setFormData({ ...formData, phone: e.target.value })} placeholder="+1 000-000-0000" className="pl-9 h-10" />
+                    <Phone className="absolute left-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground z-10 pointer-events-none" />
+                    <PhoneInput
+                      disabled={isAdminStaff}
+                      value={formData.phone}
+                      onChange={(phone) => setFormData({ ...formData, phone })}
+                      className="pl-9 h-10"
+                    />
                   </div>
                 </div>
               </div>
@@ -312,17 +325,21 @@ export default function StaffNew() {
                 <div className="grid grid-cols-2 gap-4">
                   <div>
                     <label className="text-xs font-bold text-muted-foreground mb-1.5 block uppercase tracking-wider">Date of Birth</label>
-                    <div className="relative">
-                      <Calendar className="absolute left-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground" />
-                      <Input type="date" disabled={isAdminStaff} value={formData.dob} onChange={(e) => setFormData({ ...formData, dob: e.target.value })} className="pl-9 h-10 pr-3 [&::-webkit-calendar-picker-indicator]:hidden" />
-                    </div>
+                    <DatePickerField
+                      disabled={isAdminStaff}
+                      value={formData.dob}
+                      onChange={(dob) => setFormData({ ...formData, dob })}
+                      placeholder="Select date of birth"
+                    />
                   </div>
                   <div>
                     <label className="text-xs font-bold text-muted-foreground mb-1.5 block uppercase tracking-wider">Join Anniversary</label>
-                    <div className="relative">
-                      <Calendar className="absolute left-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground" />
-                      <Input type="date" disabled={isAdminStaff} value={formData.anniversary_date} onChange={(e) => setFormData({ ...formData, anniversary_date: e.target.value })} className="pl-9 h-10 pr-3 [&::-webkit-calendar-picker-indicator]:hidden" />
-                    </div>
+                    <DatePickerField
+                      disabled={isAdminStaff}
+                      value={formData.anniversary_date}
+                      onChange={(anniversary_date) => setFormData({ ...formData, anniversary_date })}
+                      placeholder="Select join date"
+                    />
                   </div>
                 </div>
               </div>

@@ -8,6 +8,7 @@ import { Input } from "@/components/ui/input";
 import PageHeader from "@/components/PageHeader";
 import { resolvePublicUrl } from "@/services/api";
 import { listCustomers, type CustomerDto } from "@/services/customers";
+import { formatPhoneDisplay } from "@/lib/phone";
 
 function customerAvatarUrl(c: CustomerDto): string | null {
   return resolvePublicUrl(c.profile_image) ?? resolvePublicUrl(c.bodyImages?.[0]?.image_path ?? null);
@@ -142,7 +143,7 @@ export default function CustomerList() {
                 <div className="mt-4 space-y-2">
                   <div className="flex items-center gap-2 text-xs text-muted-foreground min-w-0">
                     <Phone className="h-3.5 w-3.5 shrink-0 opacity-80" />
-                    <span className="truncate">{c.phone ?? "—"}</span>
+                    <span className="truncate">{formatPhoneDisplay(c.phone)}</span>
                   </div>
                   <div className="flex items-center gap-2 text-xs text-muted-foreground min-w-0">
                     <Mail className="h-3.5 w-3.5 shrink-0 opacity-80" />
