@@ -1,10 +1,4 @@
-import { useState } from "react";
-import { format, isValid, parseISO } from "date-fns";
-import { Calendar as CalendarIcon } from "lucide-react";
-import { Button } from "@/components/ui/button";
-import { Calendar } from "@/components/ui/calendar";
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { cn } from "@/lib/utils";
+import { Input } from "@/components/ui/input";
 
 type DatePickerFieldProps = {
   value: string;
@@ -15,55 +9,24 @@ type DatePickerFieldProps = {
   id?: string;
 };
 
-function parseDateValue(value: string): Date | undefined {
-  if (!value) return undefined;
-  const parsed = parseISO(value);
-  return isValid(parsed) ? parsed : undefined;
-}
-
 export function DatePickerField({
   value,
   onChange,
   disabled,
-  placeholder = "Pick a date",
+  placeholder,
   className,
   id,
 }: DatePickerFieldProps) {
-  const [open, setOpen] = useState(false);
-  const selected = parseDateValue(value);
-
   return (
-    <Popover open={open} onOpenChange={setOpen}>
-      <PopoverTrigger asChild>
-        <Button
-          id={id}
-          type="button"
-          variant="outline"
-          disabled={disabled}
-          className={cn(
-            "w-full justify-start text-left font-normal h-10 bg-background",
-            !selected && "text-muted-foreground",
-            className,
-          )}
-        >
-          <CalendarIcon className="mr-2 h-4 w-4 shrink-0" />
-          {selected ? format(selected, "MMM d, yyyy") : placeholder}
-        </Button>
-      </PopoverTrigger>
-      <PopoverContent className="w-auto p-0" align="start">
-        <Calendar
-          mode="single"
-          selected={selected}
-          onSelect={(date) => {
-            if (date) {
-              onChange(format(date, "yyyy-MM-dd"));
-              setOpen(false);
-            }
-          }}
-          defaultMonth={selected}
-          initialFocus
-        />
-      </PopoverContent>
-    </Popover>
+    <Input
+      id={id}
+      type="date"
+      disabled={disabled}
+      placeholder={placeholder}
+      className={className}
+      value={value || ""}
+      onChange={(e) => onChange(e.target.value)}
+    />
   );
 }
+

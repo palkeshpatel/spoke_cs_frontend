@@ -134,6 +134,8 @@ export default function StaffNew() {
 
     const payload = {
       ...formData,
+      dob: formData.dob ? formData.dob : null,
+      anniversary_date: formData.anniversary_date ? formData.anniversary_date : null,
       phone: phoneToStorage(formData.phone) || null,
       bank_account_details: bankAccountDetails || formData.bank_account_details || null,
       profile_photo: formData.profile_photo_url || null,
