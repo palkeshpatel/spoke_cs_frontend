@@ -81,18 +81,18 @@ function UnifiedCalendarDayCell(props: DayProps) {
 
   return (
     <td
-      className={cn("p-0.5 !h-auto min-h-[5.5rem] overflow-visible align-top", className)}
+      className={cn("p-0.5 !h-auto sm:min-h-[5.5rem] overflow-visible align-top", className)}
       style={style}
       {...rest}
     >
       <div
         className={cn(
-          "relative flex min-h-[5rem] flex-col rounded-lg border border-border/60 bg-card",
+          "relative flex sm:min-h-[5rem] max-sm:aspect-square flex-col rounded-lg border border-border/60 bg-card",
           day.outside && "border-border/40 bg-muted/20 opacity-75",
           list.length > 0 && "max-sm:bg-primary/10 max-sm:border-primary/30"
         )}
       >
-        <div className="flex shrink-0 items-start justify-end px-1 pt-1">{children}</div>
+        <div className="flex shrink-0 sm:items-start sm:justify-end max-sm:items-center max-sm:justify-center max-sm:h-full max-sm:w-full px-1 sm:pt-1 max-sm:p-0">{children}</div>
 
         {list.length > 0 ? (
           <>
@@ -280,7 +280,7 @@ export default function CalendarView() {
               month_grid: "w-full table-fixed border-collapse",
               weekdays: "border-b border-border/40",
               weekday: "w-[14.28%] p-1 text-center text-[0.65rem] font-medium uppercase tracking-wide text-muted-foreground",
-              day: "box-border !h-auto min-h-[5.5rem] w-[14.28%] overflow-visible align-top p-0.5",
+              day: "box-border !h-auto sm:min-h-[5.5rem] w-[14.28%] overflow-visible align-top p-0.5",
               day_button:
                 "mx-auto flex h-7 min-h-7 w-8 min-w-8 shrink-0 items-center justify-center rounded-md p-0 text-xs font-semibold text-muted-foreground hover:bg-muted/80 hover:text-foreground data-[selected-single=true]:bg-primary data-[selected-single=true]:text-primary-foreground data-[selected-single=true]:shadow-sm",
             }}
