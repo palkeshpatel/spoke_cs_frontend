@@ -31,6 +31,8 @@ type GarmentDraft = {
   measurementJson: Record<string, string | null>;
 };
 const GARMENT_TYPES: GarmentType[] = ["Body", "Suit", "Shirt", "Pants"];
+// These Body fields are hidden from the Body tab view (they appear within Suit/Shirt/Pants sections instead)
+const BODY_HIDDEN_FIELDS = ["Chest", "Waist", "Hip", "Shoulder Width", "Arm Length", "Neck Size", "Wrist Size"];
 
 const formatDateString = (str: string | null | undefined): string => {
   if (!str) return "";
@@ -375,7 +377,11 @@ export default function MeasurementNew() {
       return;
     }
     try {
-      const fieldRows = await listMeasurementFields(garmentType);
+      let fieldRows = await listMeasurementFields(garmentType);
+      // Body tab only shows non-hidden fields (same as screen)
+      if (garmentType === "Body") {
+        fieldRows = fieldRows.filter((f) => !BODY_HIDDEN_FIELDS.includes(f.field_name));
+      }
       const valuesMap = new Map<number, string>();
       for (const v of measurement.values ?? []) {
         if (typeof v.field_id !== "number") continue;
@@ -407,7 +413,11 @@ export default function MeasurementNew() {
   const handleWhatsApp = async () => {
     if (!measurement) return;
     try {
-      const fieldRows = await listMeasurementFields(garmentType);
+      let fieldRows = await listMeasurementFields(garmentType);
+      // Body tab only shows non-hidden fields (same as screen)
+      if (garmentType === "Body") {
+        fieldRows = fieldRows.filter((f) => !BODY_HIDDEN_FIELDS.includes(f.field_name));
+      }
       const valuesMap = new Map<number, string>();
       for (const v of measurement.values ?? []) {
         if (typeof v.field_id !== "number") continue;
@@ -441,9 +451,12 @@ export default function MeasurementNew() {
   }, [allFields, valuesDraft]);
 
   const printSections = useMemo(() => {
+    let currentFields = fieldsByGarment[garmentType as GarmentType] ?? [];
+    // Body tab only shows non-hidden fields (same as screen)
+    if (garmentType === "Body") {
+      currentFields = currentFields.filter((f) => !BODY_HIDDEN_FIELDS.includes(f.field_name));
+    }
     const garmentValues = mergedMeasurementJson[garmentType] ?? {};
-    const currentFields = fieldsByGarment[garmentType as GarmentType] ?? [];
-    // Use field order from fieldsByGarment, fall back to json keys
     const entries = currentFields
       .map((f) => [f.field_name, garmentValues[f.field_name] ?? ""] as [string, string])
       .filter(([, val]) => val !== "");
