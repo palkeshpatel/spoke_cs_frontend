@@ -7,6 +7,7 @@ import { format, isValid, parseISO } from "date-fns";
 import { Day } from "react-day-picker";
 import { createContext, useContext } from "react";
 import { Calendar } from "@/components/ui/calendar";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import PageHeader from "@/components/PageHeader";
 import { listAppointments } from "@/services/appointments";
 import { listOrders } from "@/services/orders";
@@ -119,12 +120,38 @@ function UnifiedCalendarDayCell(props: DayProps) {
               )}
             </div>
 
-            {/* Mobile View: Single Indicator Dot */}
-            <div 
-              className="sm:hidden flex justify-center pb-1 pt-1"
-              title={list.map(e => e.label).join('\n')}
-            >
-              <div className="h-2 w-2 rounded-full bg-primary" />
+            {/* Mobile View: Single Indicator Dot with Popover */}
+            <div className="sm:hidden flex justify-center pb-1 pt-1">
+              <Popover>
+                <PopoverTrigger asChild>
+                  <button
+                    className="flex h-6 w-6 items-center justify-center rounded-full"
+                    onClick={(e) => e.stopPropagation()}
+                    onPointerDown={(e) => e.stopPropagation()}
+                  >
+                    <div className="h-1.5 w-1.5 rounded-full bg-[#8B5A2B]" />
+                  </button>
+                </PopoverTrigger>
+                <PopoverContent className="w-56 p-2 space-y-1 z-50">
+                  {list.map((evt, i) => (
+                    <Link
+                      key={`mob-${evt.type}-${evt.id}-${i}`}
+                      to={evt.linkTo}
+                      className={cn(
+                        "block w-full rounded-md px-2 py-2 text-left text-xs font-medium leading-snug shadow-sm",
+                        "transition-all hover:bg-muted",
+                        evt.type === "appointment" && "text-blue-800 bg-blue-50 border border-blue-200",
+                        evt.type === "trial" && "text-amber-800 bg-amber-50 border border-amber-200",
+                        evt.type === "delivery" && "text-emerald-800 bg-emerald-50 border border-emerald-200",
+                      )}
+                      onClick={(e) => e.stopPropagation()}
+                      onPointerDown={(e) => e.stopPropagation()}
+                    >
+                      {evt.label}
+                    </Link>
+                  ))}
+                </PopoverContent>
+              </Popover>
             </div>
           </>
         ) : null}
