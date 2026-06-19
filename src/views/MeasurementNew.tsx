@@ -702,44 +702,82 @@ export default function MeasurementNew() {
           ) : (
             <div className="space-y-6">
               {garmentType === "Body" ? (
-                (Object.keys(fieldsByGarment) as GarmentType[]).map((g) => {
-                  let grpFields = fieldsByGarment[g] ?? [];
-                  if (!isEditMode && g === "Body") {
-                    const hiddenFields = ["Chest", "Waist", "Hip", "Shoulder Width", "Arm Length", "Neck Size", "Wrist Size"];
-                    grpFields = grpFields.filter((f) => !hiddenFields.includes(f.field_name));
+                !isEditMode ? (() => {
+                  const uniqueFieldsMap = new Map<string, typeof allFields[0]>();
+                  const matchingIdsMap = new Map<string, number[]>();
+                  for (const f of allFields) {
+                    if (!uniqueFieldsMap.has(f.field_name)) {
+                      uniqueFieldsMap.set(f.field_name, f);
+                    }
+                    if (!matchingIdsMap.has(f.field_name)) {
+                      matchingIdsMap.set(f.field_name, []);
+                    }
+                    matchingIdsMap.get(f.field_name)!.push(f.id);
                   }
-                  if (grpFields.length === 0) return null;
+                  
+                  const uniqueFields = Array.from(uniqueFieldsMap.values());
+                  
                   return (
-                    <div key={g} className="space-y-3">
-                      {isEditMode && (
+                    <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
+                      {uniqueFields.map((f) => (
+                        <div key={f.id} className="space-y-1">
+                          <div className="text-xs text-muted-foreground">
+                            {f.field_name}
+                          </div>
+                          <Input
+                            type="number"
+                            value={valuesDraft[f.id] ?? ""}
+                            onChange={(e) =>
+                              setValuesDraft((prev) => {
+                                const next = { ...prev };
+                                const idsToUpdate = matchingIdsMap.get(f.field_name) ?? [f.id];
+                                for (const id of idsToUpdate) {
+                                  next[id] = e.target.value;
+                                }
+                                return next;
+                              })
+                            }
+                            placeholder={f.unit}
+                            disabled={!canEdit}
+                          />
+                        </div>
+                      ))}
+                    </div>
+                  );
+                })() : (
+                  (Object.keys(fieldsByGarment) as GarmentType[]).map((g) => {
+                    const grpFields = fieldsByGarment[g] ?? [];
+                    if (grpFields.length === 0) return null;
+                    return (
+                      <div key={g} className="space-y-3">
                         <h3 className="text-sm font-semibold border-b border-border pb-1 text-primary">
                           {g === "Body" ? "Body Measurements" : `${g} Details`}
                         </h3>
-                      )}
-                      <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
-                        {grpFields.map((f) => (
-                          <div key={f.id} className="space-y-1">
-                            <div className="text-xs text-muted-foreground">
-                              {f.field_name}
+                        <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
+                          {grpFields.map((f) => (
+                            <div key={f.id} className="space-y-1">
+                              <div className="text-xs text-muted-foreground">
+                                {f.field_name}
+                              </div>
+                              <Input
+                                type="number"
+                                value={valuesDraft[f.id] ?? ""}
+                                onChange={(e) =>
+                                  setValuesDraft((prev) => ({
+                                    ...prev,
+                                    [f.id]: e.target.value,
+                                  }))
+                                }
+                                placeholder={f.unit}
+                                disabled={!canEdit}
+                              />
                             </div>
-                            <Input
-                              type="number"
-                              value={valuesDraft[f.id] ?? ""}
-                              onChange={(e) =>
-                                setValuesDraft((prev) => ({
-                                  ...prev,
-                                  [f.id]: e.target.value,
-                                }))
-                              }
-                              placeholder={f.unit}
-                              disabled={!canEdit}
-                            />
-                          </div>
-                        ))}
+                          ))}
+                        </div>
                       </div>
-                    </div>
-                  );
-                })
+                    );
+                  })
+                )
               ) : (
                 <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
                   {(fieldsByGarment[garmentType as GarmentType] ?? []).map((f) => (
