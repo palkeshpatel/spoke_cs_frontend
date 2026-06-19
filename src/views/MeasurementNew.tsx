@@ -703,7 +703,11 @@ export default function MeasurementNew() {
             <div className="space-y-6">
               {garmentType === "Body" ? (
                 (Object.keys(fieldsByGarment) as GarmentType[]).map((g) => {
-                  const grpFields = fieldsByGarment[g] ?? [];
+                  let grpFields = fieldsByGarment[g] ?? [];
+                  if (!isEditMode && g === "Body") {
+                    const hiddenFields = ["Chest", "Waist", "Hip", "Shoulder Width", "Arm Length", "Neck Size", "Wrist Size"];
+                    grpFields = grpFields.filter((f) => !hiddenFields.includes(f.field_name));
+                  }
                   if (grpFields.length === 0) return null;
                   return (
                     <div key={g} className="space-y-3">
