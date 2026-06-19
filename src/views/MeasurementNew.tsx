@@ -416,12 +416,12 @@ export default function MeasurementNew() {
       if (deliveryDate) lines.push(`Delivery Date: ${deliveryDate}`);
 
       for (const sec of sections) {
-        const filled = sec.rows.filter((r) => r.value !== "");
-        if (filled.length === 0) continue;
         lines.push("");
         lines.push(`=== ${sec.label} ===`);
-        for (const r of filled) {
-          lines.push(`${r.name}: ${r.value}${r.unit ? " " + r.unit : ""}`);
+        // Show ALL rows — empty values become "-" (matches screen exactly)
+        for (const r of sec.rows) {
+          const val = r.value !== "" ? `${r.value}${r.unit ? " " + r.unit : ""}` : "-";
+          lines.push(`${r.name}: ${val}`);
         }
       }
 
@@ -443,6 +443,7 @@ export default function MeasurementNew() {
       if (deliveryDate) lines.push(`Delivery Date: ${deliveryDate}`);
 
       for (const sec of sections) {
+        // WhatsApp: only send fields that have values (keep message clean)
         const filled = sec.rows.filter((r) => r.value !== "");
         if (filled.length === 0) continue;
         lines.push("");
@@ -464,7 +465,8 @@ export default function MeasurementNew() {
     return buildMeasurementJson();
   }, [allFields, valuesDraft]);
 
-  // printSections mirrors the screen: Body tab shows all groups; other tabs show only their group.
+  // printSections mirrors the screen exactly: show ALL fields (empty ones show as "-").
+  // Body tab shows all groups; other tabs show only their group.
   const printSections = useMemo(() => {
     const garmentGroupsToShow = garmentType === "Body" ? GARMENT_TYPES : [garmentType as GarmentType];
     return garmentGroupsToShow.map((g) => {
@@ -474,11 +476,12 @@ export default function MeasurementNew() {
       }
       const garmentValues = mergedMeasurementJson[g] ?? {};
       const label = g === "Body" ? "Body Measurements" : `${g} Details`;
-      const entries = currentFields
-        .map((f) => [f.field_name, garmentValues[f.field_name] ?? ""] as [string, string])
-        .filter(([, val]) => val !== "");
+      // Show ALL fields (match screen — empty values show as "-")
+      const entries = currentFields.map(
+        (f) => [f.field_name, garmentValues[f.field_name] ?? ""] as [string, string]
+      );
       return { type: g, label, entries };
-    }).filter((sec) => sec.entries.length > 0);
+    });
   }, [mergedMeasurementJson, garmentType, fieldsByGarment]);
 
   if (isEditMode && measurementQuery.isLoading) {
