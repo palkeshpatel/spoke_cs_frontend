@@ -371,40 +371,62 @@ export default function MeasurementNew() {
     window.print();
   };
 
+  // Build a helper that returns what sections to show, matching the screen exactly.
+  // Body tab shows ALL garment groups (Body filtered + Suit + Shirt + Pants).
+  // Other tabs show only their own section.
+  const getVisibleSections = async () => {
+    const valuesMap = new Map<number, string>();
+    for (const v of measurement?.values ?? []) {
+      if (typeof v.field_id !== "number") continue;
+      if (v.value === null || v.value === undefined || v.value === "") continue;
+      valuesMap.set(v.field_id, String(v.value));
+    }
+
+    const garmentGroupsToShow = garmentType === "Body" ? GARMENT_TYPES : [garmentType as GarmentType];
+
+    const sections: { label: string; rows: { name: string; value: string; unit: string }[] }[] = [];
+
+    for (const g of garmentGroupsToShow) {
+      let fieldRows = await listMeasurementFields(g);
+      if (g === "Body") {
+        // Match screen: hide fields that appear in Suit/Shirt/Pants
+        fieldRows = fieldRows.filter((f) => !BODY_HIDDEN_FIELDS.includes(f.field_name));
+      }
+      const rows = fieldRows.map((f) => {
+        const jsonVal = measurement?.measurement_json?.[g]?.[f.field_name];
+        const val = valuesMap.get(f.id) ?? (jsonVal ?? "");
+        return { name: f.field_name, value: String(val ?? ""), unit: f.unit ?? "" };
+      });
+      const label = g === "Body" ? "Body Measurements" : `${g} Details`;
+      sections.push({ label, rows });
+    }
+    return sections;
+  };
+
   const handleCopy = async () => {
     if (!measurement) {
       toast({ title: "Failed", description: "Measurement data not ready.", variant: "destructive" });
       return;
     }
     try {
-      let fieldRows = await listMeasurementFields(garmentType);
-      // Body tab only shows non-hidden fields (same as screen)
-      if (garmentType === "Body") {
-        fieldRows = fieldRows.filter((f) => !BODY_HIDDEN_FIELDS.includes(f.field_name));
-      }
-      const valuesMap = new Map<number, string>();
-      for (const v of measurement.values ?? []) {
-        if (typeof v.field_id !== "number") continue;
-        if (v.value === null || v.value === undefined || v.value === "") continue;
-        valuesMap.set(v.field_id, String(v.value));
-      }
-
+      const sections = await getVisibleSections();
       const lines: string[] = [];
       lines.push(`Customer: ${measurement.customer?.name ?? "—"} (${measurement.customer?.customer_code ?? "—"})`);
-      lines.push(`Garment: ${garmentType}`);
       if (trialDate) lines.push(`Trial Date: ${trialDate}`);
       if (deliveryDate) lines.push(`Delivery Date: ${deliveryDate}`);
-      lines.push("");
 
-      for (const f of fieldRows) {
-        const jsonVal = measurement.measurement_json?.[garmentType]?.[f.field_name];
-        const val = valuesMap.get(f.id) ?? (jsonVal ?? "");
-        const unit = f.unit ? ` ${f.unit}` : "";
-        lines.push(`${f.field_name}: ${val || "-"}${unit}`);
+      for (const sec of sections) {
+        const filled = sec.rows.filter((r) => r.value !== "");
+        if (filled.length === 0) continue;
+        lines.push("");
+        lines.push(`=== ${sec.label} ===`);
+        for (const r of filled) {
+          lines.push(`${r.name}: ${r.value}${r.unit ? " " + r.unit : ""}`);
+        }
       }
 
       await navigator.clipboard.writeText(lines.join("\n").trim());
-      toast({ title: "Copied", description: `${garmentType} measurements copied to clipboard.` });
+      toast({ title: "Copied", description: "Measurements copied to clipboard." });
     } catch {
       toast({ title: "Failed", description: "Failed to copy measurements.", variant: "destructive" });
     }
@@ -413,29 +435,21 @@ export default function MeasurementNew() {
   const handleWhatsApp = async () => {
     if (!measurement) return;
     try {
-      let fieldRows = await listMeasurementFields(garmentType);
-      // Body tab only shows non-hidden fields (same as screen)
-      if (garmentType === "Body") {
-        fieldRows = fieldRows.filter((f) => !BODY_HIDDEN_FIELDS.includes(f.field_name));
-      }
-      const valuesMap = new Map<number, string>();
-      for (const v of measurement.values ?? []) {
-        if (typeof v.field_id !== "number") continue;
-        if (v.value === null || v.value === undefined || v.value === "") continue;
-        valuesMap.set(v.field_id, String(v.value));
-      }
-
+      const sections = await getVisibleSections();
       const lines: string[] = [];
-      lines.push(`*Measurement Card — ${garmentType}*`);
+      lines.push(`*Measurement Card*`);
       lines.push(`Customer: ${measurement.customer?.name ?? "—"} (${measurement.customer?.customer_code ?? "—"})`);
       if (trialDate) lines.push(`Trial Date: ${trialDate}`);
       if (deliveryDate) lines.push(`Delivery Date: ${deliveryDate}`);
-      lines.push("");
 
-      for (const f of fieldRows) {
-        const jsonVal = measurement.measurement_json?.[garmentType]?.[f.field_name];
-        const val = valuesMap.get(f.id) ?? (jsonVal ?? "");
-        if (val) lines.push(`${f.field_name}: ${val} ${f.unit ?? ""}`.trim());
+      for (const sec of sections) {
+        const filled = sec.rows.filter((r) => r.value !== "");
+        if (filled.length === 0) continue;
+        lines.push("");
+        lines.push(`*${sec.label}*`);
+        for (const r of filled) {
+          lines.push(`${r.name}: ${r.value}${r.unit ? " " + r.unit : ""}`.trim());
+        }
       }
 
       const text = encodeURIComponent(lines.join("\n").trim());
@@ -450,17 +464,21 @@ export default function MeasurementNew() {
     return buildMeasurementJson();
   }, [allFields, valuesDraft]);
 
+  // printSections mirrors the screen: Body tab shows all groups; other tabs show only their group.
   const printSections = useMemo(() => {
-    let currentFields = fieldsByGarment[garmentType as GarmentType] ?? [];
-    // Body tab only shows non-hidden fields (same as screen)
-    if (garmentType === "Body") {
-      currentFields = currentFields.filter((f) => !BODY_HIDDEN_FIELDS.includes(f.field_name));
-    }
-    const garmentValues = mergedMeasurementJson[garmentType] ?? {};
-    const entries = currentFields
-      .map((f) => [f.field_name, garmentValues[f.field_name] ?? ""] as [string, string])
-      .filter(([, val]) => val !== "");
-    return [{ type: garmentType, entries }];
+    const garmentGroupsToShow = garmentType === "Body" ? GARMENT_TYPES : [garmentType as GarmentType];
+    return garmentGroupsToShow.map((g) => {
+      let currentFields = fieldsByGarment[g] ?? [];
+      if (g === "Body") {
+        currentFields = currentFields.filter((f) => !BODY_HIDDEN_FIELDS.includes(f.field_name));
+      }
+      const garmentValues = mergedMeasurementJson[g] ?? {};
+      const label = g === "Body" ? "Body Measurements" : `${g} Details`;
+      const entries = currentFields
+        .map((f) => [f.field_name, garmentValues[f.field_name] ?? ""] as [string, string])
+        .filter(([, val]) => val !== "");
+      return { type: g, label, entries };
+    }).filter((sec) => sec.entries.length > 0);
   }, [mergedMeasurementJson, garmentType, fieldsByGarment]);
 
   if (isEditMode && measurementQuery.isLoading) {
@@ -901,21 +919,17 @@ export default function MeasurementNew() {
           </div>
           {printSections.map((section) => (
             <section key={section.type} className="print-garment-block">
-              <h2>{section.type}</h2>
-              {section.entries.length === 0 ? (
-                <p>No measurement values.</p>
-              ) : (
-                <table>
-                  <tbody>
-                    {section.entries.map(([fieldName, value]) => (
-                      <tr key={`${section.type}-${fieldName}`}>
-                        <th>{fieldName}</th>
-                        <td>{value === null || value === "" ? "-" : String(value)}</td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              )}
+              <h2>{section.label ?? section.type}</h2>
+              <table>
+                <tbody>
+                  {section.entries.map(([fieldName, value]) => (
+                    <tr key={`${section.type}-${fieldName}`}>
+                      <th>{fieldName}</th>
+                      <td>{value === null || value === "" ? "-" : String(value)}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
             </section>
           ))}
         </div>
