@@ -370,114 +370,62 @@ export default function MeasurementNew() {
   };
 
   const handleCopy = async () => {
-    if (!customerId || !measurement) {
-      toast({
-        title: "Failed",
-        description: "Measurement data not ready for copy.",
-        variant: "destructive",
-      });
+    if (!measurement) {
+      toast({ title: "Failed", description: "Measurement data not ready.", variant: "destructive" });
       return;
     }
-
-    const preferredOrder = ["Body", "Suit", "Shirt", "Pants"] as const;
-    const rows = allMeasurementsQuery.data?.data ?? [];
-    const customerMeasurements = rows.filter((m) => m.customer_id === Number(customerId));
-    const byGarment = new Map(customerMeasurements.map((m) => [m.garment_type.toLowerCase(), m]));
-    if (!byGarment.has(measurement.garment_type.toLowerCase())) {
-      byGarment.set(measurement.garment_type.toLowerCase(), measurement);
-    }
-
     try {
-      const fieldsByGarmentEntries = await Promise.all(
-        preferredOrder.map(async (g) => {
-          const fieldRows = await listMeasurementFields(g);
-          return [g.toLowerCase(), fieldRows] as const;
-        }),
-      );
-      const fieldsByGarment = new Map(fieldsByGarmentEntries);
-
-      const sections: string[] = [];
-      sections.push(`Customer: ${measurement.customer?.name ?? "—"} (${measurement.customer?.customer_code ?? "—"})`);
-      sections.push(`Copied On: ${format(new Date(), "dd-MMM-yyyy hh:mm a")}`);
-      sections.push("");
-
-      for (const garment of preferredOrder) {
-        const record = byGarment.get(garment.toLowerCase());
-        sections.push(`=== ${garment} ===`);
-        if (!record) {
-          sections.push("No measurement available.");
-          sections.push("");
-          continue;
-        }
-
-        const fieldRows = fieldsByGarment.get(garment.toLowerCase()) ?? [];
-        const valuesMap = new Map<number, string>();
-        for (const valueRow of record.values ?? []) {
-          if (typeof valueRow.field_id !== "number") continue;
-          if (valueRow.value === null || valueRow.value === undefined || valueRow.value === "") continue;
-          valuesMap.set(valueRow.field_id, String(valueRow.value));
-        }
-
-        if (fieldRows.length === 0) {
-          sections.push("No fields configured.");
-        } else {
-          for (const fieldRow of fieldRows) {
-            const jsonVal =
-              record.measurement_json?.[garment]?.[fieldRow.field_name];
-            const val = valuesMap.get(fieldRow.id) ?? (jsonVal ?? "-");
-            const unit = fieldRow.unit ? ` ${fieldRow.unit}` : "";
-            sections.push(`${fieldRow.field_name}: ${val}${unit}`);
-          }
-        }
-
-        sections.push(`Taken By: ${record.taker?.name ?? "—"}`);
-        sections.push(`Trial Date: ${record.trial_date ?? "-"}`);
-        sections.push(`Delivery Date: ${record.delivery_date ?? "-"}`);
-        sections.push(`Notes: ${record.notes?.trim() ? record.notes : "-"}`);
-        sections.push("");
+      const fieldRows = await listMeasurementFields(garmentType);
+      const valuesMap = new Map<number, string>();
+      for (const v of measurement.values ?? []) {
+        if (typeof v.field_id !== "number") continue;
+        if (v.value === null || v.value === undefined || v.value === "") continue;
+        valuesMap.set(v.field_id, String(v.value));
       }
 
-      await navigator.clipboard.writeText(sections.join("\n").trim());
-      toast({ title: "Copied", description: "All garment measurements copied." });
+      const lines: string[] = [];
+      lines.push(`Customer: ${measurement.customer?.name ?? "—"} (${measurement.customer?.customer_code ?? "—"})`);
+      lines.push(`Garment: ${garmentType}`);
+      if (trialDate) lines.push(`Trial Date: ${trialDate}`);
+      if (deliveryDate) lines.push(`Delivery Date: ${deliveryDate}`);
+      lines.push("");
+
+      for (const f of fieldRows) {
+        const jsonVal = measurement.measurement_json?.[garmentType]?.[f.field_name];
+        const val = valuesMap.get(f.id) ?? (jsonVal ?? "");
+        const unit = f.unit ? ` ${f.unit}` : "";
+        lines.push(`${f.field_name}: ${val || "-"}${unit}`);
+      }
+
+      await navigator.clipboard.writeText(lines.join("\n").trim());
+      toast({ title: "Copied", description: `${garmentType} measurements copied to clipboard.` });
     } catch {
-      toast({
-        title: "Failed",
-        description: "Failed to copy all garment measurements.",
-        variant: "destructive",
-      });
+      toast({ title: "Failed", description: "Failed to copy measurements.", variant: "destructive" });
     }
   };
 
   const handleWhatsApp = async () => {
     if (!measurement) return;
     try {
+      const fieldRows = await listMeasurementFields(garmentType);
+      const valuesMap = new Map<number, string>();
+      for (const v of measurement.values ?? []) {
+        if (typeof v.field_id !== "number") continue;
+        if (v.value === null || v.value === undefined || v.value === "") continue;
+        valuesMap.set(v.field_id, String(v.value));
+      }
+
       const lines: string[] = [];
-      lines.push(`*Measurement Card*`);
+      lines.push(`*Measurement Card — ${garmentType}*`);
       lines.push(`Customer: ${measurement.customer?.name ?? "—"} (${measurement.customer?.customer_code ?? "—"})`);
       if (trialDate) lines.push(`Trial Date: ${trialDate}`);
       if (deliveryDate) lines.push(`Delivery Date: ${deliveryDate}`);
       lines.push("");
 
-      for (const garment of GARMENT_TYPES) {
-        const fieldRows = await listMeasurementFields(garment);
-        const valuesMap = new Map<number, string>();
-        for (const v of measurement.values ?? []) {
-          if (typeof v.field_id !== "number") continue;
-          if (v.value === null || v.value === undefined || v.value === "") continue;
-          valuesMap.set(v.field_id, String(v.value));
-        }
-        const entries = fieldRows
-          .map((f) => {
-            const jsonVal = measurement.measurement_json?.[garment]?.[f.field_name];
-            const val = valuesMap.get(f.id) ?? (jsonVal ?? "");
-            return val ? `${f.field_name}: ${val} ${f.unit ?? ""}`.trim() : null;
-          })
-          .filter(Boolean);
-        if (entries.length > 0) {
-          lines.push(`*${garment}*`);
-          lines.push(...(entries as string[]));
-          lines.push("");
-        }
+      for (const f of fieldRows) {
+        const jsonVal = measurement.measurement_json?.[garmentType]?.[f.field_name];
+        const val = valuesMap.get(f.id) ?? (jsonVal ?? "");
+        if (val) lines.push(`${f.field_name}: ${val} ${f.unit ?? ""}`.trim());
       }
 
       const text = encodeURIComponent(lines.join("\n").trim());
@@ -492,17 +440,15 @@ export default function MeasurementNew() {
     return buildMeasurementJson();
   }, [allFields, valuesDraft]);
 
-  const printSections = useMemo(
-    () =>
-      GARMENT_TYPES.map((type) => {
-        const garmentValues = mergedMeasurementJson[type] ?? {};
-        const entries = Object.entries(garmentValues).sort(([a], [b]) =>
-          a.localeCompare(b),
-        );
-        return { type, entries };
-      }),
-    [mergedMeasurementJson],
-  );
+  const printSections = useMemo(() => {
+    const garmentValues = mergedMeasurementJson[garmentType] ?? {};
+    const currentFields = fieldsByGarment[garmentType as GarmentType] ?? [];
+    // Use field order from fieldsByGarment, fall back to json keys
+    const entries = currentFields
+      .map((f) => [f.field_name, garmentValues[f.field_name] ?? ""] as [string, string])
+      .filter(([, val]) => val !== "");
+    return [{ type: garmentType, entries }];
+  }, [mergedMeasurementJson, garmentType, fieldsByGarment]);
 
   if (isEditMode && measurementQuery.isLoading) {
     return (
