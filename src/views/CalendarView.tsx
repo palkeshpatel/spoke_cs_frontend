@@ -93,31 +93,40 @@ function UnifiedCalendarDayCell(props: DayProps) {
         <div className="flex shrink-0 items-start justify-end px-1 pt-1">{children}</div>
 
         {list.length > 0 ? (
-          <div className="flex flex-row flex-wrap sm:flex-col gap-1 px-1 pb-2 pt-0.5 justify-end sm:justify-start">
-            {list.slice(0, maxShown).map((evt, i) => (
-              <Link
-                key={`${evt.type}-${evt.id}-${i}`}
-                to={evt.linkTo}
-                className={cn(
-                  "relative z-[1] block shadow-sm transition-all hover:scale-[1.02] hover:shadow-md",
-                  "h-2.5 w-2.5 rounded-full border-0 p-0 flex-shrink-0 mt-1 sm:mt-0",
-                  "sm:h-auto sm:w-full sm:max-w-full sm:rounded-md sm:px-2 sm:py-1 sm:text-left sm:text-xs sm:font-medium sm:leading-snug",
-                  TAG_STYLES[evt.type],
-                )}
-                title={evt.label}
-                onClick={(e) => e.stopPropagation()}
-                onPointerDown={(e) => e.stopPropagation()}
-              >
-                <span className="hidden sm:inline">{evt.label}</span>
-              </Link>
-            ))}
-            {list.length > maxShown && (
-              <span className="px-0.5 text-center text-[10px] font-medium text-muted-foreground w-full sm:w-auto">
-                <span className="hidden sm:inline">+{list.length - maxShown} more</span>
-                <span className="inline sm:hidden">+{list.length - maxShown}</span>
-              </span>
-            )}
-          </div>
+          <>
+            {/* Desktop View: Full List */}
+            <div className="hidden sm:flex flex-col gap-1 px-1 pb-2 pt-0.5">
+              {list.slice(0, maxShown).map((evt, i) => (
+                <Link
+                  key={`${evt.type}-${evt.id}-${i}`}
+                  to={evt.linkTo}
+                  className={cn(
+                    "relative z-[1] block w-full max-w-full rounded-md px-2 py-1 text-left text-xs font-medium leading-snug shadow-sm",
+                    "transition-all hover:scale-[1.02] hover:shadow-md",
+                    TAG_STYLES[evt.type],
+                  )}
+                  title={evt.label}
+                  onClick={(e) => e.stopPropagation()}
+                  onPointerDown={(e) => e.stopPropagation()}
+                >
+                  {evt.label}
+                </Link>
+              ))}
+              {list.length > maxShown && (
+                <span className="px-0.5 text-center text-[10px] font-medium text-muted-foreground">
+                  +{list.length - maxShown} more
+                </span>
+              )}
+            </div>
+
+            {/* Mobile View: Single Indicator Dot */}
+            <div 
+              className="sm:hidden flex justify-center pb-1 pt-1"
+              title={list.map(e => e.label).join('\n')}
+            >
+              <div className="h-2 w-2 rounded-full bg-primary" />
+            </div>
+          </>
         ) : null}
       </div>
     </td>
