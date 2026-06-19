@@ -291,7 +291,7 @@ export default function AppointmentDetail() {
 
       <div className="fixed bottom-0 left-0 right-0 z-40">
         <div className="mx-auto max-w-6xl px-4 pb-4">
-          <div className="bg-card/95 backdrop-blur supports-[backdrop-filter]:bg-card/80 border border-border rounded-xl card-shadow p-2 flex gap-2">
+          <div className="bg-card/95 backdrop-blur supports-[backdrop-filter]:bg-card/80 border border-border rounded-xl card-shadow p-2 flex flex-col sm:flex-row gap-2">
             <Button
               variant="outline"
               className="flex-1 h-11"
