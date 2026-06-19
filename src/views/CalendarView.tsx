@@ -233,7 +233,7 @@ export default function CalendarView() {
             className="pointer-events-auto w-full max-w-full border-0 bg-transparent p-0 shadow-none [--rdp-day-width:100%] [--rdp-day-height:auto] [--rdp-day_button-width:auto] [--rdp-day_button-height:auto] [&_.rdp-day]:!h-auto [&_.rdp-day]:min-h-[5.5rem] [&_.rdp-day]:overflow-visible"
             components={{ Day: UnifiedCalendarDayCell }}
             classNames={{
-              root: "w-full",
+              root: "relative w-full",
               months: "w-full",
               month: "relative w-full space-y-2",
               month_caption: "flex h-9 items-center justify-center",
