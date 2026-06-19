@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState, useRef } from "react";
 import { format } from "date-fns";
-import { Copy, Printer, FileImage, Loader2 } from "lucide-react";
+import { Copy, Printer, FileImage, Loader2, MessageCircle } from "lucide-react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useLocation, useNavigate, useParams } from "react-router-dom";
 import PageHeader from "@/components/PageHeader";
@@ -448,6 +448,45 @@ export default function MeasurementNew() {
     }
   };
 
+  const handleWhatsApp = async () => {
+    if (!measurement) return;
+    try {
+      const lines: string[] = [];
+      lines.push(`*Measurement Card*`);
+      lines.push(`Customer: ${measurement.customer?.name ?? "—"} (${measurement.customer?.customer_code ?? "—"})`);
+      if (trialDate) lines.push(`Trial Date: ${trialDate}`);
+      if (deliveryDate) lines.push(`Delivery Date: ${deliveryDate}`);
+      lines.push("");
+
+      for (const garment of GARMENT_TYPES) {
+        const fieldRows = await listMeasurementFields(garment);
+        const valuesMap = new Map<number, string>();
+        for (const v of measurement.values ?? []) {
+          if (typeof v.field_id !== "number") continue;
+          if (v.value === null || v.value === undefined || v.value === "") continue;
+          valuesMap.set(v.field_id, String(v.value));
+        }
+        const entries = fieldRows
+          .map((f) => {
+            const jsonVal = measurement.measurement_json?.[garment]?.[f.field_name];
+            const val = valuesMap.get(f.id) ?? (jsonVal ?? "");
+            return val ? `${f.field_name}: ${val} ${f.unit ?? ""}`.trim() : null;
+          })
+          .filter(Boolean);
+        if (entries.length > 0) {
+          lines.push(`*${garment}*`);
+          lines.push(...(entries as string[]));
+          lines.push("");
+        }
+      }
+
+      const text = encodeURIComponent(lines.join("\n").trim());
+      window.open(`https://wa.me/?text=${text}`, "_blank");
+    } catch {
+      toast({ title: "Failed", description: "Could not open WhatsApp.", variant: "destructive" });
+    }
+  };
+
   const canEdit = !isEditMode || isEditing;
   const mergedMeasurementJson = useMemo(() => {
     return buildMeasurementJson();
@@ -657,16 +696,39 @@ export default function MeasurementNew() {
           title={isEditMode ? "Fields" : ""}
           className="mb-6"
           headerActions={
-            isEditMode && !isEditing ? (
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={handleCopy}
-                className="h-8 p-2"
-                title="Copy CSV"
-              >
-                <Copy className="h-4 w-4" />
-              </Button>
+            isEditMode ? (
+              <div className="flex items-center gap-1">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={handlePrint}
+                  className="h-8 px-2 gap-1 text-xs"
+                  title="Print measurement"
+                >
+                  <Printer className="h-3.5 w-3.5" />
+                  Print
+                </Button>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={handleWhatsApp}
+                  className="h-8 px-2 gap-1 text-xs text-green-600 border-green-200 hover:bg-green-50 hover:text-green-700"
+                  title="Share on WhatsApp"
+                >
+                  <MessageCircle className="h-3.5 w-3.5" />
+                  WhatsApp
+                </Button>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={handleCopy}
+                  className="h-8 px-2 gap-1 text-xs"
+                  title="Copy all measurements"
+                >
+                  <Copy className="h-3.5 w-3.5" />
+                  Copy
+                </Button>
+              </div>
             ) : null
           }
         >
