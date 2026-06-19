@@ -9,7 +9,7 @@ import { cn } from "@/lib/utils";
 
 const IMG = {
   appointments: "https://images.unsplash.com/photo-1521791136064-7986c2920216?auto=format&fit=crop&w=900&q=80",
-  measurements: "https://images.unsplash.com/photo-1558171813-3c29a3c0f55b?auto=format&fit=crop&w=900&q=80",
+  measurements: "https://images.unsplash.com/photo-1593030103066-0093718efeb9?auto=format&fit=crop&w=900&q=80",
   billing: "https://images.unsplash.com/photo-1558618666-fcd25c85cd64?auto=format&fit=crop&w=900&q=80",
   customers: "https://images.unsplash.com/photo-1507679799987-c73779587ccf?auto=format&fit=crop&w=900&q=80",
   staff: "https://images.unsplash.com/photo-1497366216548-37526070297c?auto=format&fit=crop&w=900&q=80",
