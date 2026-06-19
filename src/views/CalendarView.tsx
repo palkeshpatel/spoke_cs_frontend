@@ -61,11 +61,11 @@ const UnifiedCalendarCtx = createContext<CalendarCtx | null>(null);
 
 const TAG_STYLES: Record<CalendarEventType, string> = {
   appointment:
-    "border border-blue-200 bg-gradient-to-r from-blue-50 to-blue-100 text-blue-800 dark:border-blue-800 dark:from-blue-950 dark:to-blue-900 dark:text-blue-200",
+    "bg-blue-500 sm:border sm:border-blue-200 sm:bg-gradient-to-r sm:from-blue-50 sm:to-blue-100 sm:text-blue-800 dark:sm:border-blue-800 dark:sm:from-blue-950 dark:sm:to-blue-900 dark:sm:text-blue-200",
   trial:
-    "border border-amber-200 bg-gradient-to-r from-amber-50 to-orange-100 text-amber-800 dark:border-amber-800 dark:from-amber-950 dark:to-orange-900 dark:text-amber-200",
+    "bg-amber-500 sm:border sm:border-amber-200 sm:bg-gradient-to-r sm:from-amber-50 sm:to-orange-100 sm:text-amber-800 dark:sm:border-amber-800 dark:sm:from-amber-950 dark:sm:to-orange-900 dark:sm:text-amber-200",
   delivery:
-    "border border-emerald-200 bg-gradient-to-r from-emerald-50 to-green-100 text-emerald-800 dark:border-emerald-800 dark:from-emerald-950 dark:to-green-900 dark:text-emerald-200",
+    "bg-emerald-500 sm:border sm:border-emerald-200 sm:bg-gradient-to-r sm:from-emerald-50 sm:to-green-100 sm:text-emerald-800 dark:sm:border-emerald-800 dark:sm:from-emerald-950 dark:sm:to-green-900 dark:sm:text-emerald-200",
 };
 
 type DayProps = React.ComponentProps<typeof Day>;
@@ -93,26 +93,28 @@ function UnifiedCalendarDayCell(props: DayProps) {
         <div className="flex shrink-0 items-start justify-end px-1 pt-1">{children}</div>
 
         {list.length > 0 ? (
-          <div className="flex flex-col gap-1 px-1 pb-2 pt-0.5">
+          <div className="flex flex-row flex-wrap sm:flex-col gap-1 px-1 pb-2 pt-0.5 justify-end sm:justify-start">
             {list.slice(0, maxShown).map((evt, i) => (
               <Link
                 key={`${evt.type}-${evt.id}-${i}`}
                 to={evt.linkTo}
                 className={cn(
-                  "relative z-[1] block w-full max-w-full rounded-md px-2 py-1 text-left text-xs font-medium leading-snug shadow-sm",
-                  "transition-all hover:scale-[1.02] hover:shadow-md",
+                  "relative z-[1] block shadow-sm transition-all hover:scale-[1.02] hover:shadow-md",
+                  "h-2.5 w-2.5 rounded-full border-0 p-0 flex-shrink-0 mt-1 sm:mt-0",
+                  "sm:h-auto sm:w-full sm:max-w-full sm:rounded-md sm:px-2 sm:py-1 sm:text-left sm:text-xs sm:font-medium sm:leading-snug",
                   TAG_STYLES[evt.type],
                 )}
                 title={evt.label}
                 onClick={(e) => e.stopPropagation()}
                 onPointerDown={(e) => e.stopPropagation()}
               >
-                {evt.label}
+                <span className="hidden sm:inline">{evt.label}</span>
               </Link>
             ))}
             {list.length > maxShown && (
-              <span className="px-0.5 text-center text-[10px] font-medium text-muted-foreground">
-                +{list.length - maxShown} more
+              <span className="px-0.5 text-center text-[10px] font-medium text-muted-foreground w-full sm:w-auto">
+                <span className="hidden sm:inline">+{list.length - maxShown} more</span>
+                <span className="inline sm:hidden">+{list.length - maxShown}</span>
               </span>
             )}
           </div>
