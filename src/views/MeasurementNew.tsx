@@ -654,7 +654,7 @@ export default function MeasurementNew() {
         </div>
 
         <SectionCard
-          title="Fields"
+          title={isEditMode ? "Fields" : ""}
           className="mb-6"
           headerActions={
             isEditMode && !isEditing ? (
@@ -670,27 +670,29 @@ export default function MeasurementNew() {
             ) : null
           }
         >
-          <div className="mb-4">
-            <label className="text-xs text-muted-foreground mb-2 block">
-              Garment Type *
-            </label>
-            <Tabs value={garmentType} onValueChange={handleGarmentTypeChange}>
-              <TabsList className="w-full">
-                <TabsTrigger value="Body" className="flex-1">
-                  Body
-                </TabsTrigger>
-                <TabsTrigger value="Suit" className="flex-1">
-                  Suit
-                </TabsTrigger>
-                <TabsTrigger value="Shirt" className="flex-1">
-                  Shirt
-                </TabsTrigger>
-                <TabsTrigger value="Pants" className="flex-1">
-                  Pants
-                </TabsTrigger>
-              </TabsList>
-            </Tabs>
-          </div>
+          {isEditMode && (
+            <div className="mb-4">
+              <label className="text-xs text-muted-foreground mb-2 block">
+                Garment Type *
+              </label>
+              <Tabs value={garmentType} onValueChange={handleGarmentTypeChange}>
+                <TabsList className="w-full">
+                  <TabsTrigger value="Body" className="flex-1">
+                    Body
+                  </TabsTrigger>
+                  <TabsTrigger value="Suit" className="flex-1">
+                    Suit
+                  </TabsTrigger>
+                  <TabsTrigger value="Shirt" className="flex-1">
+                    Shirt
+                  </TabsTrigger>
+                  <TabsTrigger value="Pants" className="flex-1">
+                    Pants
+                  </TabsTrigger>
+                </TabsList>
+              </Tabs>
+            </div>
+          )}
           {allFieldsQuery.isLoading ? (
             <div className="text-sm text-muted-foreground">Loading fields...</div>
           ) : allFields.length === 0 ? (
@@ -705,9 +707,11 @@ export default function MeasurementNew() {
                   if (grpFields.length === 0) return null;
                   return (
                     <div key={g} className="space-y-3">
-                      <h3 className="text-sm font-semibold border-b border-border pb-1 text-primary">
-                        {g === "Body" ? "Body Measurements" : `${g} Details`}
-                      </h3>
+                      {isEditMode && (
+                        <h3 className="text-sm font-semibold border-b border-border pb-1 text-primary">
+                          {g === "Body" ? "Body Measurements" : `${g} Details`}
+                        </h3>
+                      )}
                       <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
                         {grpFields.map((f) => (
                           <div key={f.id} className="space-y-1">
