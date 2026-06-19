@@ -87,8 +87,9 @@ function UnifiedCalendarDayCell(props: DayProps) {
     >
       <div
         className={cn(
-          "flex min-h-[5rem] flex-col rounded-lg border border-border/60 bg-card",
+          "relative flex min-h-[5rem] flex-col rounded-lg border border-border/60 bg-card",
           day.outside && "border-border/40 bg-muted/20 opacity-75",
+          list.length > 0 && "max-sm:bg-primary/10 max-sm:border-primary/30"
         )}
       >
         <div className="flex shrink-0 items-start justify-end px-1 pt-1">{children}</div>
@@ -120,39 +121,34 @@ function UnifiedCalendarDayCell(props: DayProps) {
               )}
             </div>
 
-            {/* Mobile View: Single Indicator Dot with Popover */}
-            <div className="sm:hidden flex justify-center pb-1 pt-1">
-              <Popover>
-                <PopoverTrigger asChild>
-                  <button
-                    className="flex h-6 w-6 items-center justify-center rounded-full"
+            {/* Mobile View: Absolute Overlay Trigger */}
+            <Popover>
+              <PopoverTrigger asChild>
+                <button
+                  className="sm:hidden absolute inset-0 w-full h-full rounded-lg cursor-pointer focus:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                  aria-label="View appointments"
+                />
+              </PopoverTrigger>
+              <PopoverContent className="w-56 p-2 space-y-1 z-50">
+                {list.map((evt, i) => (
+                  <Link
+                    key={`mob-${evt.type}-${evt.id}-${i}`}
+                    to={evt.linkTo}
+                    className={cn(
+                      "block w-full rounded-md px-2 py-2 text-left text-xs font-medium leading-snug shadow-sm",
+                      "transition-all hover:bg-muted",
+                      evt.type === "appointment" && "text-blue-800 bg-blue-50 border border-blue-200",
+                      evt.type === "trial" && "text-amber-800 bg-amber-50 border border-amber-200",
+                      evt.type === "delivery" && "text-emerald-800 bg-emerald-50 border border-emerald-200",
+                    )}
                     onClick={(e) => e.stopPropagation()}
                     onPointerDown={(e) => e.stopPropagation()}
                   >
-                    <div className="h-1.5 w-1.5 rounded-full bg-[#8B5A2B]" />
-                  </button>
-                </PopoverTrigger>
-                <PopoverContent className="w-56 p-2 space-y-1 z-50">
-                  {list.map((evt, i) => (
-                    <Link
-                      key={`mob-${evt.type}-${evt.id}-${i}`}
-                      to={evt.linkTo}
-                      className={cn(
-                        "block w-full rounded-md px-2 py-2 text-left text-xs font-medium leading-snug shadow-sm",
-                        "transition-all hover:bg-muted",
-                        evt.type === "appointment" && "text-blue-800 bg-blue-50 border border-blue-200",
-                        evt.type === "trial" && "text-amber-800 bg-amber-50 border border-amber-200",
-                        evt.type === "delivery" && "text-emerald-800 bg-emerald-50 border border-emerald-200",
-                      )}
-                      onClick={(e) => e.stopPropagation()}
-                      onPointerDown={(e) => e.stopPropagation()}
-                    >
-                      {evt.label}
-                    </Link>
-                  ))}
-                </PopoverContent>
-              </Popover>
-            </div>
+                    {evt.label}
+                  </Link>
+                ))}
+              </PopoverContent>
+            </Popover>
           </>
         ) : null}
       </div>
