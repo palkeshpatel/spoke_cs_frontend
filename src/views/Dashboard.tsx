@@ -117,30 +117,30 @@ export default function Dashboard() {
       },
       isAdmin
         ? {
-            label: "This Month Revenue",
-            value: formatMoney(revenueMonth ?? 0),
-            icon: TrendingUp,
-            iconWrap: "bg-emerald-500",
-          }
+          label: "This Month Revenue",
+          value: formatMoney(revenueMonth ?? 0),
+          icon: TrendingUp,
+          iconWrap: "bg-emerald-500",
+        }
         : {
-            label: "Total Orders",
-            value: String(totalOrders),
-            icon: TrendingUp,
-            iconWrap: "bg-emerald-500",
-          },
+          label: "Total Orders",
+          value: String(totalOrders),
+          icon: TrendingUp,
+          iconWrap: "bg-emerald-500",
+        },
       isAdmin
         ? {
-            label: "Overdue Payments",
-            value: String(overdue),
-            icon: AlertCircle,
-            iconWrap: "bg-red-500",
-          }
+          label: "Overdue Payments",
+          value: String(overdue),
+          icon: AlertCircle,
+          iconWrap: "bg-red-500",
+        }
         : {
-            label: "Payment Follow-ups",
-            value: String(staffAlerts),
-            icon: AlertCircle,
-            iconWrap: "bg-red-500",
-          },
+          label: "Payment Follow-ups",
+          value: String(staffAlerts),
+          icon: AlertCircle,
+          iconWrap: "bg-red-500",
+        },
     ];
   }, [isAdmin, s, todaysAppointments.length]);
 
