@@ -119,13 +119,13 @@ export default function Layout() {
             <img
               src="/spoke-by-nishit-soni-logo.svg"
               alt="SPOKE"
-              className="h-7 w-7 object-contain shrink-0"
+              className="h-7 w-7 object-contain shrink-0 brightness-0 invert"
             />
           ) : (
             <img
               src="/spoke-by-nishit-soni-logo.svg"
               alt="SPOKE"
-              className="h-8 w-auto object-contain max-w-[140px]"
+              className="h-8 w-auto object-contain max-w-[140px] brightness-0 invert"
             />
           )}
           {/* Mobile close */}
