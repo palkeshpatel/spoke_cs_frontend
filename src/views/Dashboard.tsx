@@ -208,13 +208,13 @@ export default function Dashboard() {
       <section>
         <h2 className="text-lg font-semibold text-foreground mb-4">Quick Access</h2>
         {dashboardQuery.isPending ? (
-          <div className="grid md:grid-cols-2 gap-4 sm:gap-6">
+          <div className="grid grid-cols-2 md:grid-cols-2 gap-2 sm:gap-4">
             {Array.from({ length: 4 }).map((_, i) => (
               <div key={i} className="h-[22rem] rounded-2xl bg-muted/80 animate-pulse border border-border/50" />
             ))}
           </div>
         ) : showData ? (
-          <div className="grid md:grid-cols-2 gap-4 sm:gap-6">
+          <div className="grid grid-cols-2 md:grid-cols-2 gap-2 sm:gap-6">
             <QuickAccessTile
               to="/appointments"
               title="Appointments"
