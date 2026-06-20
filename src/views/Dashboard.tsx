@@ -203,33 +203,7 @@ export default function Dashboard() {
         </div>
       )}
 
-      <section>
-        <h2 className="text-lg font-semibold text-foreground mb-4">Welcome Back</h2>
-        {dashboardQuery.isPending ? (
-          <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
-            {Array.from({ length: 4 }).map((_, i) => (
-              <div key={i} className="h-28 rounded-2xl bg-muted/80 animate-pulse border border-border/50" />
-            ))}
-          </div>
-        ) : showData ? (
-          <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
-            {summary.map((item) => (
-              <div
-                key={item.label}
-                className="bg-card rounded-2xl border border-border/60 card-shadow p-4 sm:p-5 flex flex-col justify-between min-h-[7.5rem]"
-              >
-                <div className={cn("inline-flex h-10 w-10 items-center justify-center rounded-xl text-white mb-3", item.iconWrap)}>
-                  <item.icon className="h-5 w-5" />
-                </div>
-                <div>
-                  <p className="text-xs text-muted-foreground leading-snug">{item.label}</p>
-                  <p className="text-xl sm:text-2xl font-bold text-foreground tabular-nums mt-1">{item.value}</p>
-                </div>
-              </div>
-            ))}
-          </div>
-        ) : null}
-      </section>
+
 
       <section>
         <h2 className="text-lg font-semibold text-foreground mb-4">Quick Access</h2>
