@@ -295,13 +295,12 @@ export default function Login() {
       <div className="relative z-10 w-full max-w-md px-4">
         {/* Branding */}
         <div className="text-center mb-8">
-          <div className="flex items-center justify-center gap-3 mb-3">
-            <div className="bg-white/10 backdrop-blur-sm border border-white/20 rounded-xl p-2.5">
-              <Scissors className="h-8 w-8 text-white" />
-            </div>
-            <h1 className="text-5xl font-bold text-white tracking-[0.25em]">
-              SPOKE
-            </h1>
+          <div className="flex items-center justify-center mb-4">
+            <img
+              src="/spoke-by-nishit-soni-logo.svg"
+              alt="SPOKE"
+              className="h-16 w-auto object-contain brightness-0 invert"
+            />
           </div>
           <p className="text-white/70 text-sm tracking-widest uppercase">
             Professional Tailoring Management System

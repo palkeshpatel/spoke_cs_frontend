@@ -115,8 +115,19 @@ export default function Layout() {
         ${collapsed ? 'w-16' : 'w-60'}
       `}>
         <div className="flex items-center gap-2 px-3 h-14 border-b border-sidebar-hover">
-          <Scissors className="h-6 w-6 text-primary shrink-0" />
-          {!collapsed && <span className="text-sidebar-fg font-bold text-lg tracking-tight">SPOKE</span>}
+          {collapsed ? (
+            <img
+              src="/spoke-by-nishit-soni-logo.svg"
+              alt="SPOKE"
+              className="h-7 w-7 object-contain shrink-0"
+            />
+          ) : (
+            <img
+              src="/spoke-by-nishit-soni-logo.svg"
+              alt="SPOKE"
+              className="h-8 w-auto object-contain max-w-[140px]"
+            />
+          )}
           {/* Mobile close */}
           <button
             onClick={() => setMobileOpen(false)}
@@ -244,8 +255,11 @@ export default function Layout() {
           <button type="button" onClick={() => setMobileOpen(true)} className="p-1.5 rounded-lg hover:bg-muted transition-colors">
             <Menu className="h-5 w-5 text-foreground" />
           </button>
-          <Scissors className="h-5 w-5 text-primary" />
-          <span className="font-bold text-foreground tracking-tight flex-1">SPOKE</span>
+          <img
+              src="/spoke-by-nishit-soni-logo.svg"
+              alt="SPOKE"
+              className="h-7 w-auto object-contain max-w-[120px]"
+            />
           <button
             type="button"
             onClick={handleLogout}
