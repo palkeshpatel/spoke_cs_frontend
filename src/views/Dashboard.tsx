@@ -6,6 +6,7 @@ import { getDashboard } from "@/services/dashboard";
 import { listOrders } from "@/services/orders";
 import { WorkTimer } from "@/components/WorkTimer";
 import { OrderStatusStepper } from "@/components/OrderStatusStepper";
+import { StatusBadge } from "@/components/StatusBadge";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 
