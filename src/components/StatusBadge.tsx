@@ -1,6 +1,12 @@
 const statusStyles: Record<string, string> = {
   confirmed: 'bg-foreground text-card',
   pending: 'bg-card text-foreground border border-border',
+  measurement: 'bg-indigo-50 text-indigo-700 border border-indigo-200',
+  cutting: 'bg-amber-50 text-amber-700 border border-amber-200',
+  stitching: 'bg-fuchsia-50 text-fuchsia-700 border border-fuchsia-200',
+  trial_1: 'bg-primary/10 text-primary border border-primary/20',
+  trial_2: 'bg-info/10 text-info border border-info/20',
+  delivery: 'bg-success/10 text-success border border-success/20',
   completed: 'bg-success text-success-foreground',
   cancelled: 'bg-destructive/10 text-destructive',
   'in-progress': 'bg-info/10 text-info',

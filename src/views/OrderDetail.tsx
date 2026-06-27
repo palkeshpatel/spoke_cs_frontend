@@ -35,7 +35,7 @@ export default function OrderDetail() {
   const [fabricDraft, setFabricDraft] = useState("");
   const [trialDateDraft, setTrialDateDraft] = useState("");
   const [deliveryDateDraft, setDeliveryDateDraft] = useState("");
-  const [statusDraft, setStatusDraft] = useState<"pending" | "in_progress" | "trial" | "completed" | "delivered">("pending");
+  const [statusDraft, setStatusDraft] = useState<"measurement" | "cutting" | "stitching" | "trial_1" | "trial_2" | "delivery" | "pending" | "completed" | "delivered">("measurement");
   const [priceDraft, setPriceDraft] = useState("");
   const [notesDraft, setNotesDraft] = useState("");
   const [itemsDraft, setItemsDraft] = useState<ItemDraft[]>([]);
@@ -137,7 +137,7 @@ export default function OrderDetail() {
     setFabricDraft(order.fabric ?? "");
     setTrialDateDraft(order.trial_date ?? "");
     setDeliveryDateDraft(order.delivery_date ?? "");
-    setStatusDraft(order.status ?? "pending");
+    setStatusDraft(order.status ?? "measurement");
     setPriceDraft(typeof order.items?.[0]?.price === "string" ? order.items[0].price : String(order.items?.[0]?.price ?? 0));
     setNotesDraft(order.notes ?? "");
     setItemsDraft(
@@ -253,11 +253,12 @@ export default function OrderDetail() {
                 isEditing={isEditing}
                 type="select"
                 options={[
-                  { value: "pending", label: "pending" },
-                  { value: "in_progress", label: "in_progress" },
-                  { value: "trial", label: "trial" },
-                  { value: "completed", label: "completed" },
-                  { value: "delivered", label: "delivered" },
+                  { value: "measurement", label: "Measurement" },
+                  { value: "cutting", label: "Cutting" },
+                  { value: "stitching", label: "Stitching" },
+                  { value: "trial_1", label: "Trial 1" },
+                  { value: "trial_2", label: "Trial 2" },
+                  { value: "delivery", label: "Delivery" },
                 ]}
                 onChange={(v) => setStatusDraft(v as typeof statusDraft)}
               />

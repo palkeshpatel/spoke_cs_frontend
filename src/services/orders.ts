@@ -48,7 +48,7 @@ export type OrderDto = {
   trial_date: string | null;
   delivery_date: string | null;
   notes: string | null;
-  status: "pending" | "in_progress" | "trial" | "completed" | "delivered";
+  status: "measurement" | "cutting" | "stitching" | "trial_1" | "trial_2" | "delivery" | "pending" | "completed" | "delivered";
   created_at: string;
   updated_at: string;
   customer?: CustomerLite;
@@ -84,7 +84,7 @@ export async function createOrder(payload: {
   trial_date?: string | null;
   delivery_date?: string | null;
   notes?: string | null;
-  status?: "pending" | "in_progress" | "trial" | "completed" | "delivered";
+  status?: "measurement" | "cutting" | "stitching" | "trial_1" | "trial_2" | "delivery" | "pending" | "completed" | "delivered";
   items?: Array<{
     garment_type?: string | null;
     measurement_id?: number | null;
@@ -111,7 +111,7 @@ export async function updateOrder(
     trial_date: string | null;
     delivery_date: string | null;
     notes: string | null;
-    status: "pending" | "in_progress" | "trial" | "completed" | "delivered";
+    status: "measurement" | "cutting" | "stitching" | "trial_1" | "trial_2" | "delivery" | "pending" | "completed" | "delivered";
     items: Array<{
       garment_type?: string | null;
       measurement_id?: number | null;

@@ -30,7 +30,7 @@ export default function OrderNew() {
   const [fabric, setFabric] = useState<string>("");
   const [price, setPrice] = useState<string>("");
   const [notes, setNotes] = useState<string>("");
-  const [status, setStatus] = useState<"pending" | "in_progress" | "trial" | "completed" | "delivered">("pending");
+  const [status, setStatus] = useState<"measurement" | "cutting" | "stitching" | "trial_1" | "trial_2" | "delivery">("measurement");
   const [trialDate, setTrialDate] = useState<string>("");
   const [deliveryDate, setDeliveryDate] = useState<string>("");
   const [detailRows, setDetailRows] = useState<ItemDetailRow[]>([{ icon_path: null, note: "", isUploading: false }]);
@@ -248,13 +248,14 @@ export default function OrderNew() {
                 <select
                   value={status}
                   onChange={(e) => setStatus(e.target.value as any)}
-                  className="flex h-10 w-full items-center justify-between rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                  className="flex h-10 w-full items-center justify-between rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
                 >
-                  <option value="pending">pending</option>
-                  <option value="in_progress">in_progress</option>
-                  <option value="trial">trial</option>
-                  <option value="completed">completed</option>
-                  <option value="delivered">delivered</option>
+                  <option value="measurement">Measurement</option>
+                  <option value="cutting">Cutting</option>
+                  <option value="stitching">Stitching</option>
+                  <option value="trial_1">Trial 1</option>
+                  <option value="trial_2">Trial 2</option>
+                  <option value="delivery">Delivery</option>
                 </select>
               </div>
             </div>
