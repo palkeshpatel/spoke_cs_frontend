@@ -5,7 +5,7 @@ import { LayoutGrid, List, Plus, Search } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import PageHeader from "@/components/PageHeader";
-import { StatusBadge } from "@/components/StatusBadge";
+import { OrderStatusStepper } from "@/components/OrderStatusStepper";
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 import { listOrders } from "@/services/orders";
 
@@ -98,16 +98,18 @@ export default function OrderList() {
                 <Link
                   key={o.id}
                   to={`/orders/${o.id}`}
-                  className="flex flex-col gap-3 p-4 sm:flex-row sm:items-center sm:justify-between sm:gap-4 hover:bg-muted/50 transition-colors"
+                  className="flex flex-col gap-4 p-5 hover:bg-muted/50 transition-colors block"
                 >
-                  <div className="min-w-0 space-y-1">
-                    <p className="text-sm font-semibold">{o.order_number}</p>
-                    <p className="text-sm text-muted-foreground">{o.customer?.name ?? "—"}</p>
-                    <p className="text-xs text-muted-foreground">Fabric: {o.fabric ?? "—"}</p>
-                  </div>
-                  <div className="flex shrink-0 flex-row items-center justify-between gap-4 border-t border-border pt-3 sm:border-t-0 sm:pt-0 sm:text-right">
-                    <StatusBadge status={o.status} />
+                  <div className="flex items-start justify-between">
+                    <div className="min-w-0 space-y-1">
+                      <p className="text-sm font-semibold">{o.order_number}</p>
+                      <p className="text-sm text-muted-foreground">{o.customer?.name ?? "—"}</p>
+                      <p className="text-xs text-muted-foreground">Fabric: {o.fabric ?? "—"}</p>
+                    </div>
                     <p className="text-sm font-semibold">${total.toFixed(2)}</p>
+                  </div>
+                  <div className="pt-2 px-2">
+                    <OrderStatusStepper status={o.status} isEditing={false} />
                   </div>
                 </Link>
               );
@@ -126,10 +128,12 @@ export default function OrderList() {
                   >
                     <p className="text-sm font-semibold">{o.order_number}</p>
                     <p className="text-sm text-muted-foreground truncate">{o.customer?.name ?? "—"}</p>
-                    <p className="text-xs text-muted-foreground mt-2 line-clamp-2">Fabric: {o.fabric ?? "—"}</p>
-                    <div className="mt-3 flex items-center justify-between gap-2">
-                      <StatusBadge status={o.status} />
+                    <div className="mt-1 flex items-center justify-between">
+                      <p className="text-xs text-muted-foreground line-clamp-1">Fabric: {o.fabric ?? "—"}</p>
                       <p className="text-sm font-semibold">${total.toFixed(2)}</p>
+                    </div>
+                    <div className="mt-4 pt-4 border-t border-border/50">
+                      <OrderStatusStepper status={o.status} isEditing={false} />
                     </div>
                   </Link>
                 );
