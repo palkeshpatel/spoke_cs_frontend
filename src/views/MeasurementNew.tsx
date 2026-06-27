@@ -482,7 +482,7 @@ table { width: 100%; border-collapse: collapse; }
   </tr>
 </table>`;
 
-    const printGroups: { label: string; rows: { name: string; value: string; unit: string }[] }[] = [];
+    const printGroups: { label: string; type: string; rows: { name: string; value: string; unit: string }[] }[] = [];
     
     // Which groups to print (same logic as printSections)
     const garmentGroupsToShow = garmentType === "Body" ? ["Body", "Suit", "Shirt", "Pants"] : [garmentType];
@@ -501,6 +501,7 @@ table { width: 100%; border-collapse: collapse; }
       
       printGroups.push({
         label: g === "Body" ? "Body Measurements" : `${g} Details`,
+        type: g,
         rows
       });
     }
@@ -530,6 +531,11 @@ table { width: 100%; border-collapse: collapse; }
         html += `</tr>`;
       }
       html += `</table>`;
+
+      const gNotes = section.type === "Suit" ? suitNotes : section.type === "Shirt" ? shirtNotes : section.type === "Pants" ? pantNotes : "";
+      if (gNotes && gNotes.trim() !== "") {
+        html += `<div style="margin-top: 10px; font-size: 13px;"><b>Notes:</b> <span style="white-space: pre-wrap;">${gNotes}</span></div>`;
+      }
     }
 
     html += `
@@ -593,6 +599,12 @@ table { width: 100%; border-collapse: collapse; }
         const val = valuesMap.get(f.id) ?? (jsonVal ?? "");
         return { name: f.field_name, value: String(val ?? ""), unit: f.unit ?? "" };
       });
+      
+      const gNotes = g === "Suit" ? suitNotes : g === "Shirt" ? shirtNotes : g === "Pants" ? pantNotes : "";
+      if (gNotes && gNotes.trim() !== "") {
+        rows.push({ name: "Notes", value: gNotes, unit: "" });
+      }
+
       const label = g === "Body" ? "Body Measurements" : `${g} Details`;
       sections.push({ label, rows });
     }
