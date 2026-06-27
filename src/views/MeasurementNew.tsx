@@ -455,7 +455,9 @@ export default function MeasurementNew() {
       }
 
       const text = encodeURIComponent(lines.join("\n").trim());
-      window.open(`https://wa.me/?text=${text}`, "_blank");
+      const rawPhone = measurement.customer?.phone || "";
+      const phoneDigits = rawPhone.replace(/\D/g, ''); // strip non-digits
+      window.open(`https://api.whatsapp.com/send?phone=${phoneDigits}&text=${text}`, "_blank");
     } catch {
       toast({ title: "Failed", description: "Could not open WhatsApp.", variant: "destructive" });
     }
@@ -695,7 +697,7 @@ export default function MeasurementNew() {
                   title="Share on WhatsApp"
                 >
                   <MessageCircle className="h-3.5 w-3.5" />
-                  WhatsApp
+                  Share
                 </Button>
                 <Button
                   variant="outline"
