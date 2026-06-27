@@ -249,7 +249,7 @@ export default function AppointmentDetail() {
         <SectionCard title="Appointment Information">
           <div className="space-y-4">
             <EditableField 
-              label="Service" 
+              label="Service Type *" 
               value={form.serviceType} 
               isEditing={isEditing} 
               type={isEditing ? "select" : "text"}
@@ -276,16 +276,6 @@ export default function AppointmentDetail() {
                 <StatusBadge status={form.status} />
               </div>
             )}
-          </div>
-          <div className="border-t border-border pt-4 mt-4 space-y-2">
-            <div className="flex justify-between text-sm flex-wrap gap-1">
-              <span className="text-muted-foreground">Created</span>
-              <span>{form.createdAt ? format(new Date(form.createdAt), "dd-MMM-yyyy") : "—"}</span>
-            </div>
-            <div className="flex justify-between text-sm flex-wrap gap-1">
-              <span className="text-muted-foreground">Updated</span>
-              <span>{form.updatedAt ? format(new Date(form.updatedAt), "dd-MMM-yyyy") : "—"}</span>
-            </div>
           </div>
         </SectionCard>
       </div>

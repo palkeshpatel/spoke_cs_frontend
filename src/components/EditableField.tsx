@@ -52,10 +52,8 @@ function getIconForLabel(label: string): ReactNode {
 
 export default function EditableField({ label, value, isEditing, onChange, type = 'text', options, unit }: EditableFieldProps) {
   const renderLabel = (mb: string = "mb-1") => {
-    const icon = getIconForLabel(label);
     return (
       <div className={`flex items-center gap-1.5 ${mb}`}>
-        {icon ? <span className="inline-flex shrink-0">{icon}</span> : null}
         <p className="text-xs text-muted-foreground leading-none">{label}</p>
       </div>
     );
