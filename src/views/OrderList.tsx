@@ -5,6 +5,7 @@ import { LayoutGrid, List, Plus, Search } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import PageHeader from "@/components/PageHeader";
+import { StatusBadge } from "@/components/StatusBadge";
 import { OrderStatusStepper } from "@/components/OrderStatusStepper";
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 import { listOrders } from "@/services/orders";
@@ -98,18 +99,21 @@ export default function OrderList() {
                 <Link
                   key={o.id}
                   to={`/orders/${o.id}`}
-                  className="flex flex-col gap-4 p-5 hover:bg-muted/50 transition-colors block"
+                  className="flex flex-col xl:flex-row xl:items-center gap-4 p-4 hover:bg-muted/50 transition-colors"
                 >
-                  <div className="flex items-start justify-between">
-                    <div className="min-w-0 space-y-1">
-                      <p className="text-sm font-semibold">{o.order_number}</p>
-                      <p className="text-sm text-muted-foreground">{o.customer?.name ?? "—"}</p>
-                      <p className="text-xs text-muted-foreground">Fabric: {o.fabric ?? "—"}</p>
-                    </div>
-                    <p className="text-sm font-semibold">${total.toFixed(2)}</p>
+                  <div className="min-w-[200px] shrink-0 space-y-1">
+                    <p className="text-sm font-semibold">{o.order_number}</p>
+                    <p className="text-sm text-muted-foreground truncate">{o.customer?.name ?? "—"}</p>
+                    <p className="text-xs text-muted-foreground truncate">Fabric: {o.fabric ?? "—"}</p>
                   </div>
-                  <div className="pt-2 px-2">
-                    <OrderStatusStepper status={o.status} isEditing={false} />
+                  
+                  <div className="flex-1 w-full xl:w-auto px-2 xl:px-6">
+                    <OrderStatusStepper status={o.status} isEditing={false} size="sm" />
+                  </div>
+
+                  <div className="flex shrink-0 items-center justify-between xl:justify-end gap-4 xl:w-[200px] pt-2 xl:pt-0 border-t border-border xl:border-t-0">
+                    <StatusBadge status={o.status} />
+                    <p className="text-sm font-semibold whitespace-nowrap">${total.toFixed(2)}</p>
                   </div>
                 </Link>
               );
@@ -133,7 +137,7 @@ export default function OrderList() {
                       <p className="text-sm font-semibold">${total.toFixed(2)}</p>
                     </div>
                     <div className="mt-4 pt-4 border-t border-border/50">
-                      <OrderStatusStepper status={o.status} isEditing={false} />
+                      <OrderStatusStepper status={o.status} isEditing={false} size="sm" />
                     </div>
                   </Link>
                 );
