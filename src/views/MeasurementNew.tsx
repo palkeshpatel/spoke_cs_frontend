@@ -387,11 +387,15 @@ table { width: 100%; border-collapse: collapse; }
 .measure-table th { background: #f5f5f5; border: 1px solid #ddd; padding: 8px; text-align: left; }
 .value { width: 90px; text-align: center; font-weight: bold; }
 .footer { text-align: center; margin-top: 20px; color: #777; font-size: 12px; padding-top: 20px; border-top: 1px solid #ddd; }
+@media print {
+  @page { margin: 0; }
+  body { margin: 1.6cm; }
+}
 </style>
 </head>
 <body>
 <div class="header">
-  <h1>BESPOKE TAILORING</h1>
+  <img src="/spoke-by-nishit-soni-logo.svg" alt="Spoke Logo" style="height: 50px;" />
   <div style="font-size:18px;font-weight:bold;margin-top:5px;color:#d97706;">
     Customer Measurement Report
   </div>
