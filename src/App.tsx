@@ -16,7 +16,6 @@ import AppointmentDetail from "@/views/AppointmentDetail";
 import AppointmentNew from "@/views/AppointmentNew";
 import MeasurementList from "@/views/MeasurementList";
 import MeasurementNew from "@/views/MeasurementNew";
-import MeasurementPrint from "@/views/MeasurementPrint";
 import OrderList from "@/views/OrderList";
 import OrderDetail from "@/views/OrderDetail";
 import OrderNew from "@/views/OrderNew";
@@ -92,7 +91,6 @@ const App = () => (
         <Routes>
           <Route path="/login" element={<Login />} />
           <Route element={<RequireAuth />}>
-            <Route path="/measurements/:id/print" element={<MeasurementPrint />} />
             <Route element={<Layout />}>
               <Route path="/" element={<Dashboard />} />
               <Route path="/customers" element={<CustomerList />} />
