@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { Link, Outlet, useLocation, useNavigate } from 'react-router-dom';
 import {
   LayoutDashboard, Users, Calendar, Ruler, Package, Receipt,
-  BarChart3, Settings, ChevronLeft, ChevronRight, ChevronDown, Scissors, Menu, X, LogOut, Shield, Bell
+  BarChart3, Settings, ChevronLeft, ChevronRight, ChevronDown, Scissors, Menu, X, LogOut, Shield, Bell, MoreHorizontal
 } from 'lucide-react';
 import { logout as logoutApi } from '@/services/auth';
 import { getSessionBranch } from '@/services/api';
@@ -277,7 +277,7 @@ export default function Layout() {
           </div>
         </div>
 
-        <main className="flex-1 overflow-y-auto">
+        <main className="flex-1 overflow-y-auto pb-16 lg:pb-0">
           <div className="p-4 sm:p-6 max-w-7xl mx-auto">
             {isUserLoading ? (
               <div className="flex min-h-[40vh] items-center justify-center text-sm text-muted-foreground animate-pulse">
@@ -290,6 +290,30 @@ export default function Layout() {
             )}
           </div>
         </main>
+
+        {/* Mobile Bottom Navigation */}
+        <div className="lg:hidden absolute bottom-0 left-0 right-0 h-16 bg-card border-t border-border flex items-center justify-around px-1 z-40 shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.05)]">
+          <Link to="/" className={`flex flex-col items-center justify-center w-full h-full space-y-1 ${location.pathname === '/' ? 'text-primary' : 'text-muted-foreground hover:text-foreground'}`}>
+            <LayoutDashboard className="h-[22px] w-[22px]" />
+            <span className="text-[10px] font-semibold">Dashboard</span>
+          </Link>
+          <Link to="/orders" className={`flex flex-col items-center justify-center w-full h-full space-y-1 ${location.pathname.startsWith('/orders') ? 'text-primary' : 'text-muted-foreground hover:text-foreground'}`}>
+            <Package className="h-[22px] w-[22px]" />
+            <span className="text-[10px] font-semibold">Orders</span>
+          </Link>
+          <Link to="/customers" className={`flex flex-col items-center justify-center w-full h-full space-y-1 ${location.pathname.startsWith('/customers') ? 'text-primary' : 'text-muted-foreground hover:text-foreground'}`}>
+            <Users className="h-[22px] w-[22px]" />
+            <span className="text-[10px] font-semibold">Customers</span>
+          </Link>
+          <Link to="/appointments" className={`flex flex-col items-center justify-center w-full h-full space-y-1 ${location.pathname.startsWith('/appointments') ? 'text-primary' : 'text-muted-foreground hover:text-foreground'}`}>
+            <Calendar className="h-[22px] w-[22px]" />
+            <span className="text-[10px] font-semibold">Appointments</span>
+          </Link>
+          <button type="button" onClick={() => setMobileOpen(true)} className="flex flex-col items-center justify-center w-full h-full space-y-1 text-muted-foreground hover:text-foreground">
+            <MoreHorizontal className="h-[22px] w-[22px]" />
+            <span className="text-[10px] font-semibold">More</span>
+          </button>
+        </div>
       </div>
     </div>
   );
