@@ -78,8 +78,7 @@ export default function DatePicker({
             }}
             disabled={minDate ? { before: minDate } : undefined}
             defaultMonth={selectedDate && isValid(selectedDate) ? selectedDate : new Date()}
-            captionLayout="dropdown"
-            className="!p-2 text-xs [&_.rdp-day]:h-7 [&_.rdp-day]:w-7 [&_.rdp-day_button]:h-7 [&_.rdp-day_button]:w-7 [&_.rdp-day_button]:text-xs [&_.rdp-weekday]:w-7 [&_.rdp-weekday]:text-xs [&_.rdp-caption_label]:text-xs [&_.rdp-nav_button]:h-6 [&_.rdp-nav_button]:w-6"
+            className="!p-2 text-xs [&_.rdp-day]:h-7 [&_.rdp-day]:w-7 [&_.rdp-day_button]:h-7 [&_.rdp-day_button]:w-7 [&_.rdp-day_button]:text-xs [&_.rdp-weekday]:w-7 [&_.rdp-weekday]:text-xs [&_.rdp-caption_label]:text-xs [&_.rdp-nav_button]:h-6 [&_.rdp-nav_button]:w-6 bg-card"
           />
         </div>
       )}

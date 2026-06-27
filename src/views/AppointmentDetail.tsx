@@ -290,44 +290,42 @@ export default function AppointmentDetail() {
         )}
       </SectionCard>
 
-      <div className="fixed bottom-0 left-0 right-0 z-40">
-        <div className="mx-auto max-w-6xl px-4 pb-4">
-          <div className="bg-card/95 backdrop-blur supports-[backdrop-filter]:bg-card/80 border border-border rounded-xl card-shadow p-2 flex flex-col sm:flex-row gap-2">
-            <Button
-              variant="outline"
-              className="flex-1 h-11"
-              onClick={() => reminderMutation.mutate()}
-              disabled={!canRemind || reminderMutation.isPending}
-              title="Send reminder email to customer"
-            >
-              <Bell className="h-4 w-4 mr-2" />
-              {reminderMutation.isPending ? "Sending..." : "Send Reminder"}
-            </Button>
-            <Button
-              variant="outline"
-              className="flex-1 h-11"
-              onClick={() => setIsEditing(true)}
-              disabled={!canReschedule}
-              title="Reschedule appointment (edit date/time)"
-            >
-              <CalendarClock className="h-4 w-4 mr-2" />
-              Reschedule
-            </Button>
-            <Button
-              variant="cancel"
-              className="flex-1 h-11"
-              onClick={() => {
-                const ok = window.confirm("Cancel this appointment?");
-                if (!ok) return;
-                cancelMutation.mutate();
-              }}
-              disabled={!canCancel || cancelMutation.isPending}
-              title="Cancel appointment"
-            >
-              <X className="h-4 w-4 mr-2" />
-              {cancelMutation.isPending ? "Cancelling..." : "Cancel"}
-            </Button>
-          </div>
+      <div className="mt-8 mb-4">
+        <div className="bg-card border border-border rounded-xl card-shadow p-2 flex flex-col sm:flex-row gap-2">
+          <Button
+            variant="outline"
+            className="flex-1 h-11"
+            onClick={() => reminderMutation.mutate()}
+            disabled={!canRemind || reminderMutation.isPending}
+            title="Send reminder email to customer"
+          >
+            <Bell className="h-4 w-4 mr-2" />
+            {reminderMutation.isPending ? "Sending..." : "Send Reminder"}
+          </Button>
+          <Button
+            variant="outline"
+            className="flex-1 h-11"
+            onClick={() => setIsEditing(true)}
+            disabled={!canReschedule}
+            title="Reschedule appointment (edit date/time)"
+          >
+            <CalendarClock className="h-4 w-4 mr-2" />
+            Reschedule
+          </Button>
+          <Button
+            variant="cancel"
+            className="flex-1 h-11"
+            onClick={() => {
+              const ok = window.confirm("Cancel this appointment?");
+              if (!ok) return;
+              cancelMutation.mutate();
+            }}
+            disabled={!canCancel || cancelMutation.isPending}
+            title="Cancel appointment"
+          >
+            <X className="h-4 w-4 mr-2" />
+            {cancelMutation.isPending ? "Cancelling..." : "Cancel"}
+          </Button>
         </div>
       </div>
     </div>
