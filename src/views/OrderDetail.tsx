@@ -16,6 +16,7 @@ import { resolvePublicUrl } from "@/services/api";
 import { Camera, FileImage, Loader2, Plus, Trash2 } from "lucide-react";
 import { OrderCustomizationDialog } from "@/components/OrderCustomizationDialog";
 import DatePicker from "@/components/DatePicker";
+import { OrderStatusStepper } from "@/components/OrderStatusStepper";
 
 type ItemDraft = {
   garment_type: string | null;
@@ -246,22 +247,15 @@ export default function OrderDetail() {
 
             <EditableField label="Customer" value={order.customer?.name ?? "—"} isEditing={false} onChange={() => { }} />
 
-            <div className="grid grid-cols-2 gap-4">
-              <EditableField
-                label="Status"
-                value={isEditing ? statusDraft : order.status}
-                isEditing={isEditing}
-                type="select"
-                options={[
-                  { value: "measurement", label: "Measurement" },
-                  { value: "cutting", label: "Cutting" },
-                  { value: "stitching", label: "Stitching" },
-                  { value: "trial_1", label: "Trial 1" },
-                  { value: "trial_2", label: "Trial 2" },
-                  { value: "delivery", label: "Delivery" },
-                ]}
-                onChange={(v) => setStatusDraft(v as typeof statusDraft)}
-              />
+            <div className="pt-2 pb-4">
+              <p className="text-xs text-muted-foreground mb-4">Order Status Progress</p>
+              <div className="bg-muted/30 border border-border rounded-xl px-2 sm:px-6 py-6 overflow-hidden">
+                <OrderStatusStepper 
+                  status={isEditing ? statusDraft : order.status} 
+                  onChange={(v) => setStatusDraft(v as typeof statusDraft)} 
+                  isEditing={isEditing} 
+                />
+              </div>
             </div>
 
             <div className="grid grid-cols-2 gap-4">

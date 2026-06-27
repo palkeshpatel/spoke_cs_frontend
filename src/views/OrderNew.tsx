@@ -14,6 +14,7 @@ import { resolvePublicUrl } from "@/services/api";
 import { getCustomer, uploadCustomerBodyImage } from "@/services/customers";
 import { OrderCustomizationDialog } from "@/components/OrderCustomizationDialog";
 import DatePicker from "@/components/DatePicker";
+import { OrderStatusStepper } from "@/components/OrderStatusStepper";
 
 type ItemDetailRow = {
   icon_path: string | null;
@@ -243,20 +244,11 @@ export default function OrderNew() {
             </div>
 
             <div className="grid grid-cols-2 gap-4">
-              <div>
-                <label className="text-xs text-muted-foreground mb-1 block">Status</label>
-                <select
-                  value={status}
-                  onChange={(e) => setStatus(e.target.value as any)}
-                  className="flex h-10 w-full items-center justify-between rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
-                >
-                  <option value="measurement">Measurement</option>
-                  <option value="cutting">Cutting</option>
-                  <option value="stitching">Stitching</option>
-                  <option value="trial_1">Trial 1</option>
-                  <option value="trial_2">Trial 2</option>
-                  <option value="delivery">Delivery</option>
-                </select>
+              <div className="col-span-1 sm:col-span-2">
+                <label className="text-xs text-muted-foreground mb-3 block">Status</label>
+                <div className="bg-muted/30 border border-border rounded-xl px-4 py-6">
+                  <OrderStatusStepper status={status} onChange={(s) => setStatus(s as any)} isEditing={true} />
+                </div>
               </div>
             </div>
 
