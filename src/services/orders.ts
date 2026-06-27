@@ -64,10 +64,13 @@ export type Paginated<T> = {
   total: number;
 };
 
-export async function listOrders(perPage = 100, customerId?: number) {
-  const q = new URLSearchParams({ per_page: String(perPage) });
+export async function listOrders(page = 1, perPage = 10, customerId?: number, search?: string) {
+  const q = new URLSearchParams({ page: String(page), per_page: String(perPage) });
   if (customerId !== undefined && Number.isFinite(customerId)) {
     q.set("customer_id", String(customerId));
+  }
+  if (search) {
+    q.set("search", search);
   }
   return apiRequest<Paginated<OrderDto>>(`/api/orders?${q.toString()}`);
 }

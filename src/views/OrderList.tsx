@@ -1,7 +1,7 @@
-import { useMemo, useState } from "react";
+import { useMemo, useState, useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Link } from "react-router-dom";
-import { LayoutGrid, List, Plus, Search } from "lucide-react";
+import { LayoutGrid, List, Plus, Search, ChevronLeft, ChevronRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import PageHeader from "@/components/PageHeader";
@@ -10,26 +10,35 @@ import { OrderStatusStepper } from "@/components/OrderStatusStepper";
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 import { listOrders } from "@/services/orders";
 
+function useDebounce<T>(value: T, delay: number): T {
+  const [debouncedValue, setDebouncedValue] = useState<T>(value);
+  useEffect(() => {
+    const timer = setTimeout(() => setDebouncedValue(value), delay);
+    return () => clearTimeout(timer);
+  }, [value, delay]);
+  return debouncedValue;
+}
+
 export default function OrderList() {
   const [search, setSearch] = useState("");
+  const debouncedSearch = useDebounce(search, 300);
   const [view, setView] = useState<"list" | "grid">("list");
+  const [page, setPage] = useState(1);
+
+  // Reset page to 1 when search changes
+  useEffect(() => {
+    setPage(1);
+  }, [debouncedSearch]);
 
   const ordersQuery = useQuery({
-    queryKey: ["orders", "list"],
-    queryFn: () => listOrders(200),
+    queryKey: ["orders", "list", page, debouncedSearch],
+    queryFn: () => listOrders(page, 10, undefined, debouncedSearch),
   });
 
   const orders = useMemo(() => ordersQuery.data?.data ?? [], [ordersQuery.data]);
-
-  const filtered = useMemo(() => {
-    const q = search.trim().toLowerCase();
-    if (!q) return orders;
-    return orders.filter((o) => {
-      const orderNumber = (o.order_number ?? "").toLowerCase();
-      const customerName = (o.customer?.name ?? "").toLowerCase();
-      return orderNumber.includes(q) || customerName.includes(q);
-    });
-  }, [orders, search]);
+  
+  // No longer filtering on the client, backend handles it
+  const filtered = orders;
 
   const totalCount = ordersQuery.data?.total ?? orders.length;
 
@@ -142,6 +151,59 @@ export default function OrderList() {
                   </Link>
                 );
               })}
+            </div>
+          </div>
+        )}
+
+        {/* Pagination Controls */}
+        {ordersQuery.data && ordersQuery.data.total > 0 && (
+          <div className="flex items-center justify-between px-4 py-4 border-t border-border sm:px-6 mt-4">
+            <div className="flex-1 flex justify-between sm:hidden">
+              <Button
+                variant="outline"
+                disabled={page === 1}
+                onClick={() => setPage(p => p - 1)}
+              >
+                Previous
+              </Button>
+              <Button
+                variant="outline"
+                disabled={page * 10 >= ordersQuery.data.total}
+                onClick={() => setPage(p => p + 1)}
+              >
+                Next
+              </Button>
+            </div>
+            <div className="hidden sm:flex-1 sm:flex sm:items-center sm:justify-between">
+              <div>
+                <p className="text-sm text-muted-foreground">
+                  Showing <span className="font-medium">{(page - 1) * 10 + 1}</span> to <span className="font-medium">{Math.min(page * 10, ordersQuery.data.total)}</span> of <span className="font-medium">{ordersQuery.data.total}</span> results
+                </p>
+              </div>
+              <div>
+                <nav className="relative z-0 inline-flex rounded-md shadow-sm -space-x-px gap-2" aria-label="Pagination">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="h-8"
+                    disabled={page === 1}
+                    onClick={() => setPage(p => p - 1)}
+                  >
+                    <ChevronLeft className="h-4 w-4 mr-1" />
+                    Previous
+                  </Button>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="h-8"
+                    disabled={page * 10 >= ordersQuery.data.total}
+                    onClick={() => setPage(p => p + 1)}
+                  >
+                    Next
+                    <ChevronRight className="h-4 w-4 ml-1" />
+                  </Button>
+                </nav>
+              </div>
             </div>
           </div>
         )}
