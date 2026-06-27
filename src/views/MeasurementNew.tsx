@@ -55,6 +55,9 @@ export default function MeasurementNew() {
   const [garmentType, setGarmentType] = useState<string>("Body");
   const [takenBy, setTakenBy] = useState<string>("__none__");
   const [notes, setNotes] = useState<string>("");
+  const [suitNotes, setSuitNotes] = useState<string>("");
+  const [shirtNotes, setShirtNotes] = useState<string>("");
+  const [pantNotes, setPantNotes] = useState<string>("");
   const [trialDate, setTrialDate] = useState<string>("");
   const [deliveryDate, setDeliveryDate] = useState<string>("");
   const [valuesDraft, setValuesDraft] = useState<Record<number, string>>({});
@@ -195,6 +198,9 @@ export default function MeasurementNew() {
       }
       json[f.garment_type][f.field_name] = clean === "" ? null : clean;
     }
+    json["Suit"]["Notes"] = suitNotes === "" ? null : suitNotes;
+    json["Shirt"]["Notes"] = shirtNotes === "" ? null : shirtNotes;
+    json["Pants"]["Notes"] = pantNotes === "" ? null : pantNotes;
     return json;
   };
 
@@ -260,6 +266,9 @@ export default function MeasurementNew() {
     if (!currentGarmentMeasurement) {
       setTakenBy("__none__");
       setNotes("");
+      setSuitNotes("");
+      setShirtNotes("");
+      setPantNotes("");
       setTrialDate("");
       setDeliveryDate("");
       setValuesDraft({});
@@ -272,6 +281,9 @@ export default function MeasurementNew() {
         : "__none__",
     );
     setNotes(currentGarmentMeasurement.notes ?? "");
+    setSuitNotes(currentGarmentMeasurement.measurement_json?.Suit?.Notes ?? "");
+    setShirtNotes(currentGarmentMeasurement.measurement_json?.Shirt?.Notes ?? "");
+    setPantNotes(currentGarmentMeasurement.measurement_json?.Pants?.Notes ?? "");
     setTrialDate(formatDateString(currentGarmentMeasurement.trial_date));
     setDeliveryDate(formatDateString(currentGarmentMeasurement.delivery_date));
   }, [currentGarmentMeasurement, customerId, isEditMode]);
@@ -356,7 +368,7 @@ export default function MeasurementNew() {
     if (isEditMode && isEditing) {
       setHasUnsavedChanges(true);
     }
-  }, [valuesDraft, takenBy, notes, trialDate, deliveryDate, isEditMode, isEditing]);
+  }, [valuesDraft, takenBy, notes, suitNotes, shirtNotes, pantNotes, trialDate, deliveryDate, isEditMode, isEditing]);
 
   const autoSaveMutation = useMutation({
     mutationFn: async ({ id, payload }: { id: number; payload: Parameters<typeof updateMeasurement>[1] }) =>
@@ -388,7 +400,7 @@ export default function MeasurementNew() {
     }, 2000); // 2 seconds debounce
 
     return () => clearTimeout(timer);
-  }, [valuesDraft, takenBy, notes, trialDate, deliveryDate, isEditMode, isEditing, hasUnsavedChanges, measurementId]);
+  }, [valuesDraft, takenBy, notes, suitNotes, shirtNotes, pantNotes, trialDate, deliveryDate, isEditMode, isEditing, hasUnsavedChanges, measurementId]);
 
   const submit = () => {
     if (!customerId) {
@@ -990,6 +1002,22 @@ table { width: 100%; border-collapse: collapse; }
                             </div>
                           ))}
                         </div>
+                        {g !== "Body" && (
+                          <div className="mt-4">
+                            <div className="text-xs text-muted-foreground mb-1">{g} Notes</div>
+                            <Textarea
+                              value={g === "Suit" ? suitNotes : g === "Shirt" ? shirtNotes : pantNotes}
+                              onChange={(e) => {
+                                if (g === "Suit") setSuitNotes(e.target.value);
+                                else if (g === "Shirt") setShirtNotes(e.target.value);
+                                else setPantNotes(e.target.value);
+                              }}
+                              placeholder={`Any specific notes for ${g.toLowerCase()}...`}
+                              disabled={!canEdit}
+                              className="h-20"
+                            />
+                          </div>
+                        )}
                       </div>
                     );
                   })
@@ -1011,6 +1039,22 @@ table { width: 100%; border-collapse: collapse; }
                     </div>
                   ))}
                 </div>
+                {garmentType !== "Body" && (
+                  <div className="mt-6">
+                    <div className="text-sm font-medium mb-2">{garmentType} Notes</div>
+                    <Textarea
+                      value={garmentType === "Suit" ? suitNotes : garmentType === "Shirt" ? shirtNotes : pantNotes}
+                      onChange={(e) => {
+                        if (garmentType === "Suit") setSuitNotes(e.target.value);
+                        else if (garmentType === "Shirt") setShirtNotes(e.target.value);
+                        else setPantNotes(e.target.value);
+                      }}
+                      placeholder={`Any specific notes for ${garmentType.toLowerCase()}...`}
+                      disabled={!canEdit}
+                      className="h-24"
+                    />
+                  </div>
+                )}
               )}
             </div>
           )}
