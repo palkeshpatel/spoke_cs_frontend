@@ -41,7 +41,7 @@ export function OrderStatusStepper({
       {/* Progress track line */}
       <div
         className="absolute left-[5%] top-[19px] h-[2px] bg-primary -z-10 transition-all duration-300"
-        style={{ width: \`\${currentIndex === 0 ? 0 : (currentIndex / (ORDER_STATUS_STEPS.length - 1)) * 90}%\` }}
+        style={{ width: `${currentIndex === 0 ? 0 : (currentIndex / (ORDER_STATUS_STEPS.length - 1)) * 90}%` }}
       />
 
       {ORDER_STATUS_STEPS.map((step, idx) => {
