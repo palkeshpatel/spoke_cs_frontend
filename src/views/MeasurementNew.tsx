@@ -397,7 +397,7 @@ table { width: 100%; border-collapse: collapse; }
 <div class="header">
   <img src="/spoke-by-nishit-soni-logo.svg" alt="Spoke Logo" style="height: 50px;" />
   <div style="font-size:18px;font-weight:bold;margin-top:5px;color:#d97706;">
-    Customer Measurement Report
+    Customer Measurement
   </div>
 </div>
 <table class="info">
