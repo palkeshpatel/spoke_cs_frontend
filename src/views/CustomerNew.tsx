@@ -39,12 +39,16 @@ export default function CustomerNew() {
       toast({ title: "Name required", description: "Please enter customer name.", variant: "destructive" });
       return;
     }
-    if (!isValidEmail(form.email)) {
+    if (form.email.trim() && !isValidEmail(form.email)) {
       setEmailInlineError("Please enter a valid email address.");
-      toast({ title: "Email required", description: "Please enter a valid email address.", variant: "destructive" });
+      toast({ title: "Invalid email", description: "Please enter a valid email address.", variant: "destructive" });
       return;
     }
-    if (form.phone.trim() && !isValidPhone10(form.phone)) {
+    if (!form.phone.trim()) {
+      toast({ title: "Phone required", description: "Please enter a phone number.", variant: "destructive" });
+      return;
+    }
+    if (!isValidPhone10(form.phone)) {
       toast({ title: "Invalid phone", description: "Phone must be exactly 10 digits (XXX-XXX-XXXX).", variant: "destructive" });
       return;
     }
@@ -102,9 +106,9 @@ export default function CustomerNew() {
           <div className="space-y-4">
             <div><label className="text-xs text-muted-foreground mb-1 block">Name *</label><Input value={form.name} onChange={e => update('name', e.target.value)} placeholder="Enter customer name" /></div>
             <div className="grid sm:grid-cols-2 gap-4">
-              <div><label className="text-xs text-muted-foreground mb-1 block">Phone</label><PhoneInput value={form.phone} onChange={(v) => update('phone', v)} /></div>
+              <div><label className="text-xs text-muted-foreground mb-1 block">Phone *</label><PhoneInput value={form.phone} onChange={(v) => update('phone', v)} /></div>
               <div>
-                <label className="text-xs text-muted-foreground mb-1 block">Email *</label>
+                <label className="text-xs text-muted-foreground mb-1 block">Email</label>
                 <Input
                   value={form.email}
                   onChange={e => update('email', e.target.value)}

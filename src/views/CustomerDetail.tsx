@@ -179,7 +179,10 @@ export default function CustomerDetail() {
 
   const saveMutation = useMutation({
     mutationFn: () => {
-      if (form.phone.trim() && !isValidPhone10(form.phone)) {
+      if (!form.phone.trim()) {
+        throw new Error("Please enter a phone number.");
+      }
+      if (!isValidPhone10(form.phone)) {
         throw new Error("Phone must be exactly 10 digits (XXX-XXX-XXXX).");
       }
       return updateCustomer(customerId, {
