@@ -1,9 +1,10 @@
 import { useMemo, useState, useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Link } from "react-router-dom";
-import { LayoutGrid, List, Plus, Search, ChevronLeft, ChevronRight } from "lucide-react";
+import { LayoutGrid, List, Plus, Search, ChevronLeft, ChevronRight, FileText, Ruler, Scissors, PenTool, User, UserCheck } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import PageHeader from "@/components/PageHeader";
 import { StatusBadge } from "@/components/StatusBadge";
 import { OrderStatusStepper } from "@/components/OrderStatusStepper";
@@ -24,15 +25,38 @@ export default function OrderList() {
   const debouncedSearch = useDebounce(search, 300);
   const [view, setView] = useState<"list" | "grid">("list");
   const [page, setPage] = useState(1);
+  const [status, setStatus] = useState("all");
+  const [dateRange, setDateRange] = useState("all");
 
-  // Reset page to 1 when search changes
+  const { dateFrom, dateTo } = useMemo(() => {
+    const now = new Date();
+    let from: string | undefined;
+    let to: string | undefined;
+    if (dateRange === "today") {
+      from = now.toISOString().split("T")[0];
+      to = now.toISOString().split("T")[0];
+    } else if (dateRange === "7days") {
+      const past = new Date();
+      past.setDate(now.getDate() - 7);
+      from = past.toISOString().split("T")[0];
+      to = now.toISOString().split("T")[0];
+    } else if (dateRange === "30days") {
+      const past = new Date();
+      past.setDate(now.getDate() - 30);
+      from = past.toISOString().split("T")[0];
+      to = now.toISOString().split("T")[0];
+    }
+    return { dateFrom: from, dateTo: to };
+  }, [dateRange]);
+
+  // Reset page to 1 when search or filters change
   useEffect(() => {
     setPage(1);
-  }, [debouncedSearch]);
+  }, [debouncedSearch, status, dateRange]);
 
   const ordersQuery = useQuery({
-    queryKey: ["orders", "list", page, debouncedSearch],
-    queryFn: () => listOrders(page, 10, undefined, debouncedSearch),
+    queryKey: ["orders", "list", page, debouncedSearch, status, dateRange],
+    queryFn: () => listOrders(page, 10, undefined, debouncedSearch, status, dateFrom, dateTo),
   });
 
   const orders = useMemo(() => ordersQuery.data?.data ?? [], [ordersQuery.data]);
@@ -90,10 +114,47 @@ export default function OrderList() {
       />
 
       <div className="bg-card rounded-xl card-shadow">
-        <div className="p-4 border-b border-border">
-          <div className="relative">
+        <div className="flex overflow-x-auto border-b border-border hide-scrollbar">
+          {[
+            { id: "all", label: "All Orders", icon: FileText },
+            { id: "measurement", label: "Measurement", icon: Ruler },
+            { id: "cutting", label: "Cutting", icon: Scissors },
+            { id: "stitching", label: "Stitching", icon: PenTool },
+            { id: "trial_1", label: "Trial 1", icon: User },
+            { id: "trial_2", label: "Trial 2", icon: UserCheck },
+          ].map((tab) => (
+            <button
+              key={tab.id}
+              onClick={() => setStatus(tab.id)}
+              className={`flex items-center gap-2 px-6 py-3.5 text-sm font-medium whitespace-nowrap border-b-2 transition-colors ${
+                status === tab.id
+                  ? "border-primary text-primary bg-primary/5"
+                  : "border-transparent text-muted-foreground hover:text-foreground hover:bg-muted/50"
+              }`}
+            >
+              <tab.icon className="h-4 w-4" />
+              {tab.label}
+            </button>
+          ))}
+        </div>
+
+        <div className="p-4 border-b border-border flex flex-col sm:flex-row gap-4 items-center">
+          <div className="relative flex-1 w-full">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-            <Input placeholder="Search orders..." value={search} onChange={(e) => setSearch(e.target.value)} className="pl-9" />
+            <Input placeholder="Search by Order ID, Customer, Item..." value={search} onChange={(e) => setSearch(e.target.value)} className="pl-9" />
+          </div>
+          <div className="w-full sm:w-56 shrink-0">
+            <Select value={dateRange} onValueChange={setDateRange}>
+              <SelectTrigger>
+                <SelectValue placeholder="Select Date Range" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All Time</SelectItem>
+                <SelectItem value="today">Today</SelectItem>
+                <SelectItem value="7days">Last 7 Days</SelectItem>
+                <SelectItem value="30days">Last 30 Days</SelectItem>
+              </SelectContent>
+            </Select>
           </div>
         </div>
         {ordersQuery.isLoading ? (

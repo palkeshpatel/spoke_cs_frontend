@@ -64,13 +64,30 @@ export type Paginated<T> = {
   total: number;
 };
 
-export async function listOrders(page = 1, perPage = 10, customerId?: number, search?: string) {
+export async function listOrders(
+  page = 1,
+  perPage = 10,
+  customerId?: number,
+  search?: string,
+  status?: string,
+  dateFrom?: string,
+  dateTo?: string
+) {
   const q = new URLSearchParams({ page: String(page), per_page: String(perPage) });
   if (customerId !== undefined && Number.isFinite(customerId)) {
     q.set("customer_id", String(customerId));
   }
   if (search) {
     q.set("search", search);
+  }
+  if (status && status !== "all") {
+    q.set("status", status);
+  }
+  if (dateFrom) {
+    q.set("date_from", dateFrom);
+  }
+  if (dateTo) {
+    q.set("date_to", dateTo);
   }
   return apiRequest<Paginated<OrderDto>>(`/api/orders?${q.toString()}`);
 }
