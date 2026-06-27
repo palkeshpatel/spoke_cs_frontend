@@ -11,6 +11,7 @@ interface PageHeaderProps {
   onSave?: () => void;
   onCancel?: () => void;
   actions?: React.ReactNode;
+  middleContent?: React.ReactNode;
   /** When true, `actions` stay visible while editing (e.g. Print on measurement detail). */
   persistActions?: boolean;
 }
@@ -24,13 +25,14 @@ export default function PageHeader({
   onSave,
   onCancel,
   actions,
+  middleContent,
   persistActions = false,
 }: PageHeaderProps) {
   const navigate = useNavigate();
 
   return (
     <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-6">
-      <div className="flex items-center gap-3 min-w-0">
+      <div className="flex items-center gap-3 min-w-0 shrink-0">
         {backTo && (
           <button
             type="button"
@@ -45,6 +47,13 @@ export default function PageHeader({
           {subtitle && <p className="text-sm text-muted-foreground truncate">{subtitle}</p>}
         </div>
       </div>
+      
+      {middleContent && (
+        <div className="flex-1 flex justify-center min-w-0">
+          {middleContent}
+        </div>
+      )}
+
       <div className="flex items-center gap-2 shrink-0 print:hidden">
         {(persistActions || !isEditing) && actions}
         {isEditing ? (

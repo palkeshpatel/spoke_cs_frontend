@@ -38,6 +38,23 @@ export default function AppointmentList() {
     return matchSearch && matchStatus && matchService;
   });
 
+  const todayCount = appointments.filter((a) => {
+    if (!a.appointment_date) return false;
+    const date = new Date(a.appointment_date);
+    const today = new Date();
+    return date.getDate() === today.getDate() && date.getMonth() === today.getMonth() && date.getFullYear() === today.getFullYear();
+  }).length;
+
+  const upcomingCount = appointments.filter((a) => {
+    if (!a.appointment_date || a.status === 'completed' || a.status === 'cancelled') return false;
+    const date = new Date(a.appointment_date);
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    return date > today;
+  }).length;
+
+  const completedCount = appointments.filter((a) => a.status === 'completed').length;
+
   return (
     <div>
       <PageHeader
@@ -49,6 +66,22 @@ export default function AppointmentList() {
               <Plus className="h-4 w-4 mr-1" /> New
             </Button>
           </Link>
+        }
+        middleContent={
+          <div className="hidden lg:flex items-center gap-3">
+            <div className="bg-card border border-border/60 px-5 py-2 rounded-xl shadow-sm flex flex-col items-center justify-center min-w-[110px]">
+              <span className="text-[10px] text-muted-foreground font-semibold uppercase tracking-wider mb-1">Today</span>
+              <span className="text-2xl font-bold text-foreground leading-none">{todayCount}</span>
+            </div>
+            <div className="bg-card border border-border/60 px-5 py-2 rounded-xl shadow-sm flex flex-col items-center justify-center min-w-[110px]">
+              <span className="text-[10px] text-muted-foreground font-semibold uppercase tracking-wider mb-1">Upcoming</span>
+              <span className="text-2xl font-bold text-foreground leading-none">{upcomingCount}</span>
+            </div>
+            <div className="bg-card border border-border/60 px-5 py-2 rounded-xl shadow-sm flex flex-col items-center justify-center min-w-[110px]">
+              <span className="text-[10px] text-muted-foreground font-semibold uppercase tracking-wider mb-1">Completed</span>
+              <span className="text-2xl font-bold text-foreground leading-none">{completedCount}</span>
+            </div>
+          </div>
         }
       />
 
