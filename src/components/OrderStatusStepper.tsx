@@ -1,5 +1,16 @@
+import { useState } from "react";
 import { Check } from "lucide-react";
 import { cn } from "@/lib/utils";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 
 export const ORDER_STATUS_STEPS = [
   { id: "measurement", label: "Measurement" },
@@ -29,54 +40,88 @@ export function OrderStatusStepper({
   onChange,
   isEditing = false,
 }: OrderStatusStepperProps) {
+  const [pendingStatus, setPendingStatus] = useState<string | null>(null);
+
   // If status is completed or delivered, we treat all steps as done
   const isFullyDone = status === "completed" || status === "delivered";
   const currentIndex = isFullyDone ? ORDER_STATUS_STEPS.length : (ORDER_STATUS_INDEX[status] ?? 0);
 
+  const handleStepClick = (stepId: string) => {
+    if (!isEditing || !onChange) return;
+    if (stepId === status) return;
+    setPendingStatus(stepId);
+  };
+
+  const confirmChange = () => {
+    if (pendingStatus && onChange) {
+      onChange(pendingStatus);
+    }
+    setPendingStatus(null);
+  };
+
   return (
-    <div className="w-full flex items-center justify-between relative py-2">
-      {/* Background track line */}
-      <div className="absolute left-[5%] right-[5%] top-[19px] h-[2px] bg-border -z-10" />
-      
-      {/* Progress track line */}
-      <div
-        className="absolute left-[5%] top-[19px] h-[2px] bg-primary -z-10 transition-all duration-300"
-        style={{ width: `${currentIndex === 0 ? 0 : (currentIndex / (ORDER_STATUS_STEPS.length - 1)) * 90}%` }}
-      />
+    <>
+      <div className="w-full relative py-4">
+        {/* Background track line */}
+        <div className="absolute left-[10%] right-[10%] top-[27px] h-1 bg-muted rounded-full z-0" />
+        
+        {/* Progress track line */}
+        <div
+          className="absolute left-[10%] top-[27px] h-1 bg-primary rounded-full z-0 transition-all duration-500 ease-in-out"
+          style={{ width: `${currentIndex === 0 ? 0 : (currentIndex / (ORDER_STATUS_STEPS.length - 1)) * 80}%` }}
+        />
 
-      {ORDER_STATUS_STEPS.map((step, idx) => {
-        const isCompleted = isFullyDone || idx < currentIndex;
-        const isActive = !isFullyDone && idx === currentIndex;
-        const isUpcoming = !isFullyDone && idx > currentIndex;
+        <div className="flex items-start justify-between relative z-10">
+          {ORDER_STATUS_STEPS.map((step, idx) => {
+            const isCompleted = isFullyDone || idx < currentIndex;
+            const isActive = !isFullyDone && idx === currentIndex;
+            const isUpcoming = !isFullyDone && idx > currentIndex;
 
-        return (
-          <div key={step.id} className="flex flex-col items-center gap-2 z-10 relative">
-            <button
-              type="button"
-              disabled={!isEditing}
-              onClick={() => onChange?.(step.id)}
-              className={cn(
-                "w-6 h-6 rounded-full flex items-center justify-center text-[10px] transition-colors border-2 bg-background",
-                isCompleted && "bg-green-600 border-green-600 text-white",
-                isActive && "border-blue-600 bg-blue-600 text-white shadow-[0_0_0_3px_rgba(37,99,235,0.2)]",
-                isUpcoming && "border-muted-foreground",
-                isEditing && "cursor-pointer hover:scale-110",
-                !isEditing && "cursor-default"
-              )}
-            >
-              {isCompleted ? <Check className="w-3.5 h-3.5 stroke-[3]" /> : (isActive ? <div className="w-2 h-2 rounded-full bg-white" /> : null)}
-            </button>
-            <span
-              className={cn(
-                "text-[10px] font-medium whitespace-nowrap",
-                (isCompleted || isActive) ? "text-foreground" : "text-muted-foreground"
-              )}
-            >
-              {step.label}
-            </span>
-          </div>
-        );
-      })}
-    </div>
+            return (
+              <div key={step.id} className="flex flex-col items-center gap-3 w-full relative group">
+                <button
+                  type="button"
+                  disabled={!isEditing}
+                  onClick={() => handleStepClick(step.id)}
+                  className={cn(
+                    "w-8 h-8 rounded-full flex items-center justify-center transition-all duration-300 border-[3px] bg-background z-10",
+                    isCompleted && "bg-green-500 border-green-500 text-white",
+                    isActive && "border-blue-600 bg-blue-600 text-white ring-4 ring-blue-600/20 scale-110",
+                    isUpcoming && "border-muted-foreground/30 text-muted-foreground",
+                    isEditing && "cursor-pointer group-hover:scale-110 group-hover:border-primary/50",
+                    !isEditing && "cursor-default"
+                  )}
+                >
+                  {isCompleted ? <Check className="w-4 h-4 stroke-[3]" /> : (isActive ? <div className="w-2.5 h-2.5 rounded-full bg-white animate-pulse" /> : null)}
+                </button>
+                <span
+                  className={cn(
+                    "text-[11px] sm:text-xs font-semibold whitespace-nowrap transition-colors",
+                    isCompleted ? "text-green-600" : isActive ? "text-blue-600" : "text-muted-foreground"
+                  )}
+                >
+                  {step.label}
+                </span>
+              </div>
+            );
+          })}
+        </div>
+      </div>
+
+      <AlertDialog open={!!pendingStatus} onOpenChange={(open) => !open && setPendingStatus(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Change Order Status?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Are you sure you want to change the order status to <span className="font-semibold text-foreground">{ORDER_STATUS_STEPS.find(s => s.id === pendingStatus)?.label}</span>?
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction onClick={confirmChange}>Confirm Change</AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+    </>
   );
 }
