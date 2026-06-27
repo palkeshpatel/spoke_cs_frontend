@@ -398,7 +398,7 @@ export default function OrderDetail() {
         </SectionCard>
       </div>
 
-      <SectionCard title="Add Images Section (Client Selfy Pics)">
+      <SectionCard title="Add Images Section">
         <div className="space-y-3">
           <p className="text-xs text-muted-foreground">Body Images</p>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-6 gap-3">
