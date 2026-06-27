@@ -329,6 +329,47 @@ export default function MeasurementNew() {
     },
   });
 
+  const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
+  const [lastSavedTime, setLastSavedTime] = useState<Date | null>(null);
+
+  useEffect(() => {
+    if (isEditMode && isEditing) {
+      setHasUnsavedChanges(true);
+    }
+  }, [valuesDraft, takenBy, notes, trialDate, deliveryDate, isEditMode, isEditing]);
+
+  const autoSaveMutation = useMutation({
+    mutationFn: async ({ id, payload }: { id: number; payload: Parameters<typeof updateMeasurement>[1] }) =>
+      updateMeasurement(id, payload),
+    onSuccess: async () => {
+      await queryClient.invalidateQueries({ queryKey: ["measurements"] });
+      await queryClient.invalidateQueries({
+        queryKey: ["measurements", "detail", measurementId],
+      });
+      setHasUnsavedChanges(false);
+      setLastSavedTime(new Date());
+    },
+  });
+
+  useEffect(() => {
+    if (!isEditMode || !isEditing || !hasUnsavedChanges || !measurementId) return;
+
+    const timer = setTimeout(() => {
+      autoSaveMutation.mutate({
+        id: measurementId as number,
+        payload: {
+          taken_by: takenBy !== "__none__" ? Number(takenBy) : null,
+          notes: notes || null,
+          trial_date: trialDate || null,
+          delivery_date: deliveryDate || null,
+          measurement_json: buildMeasurementJson(),
+        },
+      });
+    }, 2000); // 2 seconds debounce
+
+    return () => clearTimeout(timer);
+  }, [valuesDraft, takenBy, notes, trialDate, deliveryDate, isEditMode, isEditing, hasUnsavedChanges, measurementId]);
+
   const submit = () => {
     if (!customerId) {
       toast({
