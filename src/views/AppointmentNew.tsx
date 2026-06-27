@@ -41,7 +41,7 @@ export default function AppointmentNew() {
   const [appointmentTime, setAppointmentTime] = useState<string>("");
   const [durationMinutes, setDurationMinutes] = useState<string>("30");
   const [priority, setPriority] = useState<"low" | "normal" | "high">("normal");
-  const [status, setStatus] = useState<string>("confirmed");
+  const [status, setStatus] = useState<"pending" | "confirmed" | "completed" | "cancelled">("confirmed");
   const [notes, setNotes] = useState<string>("");
 
   useEffect(() => {
@@ -296,7 +296,7 @@ export default function AppointmentNew() {
               </label>
               <Select
                 value={status}
-                onValueChange={setStatus}
+                onValueChange={(v) => setStatus(v as "pending" | "confirmed" | "completed" | "cancelled")}
               >
                 <SelectTrigger>
                   <SelectValue />

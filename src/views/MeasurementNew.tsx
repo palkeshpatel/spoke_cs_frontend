@@ -183,6 +183,17 @@ export default function MeasurementNew() {
     return groups;
   }, [allFields]);
 
+  const matchingIdsMap = useMemo(() => {
+    const map = new Map<string, number[]>();
+    for (const f of allFields) {
+      if (!map.has(f.field_name)) {
+        map.set(f.field_name, []);
+      }
+      map.get(f.field_name)!.push(f.id);
+    }
+    return map;
+  }, [allFields]);
+
   const buildMeasurementJson = () => {
     const json: Record<string, Record<string, string | null>> = {
       Body: {},
@@ -954,15 +965,10 @@ table { width: 100%; border-collapse: collapse; }
               {garmentType === "Body" ? (
                 !isEditMode ? (() => {
                   const uniqueFieldsMap = new Map<string, typeof allFields[0]>();
-                  const matchingIdsMap = new Map<string, number[]>();
                   for (const f of allFields) {
                     if (!uniqueFieldsMap.has(f.field_name)) {
                       uniqueFieldsMap.set(f.field_name, f);
                     }
-                    if (!matchingIdsMap.has(f.field_name)) {
-                      matchingIdsMap.set(f.field_name, []);
-                    }
-                    matchingIdsMap.get(f.field_name)!.push(f.id);
                   }
                   
                   const uniqueFields = Array.from(uniqueFieldsMap.values());
