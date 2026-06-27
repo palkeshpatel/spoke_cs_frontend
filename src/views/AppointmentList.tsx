@@ -8,7 +8,7 @@ import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import PageHeader from "@/components/PageHeader";
 import { StatusBadge, PriorityBadge } from "@/components/StatusBadge";
-import { listAppointments } from "@/services/appointments";
+import { listAppointments, listAppointmentServices } from "@/services/appointments";
 
 function formatAppointmentTime(t: string | null | undefined): string {
   if (!t) return "—";
@@ -25,6 +25,11 @@ export default function AppointmentList() {
   const { data, isLoading } = useQuery({
     queryKey: ["appointments", "list"],
     queryFn: () => listAppointments(200),
+  });
+
+  const servicesQuery = useQuery({
+    queryKey: ["appointment-services", "list"],
+    queryFn: () => listAppointmentServices(),
   });
 
   const appointments = useMemo(() => data?.data ?? [], [data]);
@@ -118,12 +123,16 @@ export default function AppointmentList() {
               </SelectContent>
             </Select>
             <Select value={serviceFilter} onValueChange={setServiceFilter}>
-              <SelectTrigger className="w-full sm:w-36"><SelectValue placeholder="All Services" /></SelectTrigger>
+              <SelectTrigger className="w-full sm:w-36">
+                <SelectValue placeholder={servicesQuery.isLoading ? "Loading..." : "All Services"} />
+              </SelectTrigger>
               <SelectContent>
                 <SelectItem value="all">All Services</SelectItem>
-                <SelectItem value="suit">Suit</SelectItem>
-                <SelectItem value="shirt">Shirt</SelectItem>
-                <SelectItem value="pants">Pants</SelectItem>
+                {(servicesQuery.data ?? []).map((s) => (
+                  <SelectItem key={s.id} value={s.service_name.toLowerCase()}>
+                    {s.service_name}
+                  </SelectItem>
+                ))}
               </SelectContent>
             </Select>
           </div>
