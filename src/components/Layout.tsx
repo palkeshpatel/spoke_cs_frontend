@@ -251,24 +251,30 @@ export default function Layout() {
       {/* Main content */}
       <div className="flex-1 flex flex-col overflow-hidden">
         {/* Mobile top bar */}
-        <div className="lg:hidden flex items-center gap-3 h-14 px-4 border-b border-border bg-card shrink-0 print:hidden">
-          <button type="button" onClick={() => setMobileOpen(true)} className="p-1.5 rounded-lg hover:bg-muted transition-colors">
-            <Menu className="h-5 w-5 text-foreground" />
-          </button>
-          <img
+        <div className="lg:hidden flex items-center justify-between h-14 px-4 border-b border-border bg-card shrink-0 print:hidden relative">
+          <div className="flex-1 flex justify-start">
+            <button type="button" onClick={() => setMobileOpen(true)} className="p-1.5 -ml-1.5 rounded-lg hover:bg-muted transition-colors">
+              <Menu className="h-5 w-5 text-foreground" />
+            </button>
+          </div>
+          <div className="flex shrink-0 justify-center absolute left-1/2 -translate-x-1/2">
+            <img
               src="/spoke-by-nishit-soni-logo.svg"
               alt="SPOKE"
               className="h-7 w-auto object-contain max-w-[120px]"
             />
-          <button
-            type="button"
-            onClick={handleLogout}
-            disabled={loggingOut}
-            className="p-2 rounded-lg text-muted-foreground hover:bg-muted hover:text-foreground disabled:opacity-50"
-            aria-label="Log out"
-          >
-            <LogOut className="h-5 w-5" />
-          </button>
+          </div>
+          <div className="flex-1 flex justify-end">
+            <button
+              type="button"
+              onClick={handleLogout}
+              disabled={loggingOut}
+              className="p-1.5 -mr-1.5 rounded-lg text-muted-foreground hover:bg-muted hover:text-foreground disabled:opacity-50"
+              aria-label="Log out"
+            >
+              <LogOut className="h-5 w-5" />
+            </button>
+          </div>
         </div>
 
         <main className="flex-1 overflow-y-auto">
