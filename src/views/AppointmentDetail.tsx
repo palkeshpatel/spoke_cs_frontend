@@ -9,7 +9,7 @@ import { Button } from "@/components/ui/button";
 import { Bell, CalendarClock, CheckCircle, MessageSquare, X } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
 import { format } from "date-fns";
-import { getAppointment, sendAppointmentReminder, updateAppointment } from "@/services/appointments";
+import { getAppointment, sendAppointmentReminder, updateAppointment, listAppointmentServices } from "@/services/appointments";
 
 function toDateInputValue(v: string | null | undefined): string {
   if (!v) return "";
@@ -46,6 +46,13 @@ export default function AppointmentDetail() {
     queryFn: () => getAppointment(appointmentId),
     enabled: Number.isFinite(appointmentId),
   });
+
+  const servicesQuery = useQuery({
+    queryKey: ["appointment-services", "list"],
+    queryFn: () => listAppointmentServices(),
+  });
+
+  const serviceOptions = (servicesQuery.data ?? []).map((s) => ({ value: s.service_name, label: s.service_name }));
 
   const appointment = appointmentQuery.data;
 
@@ -241,7 +248,14 @@ export default function AppointmentDetail() {
 
         <SectionCard title="Appointment Information">
           <div className="space-y-4">
-            <EditableField label="Service" value={form.serviceType} isEditing={isEditing} onChange={(v) => updateForm("serviceType", v)} />
+            <EditableField 
+              label="Service" 
+              value={form.serviceType} 
+              isEditing={isEditing} 
+              type={isEditing ? "select" : "text"}
+              options={serviceOptions}
+              onChange={(v) => updateForm("serviceType", v)} 
+            />
             {isEditing ? (
               <EditableField
                 label="Status"

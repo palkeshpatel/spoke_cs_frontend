@@ -41,6 +41,7 @@ export default function AppointmentNew() {
   const [appointmentTime, setAppointmentTime] = useState<string>("");
   const [durationMinutes, setDurationMinutes] = useState<string>("30");
   const [priority, setPriority] = useState<"low" | "normal" | "high">("normal");
+  const [status, setStatus] = useState<string>("confirmed");
   const [notes, setNotes] = useState<string>("");
 
   useEffect(() => {
@@ -135,7 +136,7 @@ export default function AppointmentNew() {
       appointment_time: time,
       duration_minutes: Number(durationMinutes || 0),
       priority,
-      status: "confirmed",
+      status: status,
       notes: notes || null,
     });
   };
@@ -185,46 +186,8 @@ export default function AppointmentNew() {
                 />
               </div>
             </div>
-          </div>
-        </SectionCard>
 
-        {/* ── Appointment Details ── */}
-        <SectionCard title="Appointment Details">
-          <div className="space-y-4">
-            <div>
-              <label className="text-xs text-muted-foreground mb-1 block">
-                Service Type *
-              </label>
-              <Select
-                value={serviceType}
-                onValueChange={(v) => {
-                  setServiceType(v);
-                  const svc = servicesQuery.data?.find(
-                    (s) => s.service_name === v,
-                  );
-                  if (svc) setDurationMinutes(String(svc.duration_minutes));
-                }}
-              >
-                <SelectTrigger>
-                  <SelectValue
-                    placeholder={
-                      servicesQuery.isLoading
-                        ? "Loading services..."
-                        : "Select service"
-                    }
-                  />
-                </SelectTrigger>
-                <SelectContent>
-                  {(servicesQuery.data ?? []).map((s) => (
-                    <SelectItem key={s.id} value={s.service_name}>
-                      {s.service_name}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-
-            <div className="grid sm:grid-cols-2 gap-4">
+            <div className="border-t border-border pt-4 mt-4 grid sm:grid-cols-2 gap-4">
               <div>
                 <label className="text-xs text-muted-foreground mb-1 block">
                   Date *
@@ -288,7 +251,64 @@ export default function AppointmentNew() {
                 </Select>
               </div>
             </div>
+          </div>
+        </SectionCard>
 
+        {/* ── Appointment Information ── */}
+        <SectionCard title="Appointment Information">
+          <div className="space-y-4">
+            <div>
+              <label className="text-xs text-muted-foreground mb-1 block">
+                Service Type *
+              </label>
+              <Select
+                value={serviceType}
+                onValueChange={(v) => {
+                  setServiceType(v);
+                  const svc = servicesQuery.data?.find(
+                    (s) => s.service_name === v,
+                  );
+                  if (svc) setDurationMinutes(String(svc.duration_minutes));
+                }}
+              >
+                <SelectTrigger>
+                  <SelectValue
+                    placeholder={
+                      servicesQuery.isLoading
+                        ? "Loading services..."
+                        : "Select service"
+                    }
+                  />
+                </SelectTrigger>
+                <SelectContent>
+                  {(servicesQuery.data ?? []).map((s) => (
+                    <SelectItem key={s.id} value={s.service_name}>
+                      {s.service_name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div>
+              <label className="text-xs text-muted-foreground mb-1 block">
+                Status
+              </label>
+              <Select
+                value={status}
+                onValueChange={setStatus}
+              >
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="pending">Pending</SelectItem>
+                  <SelectItem value="confirmed">Confirmed</SelectItem>
+                  <SelectItem value="completed">Completed</SelectItem>
+                  <SelectItem value="cancelled">Cancelled</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
           </div>
         </SectionCard>
       </div>
