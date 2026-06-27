@@ -405,7 +405,30 @@ table { width: 100%; border-collapse: collapse; }
   </tr>
 </table>`;
 
-    for (const section of printSections) {
+    const printGroups: { label: string; rows: { name: string; value: string; unit: string }[] }[] = [];
+    
+    // Which groups to print (same logic as printSections)
+    const garmentGroupsToShow = garmentType === "Body" ? ["Body", "Suit", "Shirt", "Pants"] : [garmentType];
+    
+    for (const g of garmentGroupsToShow) {
+      let currentFields = fieldsByGarment[g] ?? [];
+      if (g === "Body") {
+        currentFields = currentFields.filter((f) => !BODY_HIDDEN_FIELDS.includes(f.field_name));
+      }
+      const garmentValues = mergedMeasurementJson[g] ?? {};
+      
+      const rows = currentFields.map((f) => {
+        const val = garmentValues[f.field_name] ?? "";
+        return { name: f.field_name, value: val, unit: f.unit ?? "" };
+      });
+      
+      printGroups.push({
+        label: g === "Body" ? "Body Measurements" : `${g} Details`,
+        rows
+      });
+    }
+
+    for (const section of printGroups) {
       // Filter out empty rows to keep the print clean
       const filledRows = section.rows.filter(r => r.value && String(r.value).trim() !== "");
       if (filledRows.length === 0) continue;
