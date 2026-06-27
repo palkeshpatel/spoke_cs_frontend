@@ -1,7 +1,7 @@
 import { useMemo, useState, useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Link } from "react-router-dom";
-import { LayoutGrid, List, Plus, Search, ChevronLeft, ChevronRight, FileText, Ruler, Scissors, PenTool, User, UserCheck } from "lucide-react";
+import { LayoutGrid, List, Plus, Search, ChevronLeft, ChevronRight, FileText, Ruler, Scissors, PenTool, User, UserCheck, Truck } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -122,6 +122,7 @@ export default function OrderList() {
             { id: "stitching", label: "Stitching", icon: PenTool },
             { id: "trial_1", label: "Trial 1", icon: User },
             { id: "trial_2", label: "Trial 2", icon: UserCheck },
+            { id: "delivery", label: "Delivery", icon: Truck },
           ].map((tab) => (
             <button
               key={tab.id}
