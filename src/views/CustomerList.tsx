@@ -66,34 +66,34 @@ export default function CustomerList() {
         }
       />
 
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
-        <div className="bg-card rounded-xl card-shadow p-5 flex items-center gap-4">
-          <div className="w-12 h-12 rounded-lg bg-orange-50 flex items-center justify-center shrink-0">
-            <User className="h-6 w-6 text-orange-500" />
+      <div className="grid grid-cols-3 gap-3 sm:gap-4 mb-6">
+        <div className="bg-card rounded-xl card-shadow p-3 sm:p-5 flex flex-col items-center text-center gap-2">
+          <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-lg bg-orange-50 flex items-center justify-center shrink-0">
+            <User className="h-5 w-5 sm:h-6 sm:w-6 text-orange-500" />
           </div>
-          <div>
-            <div className="text-sm text-muted-foreground font-medium">Total Customers</div>
-            <div className="text-2xl font-bold">{totalCustomers}</div>
+          <div className="flex flex-col flex-grow justify-center">
+            <div className="text-[10px] sm:text-sm text-muted-foreground font-medium leading-tight">Total<br/>Customers</div>
+            <div className="text-lg sm:text-2xl font-bold mt-1">{totalCustomers}</div>
           </div>
         </div>
         
-        <div className="bg-card rounded-xl card-shadow p-5 flex items-center gap-4">
-          <div className="w-12 h-12 rounded-lg bg-blue-50 flex items-center justify-center shrink-0">
-            <User className="h-6 w-6 text-blue-500" />
+        <div className="bg-card rounded-xl card-shadow p-3 sm:p-5 flex flex-col items-center text-center gap-2">
+          <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-lg bg-blue-50 flex items-center justify-center shrink-0">
+            <User className="h-5 w-5 sm:h-6 sm:w-6 text-blue-500" />
           </div>
-          <div>
-            <div className="text-sm text-muted-foreground font-medium">Active This Month</div>
-            <div className="text-2xl font-bold">{activeThisMonth}</div>
+          <div className="flex flex-col flex-grow justify-center">
+            <div className="text-[10px] sm:text-sm text-muted-foreground font-medium leading-tight">Active<br/>This Month</div>
+            <div className="text-lg sm:text-2xl font-bold mt-1">{activeThisMonth}</div>
           </div>
         </div>
 
-        <div className="bg-card rounded-xl card-shadow p-5 flex items-center gap-4">
-          <div className="w-12 h-12 rounded-lg bg-primary/10 flex items-center justify-center shrink-0">
-            <User className="h-6 w-6 text-primary" />
+        <div className="bg-card rounded-xl card-shadow p-3 sm:p-5 flex flex-col items-center text-center gap-2">
+          <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-lg bg-primary/10 flex items-center justify-center shrink-0">
+            <User className="h-5 w-5 sm:h-6 sm:w-6 text-primary" />
           </div>
-          <div>
-            <div className="text-sm text-muted-foreground font-medium">New This Week</div>
-            <div className="text-2xl font-bold">{newThisWeek}</div>
+          <div className="flex flex-col flex-grow justify-center">
+            <div className="text-[10px] sm:text-sm text-muted-foreground font-medium leading-tight">New<br/>This Week</div>
+            <div className="text-lg sm:text-2xl font-bold mt-1">{newThisWeek}</div>
           </div>
         </div>
       </div>
