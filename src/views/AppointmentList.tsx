@@ -67,23 +67,39 @@ export default function AppointmentList() {
             </Button>
           </Link>
         }
-        middleContent={
-          <div className="hidden lg:flex items-center gap-3">
-            <div className="bg-card border border-border/60 px-5 py-2 rounded-xl shadow-sm flex flex-col items-center justify-center min-w-[110px]">
-              <span className="text-[10px] text-muted-foreground font-semibold uppercase tracking-wider mb-1">Today</span>
-              <span className="text-2xl font-bold text-foreground leading-none">{todayCount}</span>
-            </div>
-            <div className="bg-card border border-border/60 px-5 py-2 rounded-xl shadow-sm flex flex-col items-center justify-center min-w-[110px]">
-              <span className="text-[10px] text-muted-foreground font-semibold uppercase tracking-wider mb-1">Upcoming</span>
-              <span className="text-2xl font-bold text-foreground leading-none">{upcomingCount}</span>
-            </div>
-            <div className="bg-card border border-border/60 px-5 py-2 rounded-xl shadow-sm flex flex-col items-center justify-center min-w-[110px]">
-              <span className="text-[10px] text-muted-foreground font-semibold uppercase tracking-wider mb-1">Completed</span>
-              <span className="text-2xl font-bold text-foreground leading-none">{completedCount}</span>
-            </div>
-          </div>
-        }
       />
+
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+        <div className="bg-card rounded-xl card-shadow p-5 flex items-center gap-4">
+          <div className="w-12 h-12 rounded-lg bg-blue-50 flex items-center justify-center shrink-0">
+            <CalendarIcon className="h-6 w-6 text-blue-500" />
+          </div>
+          <div>
+            <div className="text-sm text-muted-foreground font-medium">Today</div>
+            <div className="text-2xl font-bold">{todayCount}</div>
+          </div>
+        </div>
+        
+        <div className="bg-card rounded-xl card-shadow p-5 flex items-center gap-4">
+          <div className="w-12 h-12 rounded-lg bg-orange-50 flex items-center justify-center shrink-0">
+            <Clock className="h-6 w-6 text-orange-500" />
+          </div>
+          <div>
+            <div className="text-sm text-muted-foreground font-medium">Upcoming</div>
+            <div className="text-2xl font-bold">{upcomingCount}</div>
+          </div>
+        </div>
+
+        <div className="bg-card rounded-xl card-shadow p-5 flex items-center gap-4">
+          <div className="w-12 h-12 rounded-lg bg-emerald-50 flex items-center justify-center shrink-0">
+            <CalendarIcon className="h-6 w-6 text-emerald-500" />
+          </div>
+          <div>
+            <div className="text-sm text-muted-foreground font-medium">Completed</div>
+            <div className="text-2xl font-bold">{completedCount}</div>
+          </div>
+        </div>
+      </div>
 
       <div className="bg-card rounded-xl card-shadow">
         <div className="p-4 border-b border-border flex flex-col sm:flex-row gap-3">
