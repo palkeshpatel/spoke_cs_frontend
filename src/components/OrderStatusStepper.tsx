@@ -72,7 +72,7 @@ export function OrderStatusStepper({
         {/* Progress track line */}
         <div
           className={cn("absolute left-[10%] h-1 bg-primary rounded-full z-0 transition-all duration-500 ease-in-out", isSm ? "top-[18px]" : "top-[27px]")}
-          style={{ width: `${currentIndex === 0 ? 0 : (currentIndex / (ORDER_STATUS_STEPS.length - 1)) * 80}%` }}
+          style={{ width: `${Math.min(currentIndex, ORDER_STATUS_STEPS.length - 1) === 0 ? 0 : (Math.min(currentIndex, ORDER_STATUS_STEPS.length - 1) / (ORDER_STATUS_STEPS.length - 1)) * 80}%` }}
         />
 
         <div className="flex items-start justify-between relative z-10">
