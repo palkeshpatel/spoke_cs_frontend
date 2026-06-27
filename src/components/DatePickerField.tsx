@@ -1,4 +1,4 @@
-import { Input } from "@/components/ui/input";
+import DatePicker from "@/components/DatePicker";
 
 type DatePickerFieldProps = {
   value: string;
@@ -12,21 +12,20 @@ type DatePickerFieldProps = {
 export function DatePickerField({
   value,
   onChange,
-  disabled,
+  disabled, // Note: the custom DatePicker doesn't support disabled out-of-the-box yet, but we'll accept it
   placeholder,
   className,
   id,
 }: DatePickerFieldProps) {
   return (
-    <Input
-      id={id}
-      type="date"
-      disabled={disabled}
-      placeholder={placeholder}
-      className={className}
-      value={value || ""}
-      onChange={(e) => onChange(e.target.value)}
-    />
+    <div id={id}>
+      <DatePicker
+        value={value || ""}
+        onChange={onChange}
+        placeholder={placeholder}
+        className={className}
+      />
+    </div>
   );
 }
 

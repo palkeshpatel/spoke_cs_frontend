@@ -205,6 +205,7 @@ export default function AppointmentDetail() {
                 label="Time"
                 value={form.appointmentTime || "—"}
                 isEditing={isEditing}
+                type="time"
                 onChange={(v) => updateForm("appointmentTime", v)}
               />
               <EditableField

@@ -5,6 +5,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { format } from "date-fns";
 import { PhoneInput } from "@/components/PhoneInput";
 import { DatePickerField } from "@/components/DatePickerField";
+import TimePicker from "@/components/TimePicker";
 import { formatPhoneDisplay } from "@/lib/phone";
 import {
   User,
@@ -26,7 +27,7 @@ interface EditableFieldProps {
   value: string | number;
   isEditing: boolean;
   onChange?: (value: string) => void;
-  type?: 'text' | 'textarea' | 'select' | 'number' | 'date' | 'phone';
+  type?: 'text' | 'textarea' | 'select' | 'number' | 'date' | 'phone' | 'time';
   options?: { value: string; label: string }[];
   unit?: string;
 }
@@ -119,6 +120,15 @@ export default function EditableField({ label, value, isEditing, onChange, type 
       <div>
         {renderLabel()}
         <DatePickerField value={String(value)} onChange={(v) => onChange?.(v)} className="text-sm" />
+      </div>
+    );
+  }
+
+  if (type === "time") {
+    return (
+      <div>
+        {renderLabel()}
+        <TimePicker value={String(value)} onChange={(v) => onChange?.(v)} className="text-sm" />
       </div>
     );
   }

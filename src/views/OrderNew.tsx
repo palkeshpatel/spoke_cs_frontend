@@ -13,6 +13,7 @@ import { createOrder, uploadOrderItemIcon } from "@/services/orders";
 import { resolvePublicUrl } from "@/services/api";
 import { getCustomer, uploadCustomerBodyImage } from "@/services/customers";
 import { OrderCustomizationDialog } from "@/components/OrderCustomizationDialog";
+import DatePicker from "@/components/DatePicker";
 
 type ItemDetailRow = {
   icon_path: string | null;
@@ -261,11 +262,11 @@ export default function OrderNew() {
             <div className="grid grid-cols-2 gap-4">
               <div>
                 <label className="text-xs text-muted-foreground mb-1 block">Trial Date</label>
-                <Input type="date" value={trialDate} onChange={(e) => setTrialDate(e.target.value)} />
+                <DatePicker value={trialDate} onChange={setTrialDate} />
               </div>
               <div>
                 <label className="text-xs text-muted-foreground mb-1 block">Delivery Date</label>
-                <Input type="date" value={deliveryDate} onChange={(e) => setDeliveryDate(e.target.value)} />
+                <DatePicker value={deliveryDate} onChange={setDeliveryDate} />
               </div>
             </div>
 

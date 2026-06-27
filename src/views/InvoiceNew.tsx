@@ -8,6 +8,7 @@ import { Input } from "@/components/ui/input";
 import { toast } from "@/hooks/use-toast";
 import { getCustomer } from "@/services/customers";
 import { createInvoice } from "@/services/invoices";
+import DatePicker from "@/components/DatePicker";
 
 export default function InvoiceNew() {
   const navigate = useNavigate();
@@ -90,7 +91,7 @@ export default function InvoiceNew() {
           </div>
           <div>
             <label className="text-xs text-muted-foreground mb-1 block">Invoice date</label>
-            <Input type="date" value={invoiceDate} onChange={(e) => setInvoiceDate(e.target.value)} />
+            <DatePicker value={invoiceDate} onChange={setInvoiceDate} />
           </div>
           <p className="text-xs text-muted-foreground">
             A draft invoice with no line items will be created. You can add items from the invoice screen when that flow is available.

@@ -8,6 +8,7 @@ import { StatusBadge } from "@/components/StatusBadge";
 import { format } from "date-fns";
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
+import DatePicker from "@/components/DatePicker";
 
 export default function WorkReports() {
   const [dates, setDates] = useState({
@@ -168,20 +169,16 @@ export default function WorkReports() {
         <div className="flex flex-wrap items-center gap-4">
           <div className="flex flex-col gap-1.5 min-w-[150px]">
             <label className="text-xs font-medium text-muted-foreground">Start Date</label>
-            <input 
-              type="date" 
+            <DatePicker 
               value={dates.start} 
-              onChange={e => setDates(prev => ({ ...prev, start: e.target.value }))}
-              className="bg-background border rounded-md px-3 py-1.5 text-sm"
+              onChange={v => setDates(prev => ({ ...prev, start: v }))}
             />
           </div>
           <div className="flex flex-col gap-1.5 min-w-[150px]">
             <label className="text-xs font-medium text-muted-foreground">End Date</label>
-            <input 
-              type="date" 
+            <DatePicker 
               value={dates.end} 
-              onChange={e => setDates(prev => ({ ...prev, end: e.target.value }))}
-              className="bg-background border rounded-md px-3 py-1.5 text-sm"
+              onChange={v => setDates(prev => ({ ...prev, end: v }))}
             />
           </div>
           <Button onClick={() => refetch()} className="mt-5">Filter</Button>

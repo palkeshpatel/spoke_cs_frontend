@@ -10,6 +10,7 @@ interface DatePickerProps {
   placeholder?: string;
   className?: string;
   min?: string;          // "YYYY-MM-DD"
+  disabled?: boolean;
 }
 
 export default function DatePicker({
@@ -18,6 +19,7 @@ export default function DatePicker({
   placeholder = "Select date",
   className,
   min,
+  disabled = false,
 }: DatePickerProps) {
   const [open, setOpen] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
@@ -50,10 +52,12 @@ export default function DatePicker({
       {/* Trigger button */}
       <button
         type="button"
-        onClick={() => setOpen(o => !o)}
+        disabled={disabled}
+        onClick={() => !disabled && setOpen(o => !o)}
         className={cn(
           "flex h-10 w-full items-center gap-2 rounded-md border border-input bg-background px-3 py-2 text-sm text-left ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2",
-          !displayValue && "text-muted-foreground"
+          !displayValue && "text-muted-foreground",
+          disabled && "opacity-50 cursor-not-allowed"
         )}
       >
         <CalendarDays className="h-4 w-4 shrink-0 text-muted-foreground" />

@@ -13,6 +13,7 @@ import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { toast } from "@/hooks/use-toast";
 import { listCustomers, getCustomer, uploadCustomerBodyImage } from "@/services/customers";
 import { resolvePublicUrl } from "@/services/api";
+import DatePicker from "@/components/DatePicker";
 import {
   createMeasurement,
   getMeasurement,
@@ -639,10 +640,9 @@ export default function MeasurementNew() {
                   <label className="text-xs text-muted-foreground mb-1 block">
                     Trial Date *
                   </label>
-                  <Input
-                    type="date"
+                  <DatePicker
                     value={trialDate}
-                    onChange={(e) => setTrialDate(e.target.value)}
+                    onChange={setTrialDate}
                     disabled={!canEdit}
                   />
                 </div>
@@ -650,10 +650,9 @@ export default function MeasurementNew() {
                   <label className="text-xs text-muted-foreground mb-1 block">
                     Delivery Date *
                   </label>
-                  <Input
-                    type="date"
+                  <DatePicker
                     value={deliveryDate}
-                    onChange={(e) => setDeliveryDate(e.target.value)}
+                    onChange={setDeliveryDate}
                     disabled={!canEdit}
                   />
                 </div>

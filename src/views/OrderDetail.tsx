@@ -15,6 +15,7 @@ import { getCustomer, uploadCustomerBodyImage } from "@/services/customers";
 import { resolvePublicUrl } from "@/services/api";
 import { Camera, FileImage, Loader2, Plus, Trash2 } from "lucide-react";
 import { OrderCustomizationDialog } from "@/components/OrderCustomizationDialog";
+import DatePicker from "@/components/DatePicker";
 
 type ItemDraft = {
   garment_type: string | null;
@@ -266,7 +267,7 @@ export default function OrderDetail() {
               <div>
                 <p className="text-xs text-muted-foreground mb-1">Trial Date</p>
                 {isEditing ? (
-                  <Input type="date" value={trialDateDraft} onChange={(e) => setTrialDateDraft(e.target.value)} className="text-sm" />
+                  <DatePicker value={trialDateDraft} onChange={setTrialDateDraft} className="text-sm" />
                 ) : (
                   <p className="text-sm font-medium text-foreground">
                     {order.trial_date ? format(new Date(order.trial_date), "dd-MMM-yyyy") : "—"}
@@ -276,7 +277,7 @@ export default function OrderDetail() {
               <div>
                 <p className="text-xs text-muted-foreground mb-1">Delivery Date</p>
                 {isEditing ? (
-                  <Input type="date" value={deliveryDateDraft} onChange={(e) => setDeliveryDateDraft(e.target.value)} className="text-sm" />
+                  <DatePicker value={deliveryDateDraft} onChange={setDeliveryDateDraft} className="text-sm" />
                 ) : (
                   <p className="text-sm font-medium text-foreground">
                     {order.delivery_date ? format(new Date(order.delivery_date), "dd-MMM-yyyy") : "—"}
