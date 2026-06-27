@@ -20,6 +20,14 @@ import {
   listAppointmentServices,
 } from "@/services/appointments";
 import { listCustomers } from "@/services/customers";
+import DatePicker from "@/components/DatePicker";
+
+const todayISO = () => {
+  const d = new Date();
+  const mm = String(d.getMonth() + 1).padStart(2, "0");
+  const dd = String(d.getDate()).padStart(2, "0");
+  return `${d.getFullYear()}-${mm}-${dd}`;
+};
 
 export default function AppointmentNew() {
   const navigate = useNavigate();
@@ -28,7 +36,7 @@ export default function AppointmentNew() {
 
   const [customerId, setCustomerId] = useState<string>("");
   const [serviceType, setServiceType] = useState<string>("");
-  const [appointmentDate, setAppointmentDate] = useState<string>("");
+  const [appointmentDate, setAppointmentDate] = useState<string>(todayISO());
   const [appointmentTime, setAppointmentTime] = useState<string>("");
   const [durationMinutes, setDurationMinutes] = useState<string>("30");
   const [priority, setPriority] = useState<"low" | "normal" | "high">("normal");
@@ -220,10 +228,10 @@ export default function AppointmentNew() {
                 <label className="text-xs text-muted-foreground mb-1 block">
                   Date *
                 </label>
-                <Input
-                  type="date"
+                <DatePicker
                   value={appointmentDate}
-                  onChange={(e) => setAppointmentDate(e.target.value)}
+                  onChange={setAppointmentDate}
+                  min={todayISO()}
                 />
               </div>
               <div>
