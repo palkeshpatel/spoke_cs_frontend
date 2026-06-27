@@ -1023,38 +1023,40 @@ table { width: 100%; border-collapse: collapse; }
                   })
                 )
               ) : (
-                <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
-                  {(fieldsByGarment[garmentType as GarmentType] ?? []).map((f) => (
-                    <div key={f.id} className="space-y-1">
-                      <div className="text-xs text-muted-foreground">
-                        {f.field_name}
+                <>
+                  <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
+                    {(fieldsByGarment[garmentType as GarmentType] ?? []).map((f) => (
+                      <div key={f.id} className="space-y-1">
+                        <div className="text-xs text-muted-foreground">
+                          {f.field_name}
+                        </div>
+                        <Input
+                          type="number"
+                          value={valuesDraft[f.id] ?? ""}
+                          onChange={(e) => handleMeasurementChange(f.id, e.target.value, false)}
+                          placeholder={f.unit}
+                          disabled={!canEdit}
+                        />
                       </div>
-                      <Input
-                        type="number"
-                        value={valuesDraft[f.id] ?? ""}
-                        onChange={(e) => handleMeasurementChange(f.id, e.target.value, false)}
-                        placeholder={f.unit}
+                    ))}
+                  </div>
+                  {garmentType !== "Body" && (
+                    <div className="mt-6">
+                      <div className="text-sm font-medium mb-2">{garmentType} Notes</div>
+                      <Textarea
+                        value={garmentType === "Suit" ? suitNotes : garmentType === "Shirt" ? shirtNotes : pantNotes}
+                        onChange={(e) => {
+                          if (garmentType === "Suit") setSuitNotes(e.target.value);
+                          else if (garmentType === "Shirt") setShirtNotes(e.target.value);
+                          else setPantNotes(e.target.value);
+                        }}
+                        placeholder={`Any specific notes for ${garmentType.toLowerCase()}...`}
                         disabled={!canEdit}
+                        className="h-24"
                       />
                     </div>
-                  ))}
-                </div>
-                {garmentType !== "Body" && (
-                  <div className="mt-6">
-                    <div className="text-sm font-medium mb-2">{garmentType} Notes</div>
-                    <Textarea
-                      value={garmentType === "Suit" ? suitNotes : garmentType === "Shirt" ? shirtNotes : pantNotes}
-                      onChange={(e) => {
-                        if (garmentType === "Suit") setSuitNotes(e.target.value);
-                        else if (garmentType === "Shirt") setShirtNotes(e.target.value);
-                        else setPantNotes(e.target.value);
-                      }}
-                      placeholder={`Any specific notes for ${garmentType.toLowerCase()}...`}
-                      disabled={!canEdit}
-                      className="h-24"
-                    />
-                  </div>
-                )}
+                  )}
+                </>
               )}
             </div>
           )}
