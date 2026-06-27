@@ -258,9 +258,6 @@ export default function Dashboard() {
             {ordersQuery.data?.data && ordersQuery.data.data.length > 0 ? (
               ordersQuery.data.data.map((order) => (
                 <div key={order.id} className="flex gap-4 items-center">
-                  <div className="w-12 h-12 bg-muted rounded-md flex items-center justify-center shrink-0 overflow-hidden border border-border/50">
-                    <img src={IMG.measurements} alt="Suit" className="w-full h-full object-cover opacity-70" />
-                  </div>
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center justify-between mb-1">
                       <p className="text-xs text-muted-foreground">{order.order_number}</p>
