@@ -21,6 +21,7 @@ import {
 } from "@/services/appointments";
 import { listCustomers } from "@/services/customers";
 import DatePicker from "@/components/DatePicker";
+import TimePicker from "@/components/TimePicker";
 
 const todayISO = () => {
   const d = new Date();
@@ -238,10 +239,9 @@ export default function AppointmentNew() {
                 <label className="text-xs text-muted-foreground mb-1 block">
                   Time *
                 </label>
-                <Input
-                  type="time"
+                <TimePicker
                   value={appointmentTime}
-                  onChange={(e) => setAppointmentTime(e.target.value)}
+                  onChange={setAppointmentTime}
                 />
               </div>
             </div>
