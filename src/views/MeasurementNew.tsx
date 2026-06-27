@@ -369,7 +369,7 @@ export default function MeasurementNew() {
   };
 
   const handlePrint = () => {
-    window.print();
+    window.open(`/measurements/${measurementId}/print`, '_blank');
   };
 
   // Build a helper that returns what sections to show, matching the screen exactly.
