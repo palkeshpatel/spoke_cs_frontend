@@ -205,44 +205,55 @@ export default function AppointmentDetail() {
               <p className="text-sm text-primary font-medium bg-gradient-to-r from-primary/10 to-accent/10 px-2 py-1 rounded-md inline-block">{form.serviceType}</p>
             </div>
           </div>
-          <div className="border-t border-border pt-4 space-y-4">
-            <EditableField label="Date" value={form.appointmentDate} isEditing={isEditing} type="date" onChange={(v) => updateForm("appointmentDate", v)} />
+          <div className="border-t border-border pt-4 mt-4 space-y-4">
             <div className="grid grid-cols-2 gap-4">
+              <EditableField 
+                label="Date *" 
+                value={form.appointmentDate} 
+                isEditing={isEditing} 
+                type="date" 
+                onChange={(v) => updateForm("appointmentDate", v)} 
+              />
               <EditableField
-                label="Time"
+                label="Time *"
                 value={form.appointmentTime || "—"}
                 isEditing={isEditing}
                 type="time"
                 onChange={(v) => updateForm("appointmentTime", v)}
               />
+            </div>
+            
+            <div className="grid grid-cols-2 gap-4">
               <EditableField
-                label="Duration"
+                label="Duration (min)"
                 value={form.durationMinutes}
                 isEditing={isEditing}
                 type="number"
                 onChange={(v) => updateForm("durationMinutes", v)}
                 unit="min"
               />
+              <div className="flex flex-col justify-start">
+                {isEditing ? (
+                  <EditableField
+                    label="Priority"
+                    value={form.priority}
+                    isEditing={isEditing}
+                    type="select"
+                    options={[
+                      { value: "high", label: "HIGH" },
+                      { value: "normal", label: "NORMAL" },
+                      { value: "low", label: "LOW" },
+                    ]}
+                    onChange={(v) => updateForm("priority", v as AppointmentForm["priority"])}
+                  />
+                ) : (
+                  <div>
+                    <span className="text-xs text-muted-foreground block mb-1">Priority</span>
+                    <PriorityBadge priority={form.priority === "high" ? "HIGH" : form.priority === "low" ? "LOW" : "NORMAL"} />
+                  </div>
+                )}
+              </div>
             </div>
-          </div>
-          <div className="border-t border-border pt-4 mt-4 flex items-center justify-between flex-wrap gap-2">
-            <span className="text-sm text-muted-foreground">Priority Level</span>
-            {isEditing ? (
-              <EditableField
-                label=""
-                value={form.priority}
-                isEditing={isEditing}
-                type="select"
-                options={[
-                  { value: "high", label: "HIGH" },
-                  { value: "normal", label: "NORMAL" },
-                  { value: "low", label: "LOW" },
-                ]}
-                onChange={(v) => updateForm("priority", v as AppointmentForm["priority"])}
-              />
-            ) : (
-              <PriorityBadge priority={form.priority === "high" ? "HIGH" : form.priority === "low" ? "LOW" : "NORMAL"} />
-            )}
           </div>
         </SectionCard>
 
