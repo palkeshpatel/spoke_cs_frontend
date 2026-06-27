@@ -3,7 +3,9 @@ import { useQuery } from "@tanstack/react-query";
 import { AlertCircle, CalendarDays, Clock, DollarSign, Ruler, TrendingUp, Users } from "lucide-react";
 import { Link } from "react-router-dom";
 import { getDashboard } from "@/services/dashboard";
+import { listOrders } from "@/services/orders";
 import { WorkTimer } from "@/components/WorkTimer";
+import { OrderStatusStepper } from "@/components/OrderStatusStepper";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 
@@ -38,31 +40,28 @@ function QuickAccessTile({ to, title, description, image, imageAlt, icon, iconCl
   return (
     <Link
       to={to}
-      className="group block bg-card rounded-2xl card-shadow overflow-hidden border border-border/60 transition-shadow hover:card-shadow-hover focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 ring-offset-background"
+      className="group flex flex-col bg-card rounded-xl border border-border/60 transition-all hover:shadow-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring overflow-hidden"
     >
-      <div className="relative h-44 sm:h-48 overflow-hidden">
-        <img src={image} alt={imageAlt} className="absolute inset-0 h-full w-full object-cover transition-transform duration-500 group-hover:scale-[1.03]" />
-        <div className="absolute inset-0 bg-gradient-to-t from-black/55 via-black/15 to-transparent" />
-        <div
-          className={cn(
-            "absolute left-4 top-4 flex h-11 w-11 items-center justify-center rounded-xl text-white shadow-md",
-            iconClass,
-          )}
-        >
-          {icon}
+      <div className="relative h-24 overflow-hidden shrink-0">
+        <img src={image} alt={imageAlt} className="absolute inset-0 h-full w-full object-cover transition-transform duration-500 group-hover:scale-105 opacity-80 group-hover:opacity-100" />
+        <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent" />
+        <div className="absolute left-3 bottom-3 flex items-center gap-2">
+          <div className={cn("flex h-7 w-7 items-center justify-center rounded bg-white/20 text-white backdrop-blur-sm shadow-sm", iconClass)}>
+            {icon}
+          </div>
+          <h3 className="text-sm font-bold text-white tracking-tight">{title}</h3>
         </div>
       </div>
-      <div className="p-5 sm:p-6">
-        <h3 className="text-lg font-bold text-foreground tracking-tight">{title}</h3>
-        <p className="text-sm text-muted-foreground mt-1">{description}</p>
-        <div className="mt-5 grid grid-cols-2 gap-4 border-t border-border pt-4">
+      <div className="p-4 flex-1 flex flex-col">
+        <p className="text-xs text-muted-foreground mb-4 line-clamp-1">{description}</p>
+        <div className="mt-auto flex items-end justify-between border-t border-border/50 pt-3">
           <div>
-            <p className="text-xs text-muted-foreground">{leftLabel}</p>
-            <p className="text-xl font-semibold text-foreground tabular-nums mt-0.5">{leftValue}</p>
+            <p className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider">{leftLabel}</p>
+            <p className="text-lg font-bold text-foreground tabular-nums leading-none mt-1">{leftValue}</p>
           </div>
           <div className="text-right">
-            <p className="text-xs text-muted-foreground">{rightLabel}</p>
-            <p className="text-xl font-semibold text-foreground tabular-nums mt-0.5">{rightValue}</p>
+            <p className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider">{rightLabel}</p>
+            <p className="text-lg font-bold text-foreground tabular-nums leading-none mt-1">{rightValue}</p>
           </div>
         </div>
       </div>
@@ -83,6 +82,12 @@ export default function Dashboard() {
     queryFn: getDashboard,
     staleTime: 60_000,
     refetchOnWindowFocus: true,
+  });
+
+  const ordersQuery = useQuery({
+    queryKey: ["dashboard_orders"],
+    queryFn: () => listOrders(1, 3), // Fetch latest 3 orders
+    staleTime: 60_000,
   });
 
   const dashboard = dashboardQuery.data;
@@ -205,16 +210,87 @@ export default function Dashboard() {
 
 
 
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        {/* Today's Schedule */}
+        <section className="bg-card rounded-xl border border-border/60 shadow-sm overflow-hidden flex flex-col">
+          <div className="p-4 border-b border-border/50 flex items-center justify-between">
+            <h2 className="text-sm font-bold tracking-widest uppercase text-foreground">Today's Schedule</h2>
+            <Link to="/appointments" className="text-sm text-primary hover:underline font-medium">View Calendar</Link>
+          </div>
+          <div className="p-4 flex-1">
+            {todaysAppointments.length === 0 ? (
+              <div className="h-full flex items-center justify-center text-sm text-muted-foreground">
+                No appointments today.
+              </div>
+            ) : (
+              <div className="space-y-6">
+                {todaysAppointments.slice(0, 4).map((appt) => {
+                  const time = appt.appointment_time ? new Date(`1970-01-01T${appt.appointment_time}`).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : "N/A";
+                  return (
+                    <div key={appt.id} className="flex gap-4">
+                      <div className="w-16 shrink-0 text-right">
+                        <p className="text-sm font-bold text-foreground">{time}</p>
+                      </div>
+                      <div className="relative flex flex-col items-center">
+                        <div className="w-2.5 h-2.5 rounded-full bg-primary ring-4 ring-primary/20 z-10" />
+                        <div className="w-0.5 h-full bg-border absolute top-2.5" />
+                      </div>
+                      <div className="flex-1 pb-2">
+                        <p className="font-semibold text-foreground text-sm">{appt.customer?.name ?? "Unknown Customer"}</p>
+                        <p className="text-xs text-muted-foreground mt-0.5">{appt.service_type}</p>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
+          </div>
+        </section>
+
+        {/* Active Orders */}
+        <section className="bg-card rounded-xl border border-border/60 shadow-sm overflow-hidden flex flex-col">
+          <div className="p-4 border-b border-border/50 flex items-center justify-between">
+            <h2 className="text-sm font-bold tracking-widest uppercase text-foreground">Active Orders</h2>
+            <Link to="/orders" className="text-sm text-primary hover:underline font-medium">View All</Link>
+          </div>
+          <div className="p-4 flex-1 space-y-4">
+            {ordersQuery.data?.data && ordersQuery.data.data.length > 0 ? (
+              ordersQuery.data.data.map((order) => (
+                <div key={order.id} className="flex gap-4 items-center">
+                  <div className="w-12 h-12 bg-muted rounded-md flex items-center justify-center shrink-0 overflow-hidden border border-border/50">
+                    <img src={IMG.measurements} alt="Suit" className="w-full h-full object-cover opacity-70" />
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center justify-between mb-1">
+                      <p className="text-xs text-muted-foreground">{order.order_number}</p>
+                      <StatusBadge status={order.status} />
+                    </div>
+                    <p className="text-sm font-bold text-foreground truncate">{order.customer?.name ?? "—"}</p>
+                    <p className="text-xs text-muted-foreground truncate">{order.fabric ?? "Fabric TBD"}</p>
+                    <div className="mt-2">
+                      <OrderStatusStepper status={order.status} isEditing={false} size="sm" />
+                    </div>
+                  </div>
+                </div>
+              ))
+            ) : (
+              <div className="h-full flex items-center justify-center text-sm text-muted-foreground">
+                No active orders found.
+              </div>
+            )}
+          </div>
+        </section>
+      </div>
+
       <section>
-        <h2 className="text-lg font-semibold text-foreground mb-4">Quick Access</h2>
         {dashboardQuery.isPending ? (
-          <div className="grid grid-cols-2 md:grid-cols-2 gap-2 sm:gap-4">
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
             {Array.from({ length: 4 }).map((_, i) => (
-              <div key={i} className="h-[22rem] rounded-2xl bg-muted/80 animate-pulse border border-border/50" />
+              <div key={i} className="h-[12rem] rounded-xl bg-muted/80 animate-pulse border border-border/50" />
             ))}
           </div>
         ) : showData ? (
-          <div className="grid grid-cols-2 md:grid-cols-2 gap-2 sm:gap-6">
+          <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
             <QuickAccessTile
               to="/appointments"
               title="Appointments"
