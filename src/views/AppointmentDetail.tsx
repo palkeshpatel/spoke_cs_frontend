@@ -228,9 +228,16 @@ export default function AppointmentDetail() {
                 label="Duration (min)"
                 value={form.durationMinutes}
                 isEditing={isEditing}
-                type="number"
+                type={isEditing ? "select" : "number"}
+                options={[
+                  { value: "15", label: "15 minutes" },
+                  { value: "20", label: "20 minutes" },
+                  { value: "30", label: "30 minutes" },
+                  { value: "45", label: "45 minutes" },
+                  { value: "60", label: "60 minutes" },
+                ]}
                 onChange={(v) => updateForm("durationMinutes", v)}
-                unit="min"
+                unit={!isEditing ? "min" : undefined}
               />
               <div className="flex flex-col justify-start">
                 {isEditing ? (
