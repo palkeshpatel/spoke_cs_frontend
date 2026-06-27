@@ -292,7 +292,7 @@ export default function Layout() {
         </main>
 
         {/* Mobile Bottom Navigation */}
-        <div className="lg:hidden absolute bottom-0 left-0 right-0 h-16 bg-card border-t border-border flex items-center justify-around px-1 z-40 shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.05)]">
+        <div className="lg:hidden fixed bottom-0 left-0 right-0 h-16 bg-card border-t border-border flex items-center justify-around px-1 z-40 shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.05)]">
           <Link to="/" className={`flex flex-col items-center justify-center w-full h-full space-y-1 ${location.pathname === '/' ? 'text-primary' : 'text-muted-foreground hover:text-foreground'}`}>
             <LayoutDashboard className="h-[22px] w-[22px]" />
             <span className="text-[10px] font-semibold">Dashboard</span>
@@ -309,10 +309,6 @@ export default function Layout() {
             <Calendar className="h-[22px] w-[22px]" />
             <span className="text-[10px] font-semibold">Appointments</span>
           </Link>
-          <button type="button" onClick={() => setMobileOpen(true)} className="flex flex-col items-center justify-center w-full h-full space-y-1 text-muted-foreground hover:text-foreground">
-            <MoreHorizontal className="h-[22px] w-[22px]" />
-            <span className="text-[10px] font-semibold">More</span>
-          </button>
         </div>
       </div>
     </div>
