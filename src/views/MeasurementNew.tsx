@@ -202,6 +202,26 @@ export default function MeasurementNew() {
     setGarmentType(v);
   };
 
+  const handleMeasurementChange = (fieldId: number, value: string, syncAcrossGarments: boolean = false, fieldName?: string) => {
+    // Only allow max 2 digits before decimal, and max 2 digits after decimal.
+    if (value !== "" && !/^\d{0,2}(\.\d{0,2})?$/.test(value)) {
+      return;
+    }
+    
+    setValuesDraft((prev) => {
+      const next = { ...prev };
+      if (syncAcrossGarments && fieldName) {
+        const idsToUpdate = matchingIdsMap.get(fieldName) ?? [fieldId];
+        for (const id of idsToUpdate) {
+          next[id] = value;
+        }
+      } else {
+        next[fieldId] = value;
+      }
+      return next;
+    });
+  };
+
   const measurementQuery = useQuery({
     queryKey: ["measurements", "detail", measurementId],
     queryFn: () => getMeasurement(measurementId as number),
@@ -933,16 +953,7 @@ table { width: 100%; border-collapse: collapse; }
                           <Input
                             type="number"
                             value={valuesDraft[f.id] ?? ""}
-                            onChange={(e) =>
-                              setValuesDraft((prev) => {
-                                const next = { ...prev };
-                                const idsToUpdate = matchingIdsMap.get(f.field_name) ?? [f.id];
-                                for (const id of idsToUpdate) {
-                                  next[id] = e.target.value;
-                                }
-                                return next;
-                              })
-                            }
+                            onChange={(e) => handleMeasurementChange(f.id, e.target.value, true, f.field_name)}
                             placeholder={f.unit}
                             disabled={!canEdit}
                           />
@@ -972,12 +983,7 @@ table { width: 100%; border-collapse: collapse; }
                               <Input
                                 type="number"
                                 value={valuesDraft[f.id] ?? ""}
-                                onChange={(e) =>
-                                  setValuesDraft((prev) => ({
-                                    ...prev,
-                                    [f.id]: e.target.value,
-                                  }))
-                                }
+                                onChange={(e) => handleMeasurementChange(f.id, e.target.value, false)}
                                 placeholder={f.unit}
                                 disabled={!canEdit}
                               />
@@ -998,12 +1004,7 @@ table { width: 100%; border-collapse: collapse; }
                       <Input
                         type="number"
                         value={valuesDraft[f.id] ?? ""}
-                        onChange={(e) =>
-                          setValuesDraft((prev) => ({
-                            ...prev,
-                            [f.id]: e.target.value,
-                          }))
-                        }
+                        onChange={(e) => handleMeasurementChange(f.id, e.target.value, false)}
                         placeholder={f.unit}
                         disabled={!canEdit}
                       />
