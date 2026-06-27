@@ -1,9 +1,10 @@
 import { useMemo, useState, useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Link } from "react-router-dom";
-import { LayoutGrid, List, Plus, Search, ChevronLeft, ChevronRight, FileText, Ruler, Scissors, PenTool, User, UserCheck, Truck } from "lucide-react";
+import { LayoutGrid, List, Plus, Search, ChevronLeft, ChevronRight, FileText, Ruler, Scissors, PenTool, User, UserCheck, Truck, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { DateRangePicker } from "@/components/DateRangePicker";
 import PageHeader from "@/components/PageHeader";
 import { StatusBadge } from "@/components/StatusBadge";
@@ -26,18 +27,40 @@ export default function OrderList() {
   const [view, setView] = useState<"list" | "grid">("list");
   const [page, setPage] = useState(1);
   const [status, setStatus] = useState("all");
-  const [dateRange, setDateRange] = useState<{from?: string, to?: string}>({});
+  const [dateRangePreset, setDateRangePreset] = useState("all");
+  const [customDateRange, setCustomDateRange] = useState<{from?: string, to?: string}>({});
 
-  const dateFrom = dateRange.from;
-  const dateTo = dateRange.to;
+  const { dateFrom, dateTo } = useMemo(() => {
+    if (dateRangePreset === "custom") {
+      return { dateFrom: customDateRange.from, dateTo: customDateRange.to };
+    }
+    const now = new Date();
+    let from: string | undefined;
+    let to: string | undefined;
+    if (dateRangePreset === "today") {
+      from = now.toISOString().split("T")[0];
+      to = now.toISOString().split("T")[0];
+    } else if (dateRangePreset === "7days") {
+      const past = new Date();
+      past.setDate(now.getDate() - 7);
+      from = past.toISOString().split("T")[0];
+      to = now.toISOString().split("T")[0];
+    } else if (dateRangePreset === "30days") {
+      const past = new Date();
+      past.setDate(now.getDate() - 30);
+      from = past.toISOString().split("T")[0];
+      to = now.toISOString().split("T")[0];
+    }
+    return { dateFrom: from, dateTo: to };
+  }, [dateRangePreset, customDateRange]);
 
   // Reset page to 1 when search or filters change
   useEffect(() => {
     setPage(1);
-  }, [debouncedSearch, status, dateRange]);
+  }, [debouncedSearch, status, dateRangePreset, customDateRange]);
 
   const ordersQuery = useQuery({
-    queryKey: ["orders", "list", page, debouncedSearch, status, dateRange],
+    queryKey: ["orders", "list", page, debouncedSearch, status, dateRangePreset, customDateRange],
     queryFn: () => listOrders(page, 10, undefined, debouncedSearch, status, dateFrom, dateTo),
   });
 
@@ -126,12 +149,36 @@ export default function OrderList() {
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
             <Input placeholder="Search by Order ID, Customer, Item..." value={search} onChange={(e) => setSearch(e.target.value)} className="pl-9" />
           </div>
-          <div className="w-full sm:w-[260px] shrink-0">
-            <DateRangePicker 
-              dateFrom={dateFrom} 
-              dateTo={dateTo} 
-              onChange={setDateRange} 
-            />
+          <div className="flex w-full sm:w-auto shrink-0 gap-2">
+            {dateRangePreset === "custom" ? (
+              <div className="flex items-center gap-2 w-full">
+                <DateRangePicker 
+                  dateFrom={customDateRange.from} 
+                  dateTo={customDateRange.to} 
+                  onChange={setCustomDateRange}
+                  className="w-full sm:w-[260px]"
+                />
+                <Button variant="ghost" size="icon" onClick={() => {
+                  setDateRangePreset("all");
+                  setCustomDateRange({});
+                }} title="Clear Custom Date">
+                  <X className="h-4 w-4" />
+                </Button>
+              </div>
+            ) : (
+              <Select value={dateRangePreset} onValueChange={setDateRangePreset}>
+                <SelectTrigger className="w-full sm:w-56">
+                  <SelectValue placeholder="Select Date Range" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">All Time</SelectItem>
+                  <SelectItem value="today">Today</SelectItem>
+                  <SelectItem value="7days">Last 7 Days</SelectItem>
+                  <SelectItem value="30days">Last 30 Days</SelectItem>
+                  <SelectItem value="custom">Custom Range...</SelectItem>
+                </SelectContent>
+              </Select>
+            )}
           </div>
         </div>
         {ordersQuery.isLoading ? (
