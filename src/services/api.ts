@@ -112,6 +112,11 @@ export async function apiRequest<TResponse>(
   if (options?.auth !== false) {
     const token = getAuthToken();
     if (token) headers.Authorization = `Bearer ${token}`;
+
+    const sessionBranch = getSessionBranch();
+    if (sessionBranch) {
+      headers["X-Branch-ID"] = String(sessionBranch.id);
+    }
   }
 
   const res = await fetch(url, {

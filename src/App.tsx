@@ -93,6 +93,7 @@ const App = () => (
           <Route element={<RequireAuth />}>
             <Route element={<Layout />}>
               <Route path="/" element={<Dashboard />} />
+              <Route path="/admin" element={<Navigate to="/" replace />} />
               <Route path="/customers" element={<CustomerList />} />
               <Route path="/customers/new" element={<CustomerNew />} />
               <Route path="/customers/:id" element={<CustomerDetail />} />
