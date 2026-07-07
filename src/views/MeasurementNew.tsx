@@ -881,9 +881,8 @@ table { width: 100%; border-collapse: collapse; }
           </SectionCard>
 
           <SectionCard title="Notes">
-            <Textarea
+            <Input
               placeholder="Notes..."
-              rows={8}
               value={notes}
               onChange={(e) => setNotes(e.target.value)}
               disabled={!canEdit}
