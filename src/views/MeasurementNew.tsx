@@ -224,7 +224,7 @@ export default function MeasurementNew() {
     if (value !== "" && !/^\d{0,2}(\.\d{0,2})?$/.test(value)) {
       return;
     }
-    
+
     setValuesDraft((prev) => {
       const next = { ...prev };
       if (syncAcrossGarments && fieldName) {
@@ -494,22 +494,22 @@ table { width: 100%; border-collapse: collapse; }
 </table>`;
 
     const printGroups: { label: string; type: string; rows: { name: string; value: string; unit: string }[] }[] = [];
-    
+
     // Which groups to print (same logic as printSections)
     const garmentGroupsToShow = garmentType === "Body" ? ["Body", "Suit", "Shirt", "Pants"] : [garmentType];
-    
+
     for (const g of garmentGroupsToShow) {
       let currentFields = fieldsByGarment[g] ?? [];
       if (g === "Body") {
         currentFields = currentFields.filter((f) => !BODY_HIDDEN_FIELDS.includes(f.field_name));
       }
       const garmentValues = mergedMeasurementJson[g] ?? {};
-      
+
       const rows = currentFields.map((f) => {
         const val = garmentValues[f.field_name] ?? "";
         return { name: f.field_name, value: val, unit: f.unit ?? "" };
       });
-      
+
       printGroups.push({
         label: g === "Body" ? "Body Measurements" : `${g} Details`,
         type: g,
@@ -524,14 +524,14 @@ table { width: 100%; border-collapse: collapse; }
 
       html += `<div class="section">${section.label}</div>`;
       html += `<table class="measure-table"><tr><th>Measurement</th><th class="value">Value</th><th>Measurement</th><th class="value">Value</th></tr>`;
-      
+
       for (let i = 0; i < filledRows.length; i += 2) {
         const row1 = filledRows[i];
         const row2 = i + 1 < filledRows.length ? filledRows[i + 1] : null;
-        
+
         const val1 = row1.value ? `${row1.value} ${row1.unit || ""}`.trim() : "-";
         const val2 = row2 && row2.value ? `${row2.value} ${row2.unit || ""}`.trim() : (row2 ? "-" : "");
-        
+
         html += `<tr>`;
         html += `<td>${row1.name}</td><td class="value">${val1}</td>`;
         if (row2) {
@@ -610,7 +610,7 @@ table { width: 100%; border-collapse: collapse; }
         const val = valuesMap.get(f.id) ?? (jsonVal ?? "");
         return { name: f.field_name, value: String(val ?? ""), unit: f.unit ?? "" };
       });
-      
+
       const gNotes = g === "Suit" ? suitNotes : g === "Shirt" ? shirtNotes : g === "Pants" ? pantNotes : "";
       if (gNotes && gNotes.trim() !== "") {
         rows.push({ name: "Notes", value: gNotes, unit: "" });
@@ -970,9 +970,9 @@ table { width: 100%; border-collapse: collapse; }
                       uniqueFieldsMap.set(f.field_name, f);
                     }
                   }
-                  
+
                   const uniqueFields = Array.from(uniqueFieldsMap.values());
-                  
+
                   return (
                     <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
                       {uniqueFields.map((f) => (
@@ -1080,7 +1080,7 @@ table { width: 100%; border-collapse: collapse; }
           )}
         </SectionCard>
 
-        <SectionCard title="Add Images Section (Client Selfy Pics)" className="mb-6">
+        <SectionCard title="Add Images Section" className="mb-6">
           <div className="space-y-3">
             <p className="text-xs text-muted-foreground">Body Images</p>
             <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-6 gap-3">
