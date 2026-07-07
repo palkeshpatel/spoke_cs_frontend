@@ -6,7 +6,7 @@ import SectionCard from "@/components/SectionCard";
 import EditableField from "@/components/EditableField";
 import { StatusBadge, PriorityBadge } from "@/components/StatusBadge";
 import { Button } from "@/components/ui/button";
-import { Bell, CalendarClock, CheckCircle, MessageSquare, X } from "lucide-react";
+import { Bell, CalendarClock, CheckCircle, MessageSquare, X, MessageCircle } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
 import { format } from "date-fns";
 import { getAppointment, sendAppointmentReminder, updateAppointment, listAppointmentServices } from "@/services/appointments";
@@ -314,6 +314,21 @@ export default function AppointmentDetail() {
 
       <div className="mt-8 mb-4">
         <div className="bg-card border border-border rounded-xl card-shadow p-2 flex flex-col sm:flex-row gap-2">
+          <Button
+            variant="outline"
+            className="flex-1 h-11 border-[#25D366] text-[#25D366] hover:bg-[#25D366]/10 hover:text-[#25D366]"
+            onClick={() => {
+              const cleanPhone = form.customerPhone.replace(/[^0-9]/g, "");
+              const formattedDate = form.appointmentDate ? format(new Date(form.appointmentDate), "dd-MMM-yyyy") : "";
+              const text = `Hello ${form.customerName}, your appointment for ${form.serviceType} is confirmed on ${formattedDate} at ${form.appointmentTime}.`;
+              const url = cleanPhone ? `https://wa.me/${cleanPhone}?text=${encodeURIComponent(text)}` : `https://wa.me/?text=${encodeURIComponent(text)}`;
+              window.open(url, "_blank");
+            }}
+            title="Share via WhatsApp"
+          >
+            <MessageCircle className="h-4 w-4 mr-2" />
+            Share
+          </Button>
           <Button
             variant="outline"
             className="flex-1 h-11"

@@ -2,7 +2,7 @@ import { useMemo, useState } from "react";
 import { Link } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { format } from "date-fns";
-import { Calendar as CalendarIcon, Clock, Plus, Search } from "lucide-react";
+import { Calendar as CalendarIcon, Clock, Plus, Search, MessageCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -175,11 +175,27 @@ export default function AppointmentList() {
                     </div>
                   </div>
                 </div>
-                <div className="text-right shrink-0 ml-2">
+                <div className="text-right shrink-0 ml-2 flex flex-col items-end gap-2">
                   <StatusBadge status={a.status} />
-                  <div className="mt-1">
-                    <PriorityBadge priority={a.priority === "high" ? "HIGH" : a.priority === "low" ? "LOW" : "NORMAL"} />
-                  </div>
+                  <PriorityBadge priority={a.priority === "high" ? "HIGH" : a.priority === "low" ? "LOW" : "NORMAL"} />
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    className="h-7 text-xs border-[#25D366] text-[#25D366] hover:bg-[#25D366]/10 hover:text-[#25D366]"
+                    onClick={(e) => {
+                      e.preventDefault();
+                      e.stopPropagation();
+                      const phone = a.customer?.phone ? a.customer.phone.replace(/[^0-9]/g, "") : "";
+                      const formattedDate = a.appointment_date ? format(new Date(a.appointment_date), "dd-MMM-yyyy") : "";
+                      const text = `Hello ${a.customer?.name ?? ""}, your appointment for ${a.service_type} is confirmed on ${formattedDate} at ${formatAppointmentTime(a.appointment_time)}.`;
+                      const url = phone ? `https://wa.me/${phone}?text=${encodeURIComponent(text)}` : `https://wa.me/?text=${encodeURIComponent(text)}`;
+                      window.open(url, "_blank");
+                    }}
+                    title="Share via WhatsApp"
+                  >
+                    <MessageCircle className="h-3 w-3 mr-1" />
+                    Share
+                  </Button>
                 </div>
               </Link>
             ))
