@@ -269,8 +269,8 @@ export default function OrderNew() {
 
             <div className="space-y-2 rounded-xl border border-border p-3 sm:p-4">
               {detailRows.map((row, index) => (
-                <div key={index} className="flex flex-col sm:flex-row gap-2 sm:items-center">
-                  <div className="flex items-center gap-2">
+                <div key={index} className="flex flex-row items-center gap-2 w-full">
+                  <div className="flex items-center gap-2 shrink-0">
                     <span className="text-sm font-medium text-muted-foreground w-6 text-center">{index + 1}.</span>
                     <Button
                       type="button"
@@ -306,7 +306,7 @@ export default function OrderNew() {
                     placeholder="Note"
                     value={row.note}
                     onChange={(e) => updateRowNote(index, e.target.value)}
-                    className="flex-1"
+                    className="flex-1 min-w-0"
                   />
                   <Button
                     type="button"

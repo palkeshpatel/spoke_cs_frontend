@@ -65,7 +65,7 @@ export function OrderStatusStepper({
 
   return (
     <>
-      <div className={cn("w-full relative", isSm ? "py-2" : "py-4")}>
+      <div className={cn("w-full relative px-2 sm:px-0", isSm ? "py-2" : "py-4")}>
         {/* Background track line */}
         <div className={cn("absolute left-[10%] right-[10%] h-1 bg-muted rounded-full z-0", isSm ? "top-[18px]" : "top-[27px]")} />
         
@@ -82,7 +82,7 @@ export function OrderStatusStepper({
             const isUpcoming = !isFullyDone && idx > currentIndex;
 
             return (
-              <div key={step.id} className="flex flex-col items-center gap-2 w-full relative group">
+              <div key={step.id} className="flex flex-col items-center gap-2 w-full min-w-0 relative group">
                 <button
                   type="button"
                   disabled={!isEditing}
@@ -101,7 +101,8 @@ export function OrderStatusStepper({
                 </button>
                 <span
                   className={cn(
-                    "font-semibold transition-colors text-center sm:whitespace-nowrap max-sm:text-[9px] max-sm:leading-tight max-sm:px-0.5",
+                    "font-semibold transition-colors text-center sm:whitespace-nowrap max-sm:text-[8px] max-sm:leading-tight max-sm:px-0.5",
+                    "max-sm:break-words max-sm:w-full min-w-0",
                     isSm ? "text-[10px]" : "text-[11px] sm:text-xs",
                     isCompleted ? "text-green-600" : isActive ? "text-primary" : "text-muted-foreground"
                   )}
