@@ -201,8 +201,10 @@ export default function OrderList() {
                     <p className="text-xs text-muted-foreground truncate">Fabric: {o.fabric ?? "—"}</p>
                   </div>
                   
-                  <div className="flex-1 w-full xl:w-auto px-2 xl:px-6">
-                    <OrderStatusStepper status={o.status} isEditing={false} size="sm" />
+                  <div className="flex-1 w-full xl:w-auto px-2 xl:px-6 xl:flex xl:justify-center">
+                    <div className="w-full xl:max-w-[450px]">
+                      <OrderStatusStepper status={o.status} isEditing={false} size="sm" />
+                    </div>
                   </div>
 
                   <div className="flex shrink-0 items-center justify-between xl:justify-end gap-4 xl:w-[200px] pt-2 xl:pt-0 border-t border-border xl:border-t-0">
