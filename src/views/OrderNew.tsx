@@ -244,7 +244,7 @@ export default function OrderNew() {
             </div>
 
             <div className="grid grid-cols-2 gap-4">
-              <div className="col-span-1 sm:col-span-2">
+              <div className="col-span-2">
                 <label className="text-xs text-muted-foreground mb-3 block">Status</label>
                 <div className="bg-muted/30 border border-border rounded-xl px-4 py-6">
                   <OrderStatusStepper status={status} onChange={(s) => setStatus(s as any)} isEditing={true} />
