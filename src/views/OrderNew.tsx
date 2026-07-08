@@ -274,22 +274,39 @@ export default function OrderNew() {
                 <div key={index} className="flex flex-row items-center gap-2 w-full">
                   <div className="flex items-center gap-2 shrink-0">
                     <span className="text-sm font-medium text-muted-foreground w-6 text-center">{index + 1}.</span>
-                    <Button
-                      type="button"
-                      variant="outline"
-                      size="icon"
-                      onClick={() => selectIconFile(index)}
-                      className="h-10 w-10 shrink-0"
-                      title="Upload image"
-                    >
-                      {row.isUploading ? (
-                        <Loader2 className="h-4 w-4 animate-spin" />
-                      ) : row.icon_path ? (
-                        <img src={resolvePublicUrl(row.icon_path) ?? ""} alt="Icon" className="h-full w-full rounded object-cover" />
-                      ) : (
+                    {row.isUploading ? (
+                      <div className="h-10 w-10 shrink-0 rounded-md border border-border flex items-center justify-center bg-muted/20">
+                        <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />
+                      </div>
+                    ) : row.icon_path ? (
+                      <div className="relative h-10 w-10 shrink-0 rounded-md border border-border bg-muted/20 overflow-hidden group">
+                        <ImagePreviewDialog src={resolvePublicUrl(row.icon_path)!} alt="Icon">
+                          <img src={resolvePublicUrl(row.icon_path) ?? ""} alt="Icon" className="h-full w-full object-cover cursor-pointer" />
+                        </ImagePreviewDialog>
+                        <button
+                          type="button"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            selectIconFile(index);
+                          }}
+                          className="absolute top-0.5 right-0.5 bg-black/60 hover:bg-black/80 text-white rounded p-0.5 opacity-0 group-hover:opacity-100 transition-opacity animate-fade-in"
+                          title="Change image"
+                        >
+                          <Camera className="h-2.5 w-2.5" />
+                        </button>
+                      </div>
+                    ) : (
+                      <Button
+                        type="button"
+                        variant="outline"
+                        size="icon"
+                        onClick={() => selectIconFile(index)}
+                        className="h-10 w-10 shrink-0"
+                        title="Upload image"
+                      >
                         <Camera className="h-4 w-4" />
-                      )}
-                    </Button>
+                      </Button>
+                    )}
                   </div>
                   <input
                     ref={(el) => {

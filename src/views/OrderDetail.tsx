@@ -294,22 +294,39 @@ export default function OrderDetail() {
                     <div key={index} className="flex flex-col sm:flex-row gap-2 sm:items-center">
                       <div className="flex items-center gap-2">
                         <span className="text-sm font-medium text-muted-foreground w-6 text-center">{index + 1}.</span>
-                        <Button
-                          type="button"
-                          variant="outline"
-                          size="icon"
-                          onClick={() => selectIconFile(index)}
-                          className="h-10 w-10 shrink-0"
-                          title="Upload image"
-                        >
-                          {uploadingIndex === index ? (
-                            <Loader2 className="h-4 w-4 animate-spin" />
-                          ) : item.icon_path ? (
-                            <img src={resolvePublicUrl(item.icon_path) ?? ""} alt="Icon" className="h-full w-full rounded object-cover" />
-                          ) : (
+                        {uploadingIndex === index ? (
+                          <div className="h-10 w-10 shrink-0 rounded-md border border-border flex items-center justify-center bg-muted/20">
+                            <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />
+                          </div>
+                        ) : item.icon_path ? (
+                          <div className="relative h-10 w-10 shrink-0 rounded-md border border-border bg-muted/20 overflow-hidden group">
+                            <ImagePreviewDialog src={resolvePublicUrl(item.icon_path)!} alt="Icon">
+                              <img src={resolvePublicUrl(item.icon_path) ?? ""} alt="Icon" className="h-full w-full object-cover cursor-pointer" />
+                            </ImagePreviewDialog>
+                            <button
+                              type="button"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                selectIconFile(index);
+                              }}
+                              className="absolute top-0.5 right-0.5 bg-black/60 hover:bg-black/80 text-white rounded p-0.5 opacity-0 group-hover:opacity-100 transition-opacity animate-fade-in"
+                              title="Change image"
+                            >
+                              <Camera className="h-2.5 w-2.5" />
+                            </button>
+                          </div>
+                        ) : (
+                          <Button
+                            type="button"
+                            variant="outline"
+                            size="icon"
+                            onClick={() => selectIconFile(index)}
+                            className="h-10 w-10 shrink-0"
+                            title="Upload image"
+                          >
                             <Camera className="h-4 w-4" />
-                          )}
-                        </Button>
+                          </Button>
+                        )}
                       </div>
                       <input
                         ref={(el) => {
@@ -357,7 +374,9 @@ export default function OrderDetail() {
                           <span className="text-sm font-medium text-muted-foreground w-6 text-center">{i + 1}.</span>
                           <div className="w-12 h-12 shrink-0 rounded-lg bg-muted/30 flex items-center justify-center overflow-hidden border border-border">
                             {item.icon_path ? (
-                              <img src={resolvePublicUrl(item.icon_path) ?? ""} alt="Icon" className="w-full h-full object-cover" />
+                              <ImagePreviewDialog src={resolvePublicUrl(item.icon_path)!} alt="Icon">
+                                <img src={resolvePublicUrl(item.icon_path) ?? ""} alt="Icon" className="w-full h-full object-cover cursor-pointer" />
+                              </ImagePreviewDialog>
                             ) : (
                               <Camera className="h-5 w-5 text-muted-foreground" />
                             )}
