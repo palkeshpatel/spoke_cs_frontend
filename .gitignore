@@ -41,3 +41,7 @@ test-results
 *.njsproj
 *.sln
 *.sw?
+
+# Local env files
+env.development
+env.production
