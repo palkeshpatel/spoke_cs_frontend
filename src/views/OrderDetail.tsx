@@ -13,6 +13,8 @@ import { StatusBadge } from "@/components/StatusBadge";
 import { getOrder, updateOrder, uploadOrderItemIcon } from "@/services/orders";
 import { getCustomer, uploadCustomerBodyImage } from "@/services/customers";
 import { resolvePublicUrl } from "@/services/api";
+import { ImagePreviewDialog } from "@/components/ImagePreviewDialog";
+
 import { Camera, FileImage, Loader2, Plus, Trash2 } from "lucide-react";
 import { OrderCustomizationDialog } from "@/components/OrderCustomizationDialog";
 import DatePicker from "@/components/DatePicker";
@@ -410,22 +412,35 @@ export default function OrderDetail() {
               return (
                 <div key={type.key} className="rounded-xl border border-border p-3 space-y-2">
                   <p className="text-xs font-medium text-muted-foreground">{type.label}</p>
-                  <button
-                    type="button"
-                    onClick={() => openBodyImagePicker(type.key)}
-                    className="w-full h-28 rounded-lg border border-dashed border-border bg-muted/20 flex items-center justify-center overflow-hidden hover:bg-muted/40 transition-colors"
-                  >
-                    {isUploading ? (
+                  {isUploading ? (
+                    <div className="w-full h-28 rounded-lg border border-border bg-muted/20 flex items-center justify-center">
                       <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" />
-                    ) : preview ? (
-                      <img src={preview} alt={type.label} className="h-full w-full object-cover" />
-                    ) : (
+                    </div>
+                  ) : preview ? (
+                    <div className="relative w-full h-28 rounded-lg overflow-hidden group border border-border bg-muted/20">
+                      <ImagePreviewDialog src={preview} alt={type.label}>
+                        <img src={preview} alt={type.label} className="h-full w-full object-cover" />
+                      </ImagePreviewDialog>
+                      <button
+                        type="button"
+                        onClick={() => openBodyImagePicker(type.key)}
+                        className="absolute bottom-2 right-2 bg-black/60 hover:bg-black/80 text-white rounded px-1.5 py-0.5 text-[10px] font-medium transition-colors"
+                      >
+                        Change
+                      </button>
+                    </div>
+                  ) : (
+                    <button
+                      type="button"
+                      onClick={() => openBodyImagePicker(type.key)}
+                      className="w-full h-28 rounded-lg border border-dashed border-border bg-muted/20 flex items-center justify-center overflow-hidden hover:bg-muted/40 transition-colors"
+                    >
                       <div className="flex flex-col items-center gap-1 text-muted-foreground">
                         <FileImage className="h-4 w-4" />
                         <span className="text-[11px]">Upload</span>
                       </div>
-                    )}
-                  </button>
+                    </button>
+                  )}
                   <input
                     ref={(el) => {
                       bodyImageRefs.current[type.key] = el;

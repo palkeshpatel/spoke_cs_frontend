@@ -13,6 +13,8 @@ import { PriorityBadge, StatusBadge } from "@/components/StatusBadge";
 import { toast } from "@/hooks/use-toast";
 import { CustomerImageCropDialog } from "@/components/CustomerImageCropDialog";
 import { resolvePublicUrl } from "@/services/api";
+import { ImagePreviewDialog } from "@/components/ImagePreviewDialog";
+
 import { listAppointments } from "@/services/appointments";
 import {
   deleteCustomerBodyImage,
@@ -335,7 +337,9 @@ export default function CustomerDetail() {
             <div className="flex flex-col items-center pt-2">
               <div className="relative w-24 h-24 rounded-full overflow-hidden bg-muted mb-3">
                 {profilePhotoUrl ? (
-                  <img src={profilePhotoUrl} alt={customer.name} className="w-full h-full object-cover" />
+                  <ImagePreviewDialog src={profilePhotoUrl} alt={customer.name}>
+                    <img src={profilePhotoUrl} alt={customer.name} className="w-full h-full object-cover" />
+                  </ImagePreviewDialog>
                 ) : (
                   <div className="flex items-center justify-center w-full h-full text-2xl font-bold text-muted-foreground">{customer.name.substring(0, 2).toUpperCase()}</div>
                 )}
@@ -604,7 +608,11 @@ export default function CustomerDetail() {
                   <div key={t.key} className="border border-border rounded-lg p-2 flex flex-col items-center">
                     <div className="text-xs font-medium w-full truncate text-center mb-1">{t.label}</div>
                     <div className="relative h-28 sm:h-32 w-full rounded bg-muted overflow-hidden">
-                      {src ? <img src={src} alt={t.label} className="h-full w-full object-cover" /> : null}
+                      {src ? (
+                        <ImagePreviewDialog src={src} alt={t.label}>
+                          <img src={src} alt={t.label} className="h-full w-full object-cover" />
+                        </ImagePreviewDialog>
+                      ) : null}
                     </div>
                     {isEditing ? (
                       <div className="w-full mt-2">
