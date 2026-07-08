@@ -14,6 +14,8 @@ import { toast } from "@/hooks/use-toast";
 import { listCustomers, getCustomer, uploadCustomerBodyImage } from "@/services/customers";
 import { resolvePublicUrl } from "@/services/api";
 import { ImagePreviewDialog } from "@/components/ImagePreviewDialog";
+import { getMe } from "@/services/auth";
+import { canEditMeasurements } from "@/lib/permissions";
 
 import DatePicker from "@/components/DatePicker";
 import {
@@ -52,6 +54,11 @@ export default function MeasurementNew() {
   const queryClient = useQueryClient();
   const measurementId = params.id ? Number(params.id) : null;
   const isEditMode = measurementId !== null && Number.isFinite(measurementId);
+
+  // Fetch current user to check permissions
+  const { data: meData } = useQuery({ queryKey: ["me"], queryFn: getMe, staleTime: 60_000 });
+  const currentUser = meData?.user;
+  const userCanEdit = canEditMeasurements(currentUser);
 
   const [customerId, setCustomerId] = useState<string | undefined>(undefined);
   const [garmentType, setGarmentType] = useState<string>("Body");
@@ -683,7 +690,8 @@ table { width: 100%; border-collapse: collapse; }
     }
   };
 
-  const canEdit = !isEditMode || isEditing;
+  // canEdit: in view mode allow editing only if user has manage_measurements permission
+  const canEdit = userCanEdit && (!isEditMode || isEditing);
   const mergedMeasurementJson = useMemo(() => {
     return buildMeasurementJson();
   }, [allFields, valuesDraft]);
@@ -732,7 +740,7 @@ table { width: 100%; border-collapse: collapse; }
             subtitle={`${garmentType} · Updated ${measurement?.updated_at ? format(new Date(measurement.updated_at), "dd-MMM-yyyy") : ""}`}
             backTo="/measurements"
             isEditing={isEditing}
-            onEdit={() => setIsEditing(true)}
+            onEdit={userCanEdit ? () => setIsEditing(true) : undefined}
             persistActions
             actions={
               <Button

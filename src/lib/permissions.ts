@@ -20,6 +20,24 @@ export function hasPermission(user: AuthUser | null | undefined, permission: str
   return !!roleData?.permissions?.some((p) => p.permission_name === permission);
 }
 
+/**
+ * Returns true if the user can view the Measurements module
+ * (either view_measurements OR manage_measurements grants access to view).
+ */
+export function canViewMeasurements(user: AuthUser | null | undefined): boolean {
+  if (isAdminUser(user)) return true;
+  return hasPermission(user, "view_measurements") || hasPermission(user, "manage_measurements");
+}
+
+/**
+ * Returns true if the user can create/edit/update/delete measurements.
+ * Requires manage_measurements permission.
+ */
+export function canEditMeasurements(user: AuthUser | null | undefined): boolean {
+  if (isAdminUser(user)) return true;
+  return hasPermission(user, "manage_measurements");
+}
+
 type RoutePermissionRule = {
   match: RegExp;
   permission?: string;
@@ -31,7 +49,7 @@ const routePermissionRules: RoutePermissionRule[] = [
   { match: /^\/customers(\/|$)/, permission: "manage_customers" },
   { match: /^\/appointments(\/|$)/, permission: "manage_appointments" },
   { match: /^\/calendar(\/|$)?$/, permission: "manage_appointments" },
-  { match: /^\/measurements(\/|$)/, permission: "manage_measurements" },
+  { match: /^\/measurements(\/|$)/, permissions: ["view_measurements", "manage_measurements"] },
   { match: /^\/orders(\/|$)/, permission: "manage_orders" },
   { match: /^\/billing(\/|$)/, permission: "manage_billing" },
   { match: /^\/reports(\/|$)?$/, permission: "view_reports" },
@@ -68,3 +86,4 @@ export function canAccessPath(user: AuthUser | null | undefined, pathname: strin
 export function canViewNavItem(user: AuthUser | null | undefined, permission?: string): boolean {
   return hasPermission(user, permission ?? "");
 }
+

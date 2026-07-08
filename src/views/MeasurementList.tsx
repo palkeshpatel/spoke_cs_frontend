@@ -147,11 +147,10 @@ export default function MeasurementList() {
                   return (
                     <span
                       key={garment}
-                      className={`inline-flex h-9 min-w-[4.25rem] items-center justify-center rounded-md border px-3 text-xs font-medium select-none ${
-                        has
+                      className={`inline-flex h-9 min-w-[4.25rem] items-center justify-center rounded-md border px-3 text-xs font-medium select-none ${has
                           ? "border-primary/30 bg-primary text-primary-foreground shadow-sm"
                           : "border-border/80 bg-muted/50 text-muted-foreground opacity-80"
-                      }`}
+                        }`}
                     >
                       {garment}
                     </span>

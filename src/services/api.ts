@@ -85,13 +85,7 @@ export const getSessionBranch = (): SessionBranch | null => {
 export function resolvePublicUrl(path: string | null | undefined): string | null {
   if (path == null || path === "") return null;
   if (path.startsWith("http://") || path.startsWith("https://")) return path;
-  
-  // Use production URL for customization images since they aren't seeded locally
-  let base = apiBaseUrl().replace(/\/$/, "");
-  if (path.includes("customizations")) {
-    base = "https://system.spokebynishitsoni.com";
-  }
-  
+  const base = apiBaseUrl().replace(/\/$/, "");
   const p = path.startsWith("/") ? path : `/${path}`;
   return `${base}${p}`;
 }
@@ -128,8 +122,8 @@ export async function apiRequest<TResponse>(
   const res = await fetch(url, {
     method,
     headers,
-    body: options?.body !== undefined 
-      ? (options.body instanceof FormData ? options.body : JSON.stringify(options.body)) 
+    body: options?.body !== undefined
+      ? (options.body instanceof FormData ? options.body : JSON.stringify(options.body))
       : undefined,
     signal: options?.signal,
   });

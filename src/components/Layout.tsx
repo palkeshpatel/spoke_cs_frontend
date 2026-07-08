@@ -11,7 +11,7 @@ import { getSessionBranch, setSessionBranch, apiRequest, type SessionBranch } fr
 
 import { getMe } from '@/services/auth';
 import { useQuery } from '@tanstack/react-query';
-import { canAccessPath, canViewNavItem, isAdminUser } from '@/lib/permissions';
+import { canAccessPath, canViewNavItem, canViewMeasurements, isAdminUser } from '@/lib/permissions';
 import Unauthorized from '@/views/Unauthorized';
 
 export default function Layout() {
@@ -56,10 +56,10 @@ export default function Layout() {
     { path: '/customers', label: 'Customers', icon: Users, permission: 'manage_customers' },
     { path: '/appointments', label: 'Appointments', icon: Calendar, permission: 'manage_appointments' },
     { path: '/calendar', label: 'Calendar', icon: Calendar, permission: 'manage_appointments' },
-    { path: '/measurements', label: 'Measurements', icon: Ruler, permission: 'manage_measurements' },
+    { path: '/measurements', label: 'Measurements', icon: Ruler, permission: '' },
     { path: '/orders', label: 'Orders', icon: Package, permission: 'manage_orders' },
     { path: '/billing', label: 'Billing', icon: Receipt, permission: 'manage_billing' }, 
-  ].filter(canViewItem);
+  ].filter((item) => item.path === '/measurements' ? canViewMeasurements(user) : canViewItem(item));
 
   const settingsNavItem = { path: '/settings', label: 'Settings', icon: Settings };
 
