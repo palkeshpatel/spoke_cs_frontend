@@ -414,14 +414,16 @@ export default function RoleDetail() {
                                   }`}
                                 >
                                   {perm.permission_name
-                                    .replace("manage_", "")
-                                    .replace("view_", "")
+                                    .replace(/^manage_/, "MANAGE ")
+                                    .replace(/^view_/, "VIEW ")
                                     .replace(/_/g, " ")
                                     .toUpperCase()}
                                 </p>
                                 <p className="text-[11px] text-muted-foreground mt-1 leading-relaxed">
                                   {perm.description ||
-                                    `Grants access to ${module.toLowerCase()} functionality.`}
+                                    (perm.permission_name.startsWith("view_")
+                                      ? `View-only access to ${module.toLowerCase()} records.`
+                                      : `Full access to manage ${module.toLowerCase()} records.`)}
                                 </p>
                               </div>
 
