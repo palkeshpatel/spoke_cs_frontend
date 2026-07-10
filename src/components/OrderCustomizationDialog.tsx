@@ -125,25 +125,6 @@ export function OrderCustomizationDialog({ open, onOpenChange, selectedOptions, 
                           );
                         })}
                       </div>
-                      {(localSelections[category.id] as any)?.optionId && (
-                        <div className="mt-4 p-3 bg-muted/20 rounded-xl border border-border">
-                          <label className="text-xs font-medium text-muted-foreground mb-1.5 block">
-                            Note for {category.options.find(o => o.id === (localSelections[category.id] as any).optionId)?.name}
-                          </label>
-                          <input
-                            type="text"
-                            placeholder="note"
-                            value={(localSelections[category.id] as any).note || ""}
-                            onChange={(e) => {
-                              setLocalSelections(prev => ({
-                                ...prev,
-                                [category.id]: { ...(prev[category.id] as any), note: e.target.value }
-                              }));
-                            }}
-                            className="flex h-9 w-full rounded-md border border-input bg-background px-3 py-1 text-sm shadow-sm transition-colors file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50"
-                          />
-                        </div>
-                      )}
                     </div>
                   ))}
                 </TabsContent>
