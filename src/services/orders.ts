@@ -15,6 +15,8 @@ export type OrderItemDto = {
   measurement_id: number | null;
   icon_path: string | null;
   note: string | null;
+  handwork?: boolean | number;
+  customization_flags?: string | null;
   quantity: number;
   price: string | number;
   created_at: string;

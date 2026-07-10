@@ -17,11 +17,14 @@ import { getCustomer, uploadCustomerBodyImage } from "@/services/customers";
 import { OrderCustomizationDialog } from "@/components/OrderCustomizationDialog";
 import DatePicker from "@/components/DatePicker";
 import { OrderStatusStepper } from "@/components/OrderStatusStepper";
+import { listCustomizations } from "@/services/customizations";
 
 type ItemDetailRow = {
   icon_path: string | null;
   note: string;
   isUploading: boolean;
+  handwork: boolean;
+  customizations: Record<number, { priceModifier: number, note: string }>;
 };
 
 export default function OrderNew() {
@@ -36,12 +39,32 @@ export default function OrderNew() {
   const [status, setStatus] = useState<"measurement" | "cutting" | "stitching" | "trial_1" | "trial_2" | "delivery">("measurement");
   const [trialDate, setTrialDate] = useState<string>("");
   const [deliveryDate, setDeliveryDate] = useState<string>("");
-  const [detailRows, setDetailRows] = useState<ItemDetailRow[]>([{ icon_path: null, note: "", isUploading: false }]);
+  const [detailRows, setDetailRows] = useState<ItemDetailRow[]>([
+    { icon_path: null, note: "", isUploading: false, handwork: false, customizations: {} }
+  ]);
   const fileInputRefs = useRef<Array<HTMLInputElement | null>>([]);
   const bodyImageRefs = useRef<Record<string, HTMLInputElement | null>>({});
 
-  const [customizationModalOpen, setCustomizationModalOpen] = useState(false);
-  const [selectedCustomizations, setSelectedCustomizations] = useState<Record<number, { priceModifier: number, note: string }>>({});
+  const [activeCustomizationRowIndex, setActiveCustomizationRowIndex] = useState<number | null>(null);
+
+  // Load all customizations to flat map option ID -> option Name
+  const { data: customizationsData } = useQuery({
+    queryKey: ["customizations"],
+    queryFn: listCustomizations,
+  });
+
+  const optionsMap = useMemo(() => {
+    const map = new Map<number, string>();
+    if (!customizationsData) return map;
+    Object.values(customizationsData).forEach((categories: any) => {
+      categories.forEach((cat: any) => {
+        cat.options.forEach((opt: any) => {
+          map.set(opt.id, opt.name);
+        });
+      });
+    });
+    return map;
+  }, [customizationsData]);
 
   const selectedCustomerId = customerId ? Number(customerId) : NaN;
 
@@ -56,7 +79,7 @@ export default function OrderNew() {
   };
 
   const addDetailRow = () => {
-    setDetailRows((prev) => [...prev, { icon_path: null, note: "", isUploading: false }]);
+    setDetailRows((prev) => [...prev, { icon_path: null, note: "", isUploading: false, handwork: false, customizations: {} }]);
   };
 
   const removeDetailRow = (index: number) => {
@@ -201,7 +224,7 @@ export default function OrderNew() {
     }
 
     const p = price.trim() === "" ? 0 : Number(price);
-    const rows = detailRows.length > 0 ? detailRows : [{ icon_path: null, note: "", isUploading: false }];
+    const rows = detailRows.length > 0 ? detailRows : [];
     createMutation.mutate({
       customer_id: Number(customerId),
       fabric: fabric || null,
@@ -215,12 +238,10 @@ export default function OrderNew() {
         price: index === 0 && Number.isFinite(p) ? p : 0,
         icon_path: row.icon_path,
         note: row.note.trim() || null,
+        handwork: row.handwork,
+        customization_flags: Object.keys(row.customizations).length > 0 ? JSON.stringify(row.customizations) : null,
       })),
-      customizations: Object.entries(selectedCustomizations).map(([optId, data]) => ({
-        option_id: Number(optId),
-        price_modifier: Number(data.priceModifier),
-        note: data.note || null,
-      })),
+      customizations: [],
     });
   };
 
@@ -321,19 +342,70 @@ export default function OrderNew() {
                       e.currentTarget.value = "";
                     }}
                   />
-                  <Input
-                    placeholder="Note"
-                    value={row.note}
-                    onChange={(e) => updateRowNote(index, e.target.value)}
-                    className="flex-1 min-w-0"
-                  />
+                  <div className="flex-1 flex flex-col gap-2 min-w-0">
+                    <Input
+                      placeholder="Note"
+                      value={row.note}
+                      onChange={(e) => updateRowNote(index, e.target.value)}
+                      className="w-full"
+                    />
+                    <div className="flex items-center gap-4 px-1">
+                      <label className="flex items-center gap-1.5 text-xs text-muted-foreground cursor-pointer select-none">
+                        <input
+                          type="checkbox"
+                          checked={row.handwork}
+                          onChange={(e) => {
+                            const val = e.target.checked;
+                            setDetailRows((prev) =>
+                              prev.map((r, i) => (i === index ? { ...r, handwork: val } : r))
+                            );
+                          }}
+                          className="rounded border-input text-primary focus:ring-primary h-3.5 w-3.5"
+                        />
+                        Handwork
+                      </label>
+
+                      <div className="flex items-center gap-1.5">
+                        <label className="flex items-center gap-1.5 text-xs text-muted-foreground cursor-pointer select-none">
+                          <input
+                            type="checkbox"
+                            checked={Object.keys(row.customizations).length > 0}
+                            onChange={(e) => {
+                              if (!e.target.checked) {
+                                // Clear customizations if unchecked
+                                setDetailRows((prev) =>
+                                  prev.map((r, i) => (i === index ? { ...r, customizations: {} } : r))
+                                );
+                              } else {
+                                // Open dialog if checked
+                                setActiveCustomizationRowIndex(index);
+                              }
+                            }}
+                            className="rounded border-input text-primary focus:ring-primary h-3.5 w-3.5"
+                          />
+                          Advanced Customization
+                        </label>
+                        {Object.keys(row.customizations).length > 0 && (
+                          <span 
+                            onClick={() => setActiveCustomizationRowIndex(index)}
+                            className="text-xs text-primary font-medium hover:underline cursor-pointer"
+                          >
+                            ({Object.keys(row.customizations)
+                              .map((id) => optionsMap.get(Number(id)) || "")
+                              .filter(Boolean)
+                              .join(", ")})
+                          </span>
+                        )}
+                      </div>
+                    </div>
+                  </div>
                   <Button
                     type="button"
                     variant="ghost"
                     size="icon"
                     onClick={() => removeDetailRow(index)}
                     disabled={detailRows.length <= 1}
-                    className="h-10 w-10 shrink-0 text-destructive hover:text-destructive"
+                    className="h-10 w-10 shrink-0 text-destructive hover:text-destructive align-top"
                     title="Remove row"
                   >
                     <Trash2 className="h-4 w-4" />
@@ -351,7 +423,6 @@ export default function OrderNew() {
 
         <SectionCard title="Notes">
           <div className="space-y-4">
-
             <div>
               <Textarea
                 placeholder="Add order notes..."
@@ -359,17 +430,6 @@ export default function OrderNew() {
                 value={notes}
                 onChange={(e) => setNotes(e.target.value)}
               />
-            </div>
-
-            <div className="pt-2 flex justify-end">
-              <button
-                type="button"
-                onClick={() => setCustomizationModalOpen(true)}
-                className="text-sm font-medium text-primary hover:underline flex items-center gap-1.5 transition-colors"
-              >
-                Advance Customisation
-                <span className="flex items-center justify-center w-4 h-4 rounded-full border border-primary text-[10px] font-bold">?</span>
-              </button>
             </div>
           </div>
         </SectionCard>
@@ -446,10 +506,26 @@ export default function OrderNew() {
       </div>
 
       <OrderCustomizationDialog
-        open={customizationModalOpen}
-        onOpenChange={setCustomizationModalOpen}
-        selectedOptions={selectedCustomizations}
-        onSelectionChange={setSelectedCustomizations}
+        open={activeCustomizationRowIndex !== null}
+        onOpenChange={(isOpen) => {
+          if (!isOpen) setActiveCustomizationRowIndex(null);
+        }}
+        selectedOptions={
+          activeCustomizationRowIndex !== null
+            ? detailRows[activeCustomizationRowIndex]?.customizations ?? {}
+            : {}
+        }
+        onSelectionChange={(newCustomizations) => {
+          if (activeCustomizationRowIndex !== null) {
+            setDetailRows((prev) =>
+              prev.map((row, i) =>
+                i === activeCustomizationRowIndex
+                  ? { ...row, customizations: newCustomizations }
+                  : row
+              )
+            );
+          }
+        }}
       />
     </div>
   );

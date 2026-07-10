@@ -19,6 +19,7 @@ import { Camera, FileImage, Loader2, Plus, Trash2 } from "lucide-react";
 import { OrderCustomizationDialog } from "@/components/OrderCustomizationDialog";
 import DatePicker from "@/components/DatePicker";
 import { OrderStatusStepper } from "@/components/OrderStatusStepper";
+import { listCustomizations } from "@/services/customizations";
 
 type ItemDraft = {
   garment_type: string | null;
@@ -27,6 +28,8 @@ type ItemDraft = {
   note: string | null;
   quantity: string;
   price: string;
+  handwork: boolean;
+  customizations: Record<number, { priceModifier: number, note: string }>;
 };
 
 export default function OrderDetail() {
@@ -46,15 +49,33 @@ export default function OrderDetail() {
   const bodyImageRefs = useRef<Record<string, HTMLInputElement | null>>({});
   const [uploadingIndex, setUploadingIndex] = useState<number | null>(null);
 
-  const [customizationModalOpen, setCustomizationModalOpen] = useState(false);
-  const [selectedCustomizations, setSelectedCustomizations] = useState<Record<number, { priceModifier: number, note: string }>>({});
+  const [activeCustomizationRowIndex, setActiveCustomizationRowIndex] = useState<number | null>(null);
 
-  const updateItemField = (index: number, field: keyof ItemDraft, value: string | null) => {
+  // Load all customizations to flat map option ID -> option Name
+  const { data: customizationsData } = useQuery({
+    queryKey: ["customizations"],
+    queryFn: listCustomizations,
+  });
+
+  const optionsMap = useMemo(() => {
+    const map = new Map<number, string>();
+    if (!customizationsData) return map;
+    Object.values(customizationsData).forEach((categories: any) => {
+      categories.forEach((cat: any) => {
+        cat.options.forEach((opt: any) => {
+          map.set(opt.id, opt.name);
+        });
+      });
+    });
+    return map;
+  }, [customizationsData]);
+
+  const updateItemField = (index: number, field: keyof ItemDraft, value: any) => {
     setItemsDraft((prev) => prev.map((x, i) => (i === index ? { ...x, [field]: value } : x)));
   };
 
   const addItemRow = () => {
-    setItemsDraft((prev) => [...prev, { garment_type: null, measurement_id: null, icon_path: null, note: "", quantity: "1", price: "0" }]);
+    setItemsDraft((prev) => [...prev, { garment_type: null, measurement_id: null, icon_path: null, note: "", quantity: "1", price: "0", handwork: false, customizations: {} }]);
   };
 
   const removeItemRow = (index: number) => {
@@ -103,10 +124,12 @@ export default function OrderDetail() {
         fileName: params.file.name,
       }),
     onSuccess: async () => {
-      await queryClient.invalidateQueries({ queryKey: ["customers", "detail", order?.customer_id] });
+      await queryClient.invalidateQueries({ queryKey: ["customers", "detail", order!.customer_id] });
       toast({ title: "Image uploaded", description: "Client body image uploaded successfully." });
     },
-    onError: () => toast({ title: "Upload failed", variant: "destructive" }),
+    onError: () => {
+      toast({ title: "Upload failed", variant: "destructive" });
+    },
   });
 
   const imageTypes = [
@@ -138,29 +161,33 @@ export default function OrderDetail() {
   const initDraft = useCallback(() => {
     if (!order) return;
     setFabricDraft(order.fabric ?? "");
-    setTrialDateDraft(order.trial_date ?? "");
-    setDeliveryDateDraft(order.delivery_date ?? "");
-    setStatusDraft(order.status ?? "measurement");
-    setPriceDraft(typeof order.items?.[0]?.price === "string" ? order.items[0].price : String(order.items?.[0]?.price ?? 0));
+    setTrialDateDraft(order.trial_date ? order.trial_date.substring(0, 10) : "");
+    setDeliveryDateDraft(order.delivery_date ? order.delivery_date.substring(0, 10) : "");
+    setStatusDraft(order.status as any);
+    setPriceDraft(order.items?.[0]?.price ? String(Number(order.items[0].price)) : "");
     setNotesDraft(order.notes ?? "");
     setItemsDraft(
-      (order.items ?? []).map((it) => ({
-        garment_type: it.garment_type ?? null,
-        measurement_id: it.measurement_id ?? null,
-        icon_path: it.icon_path ?? null,
-        note: it.note ?? null,
-        quantity: String(1),
-        price: "0",
-      })),
+      (order.items ?? []).map((it) => {
+        let custs: Record<number, { priceModifier: number, note: string }> = {};
+        if (it.customization_flags) {
+          try {
+            custs = JSON.parse(it.customization_flags);
+          } catch (e) {
+            custs = {};
+          }
+        }
+        return {
+          garment_type: it.garment_type ?? null,
+          measurement_id: it.measurement_id ?? null,
+          icon_path: it.icon_path ?? null,
+          note: it.note ?? null,
+          quantity: String(1),
+          price: "0",
+          handwork: !!it.handwork,
+          customizations: custs,
+        };
+      }),
     );
-
-    const custMap: Record<number, { priceModifier: number, note: string }> = {};
-    if (order.customizations) {
-      order.customizations.forEach((c: any) => {
-        custMap[c.option_id] = { priceModifier: Number(c.price_modifier), note: c.note || "" };
-      });
-    }
-    setSelectedCustomizations(custMap);
   }, [order]);
 
   useEffect(() => {
@@ -177,6 +204,8 @@ export default function OrderDetail() {
           measurement_id: it.measurement_id,
           icon_path: it.icon_path,
           note: it.note,
+          handwork: it.handwork,
+          customization_flags: Object.keys(it.customizations).length > 0 ? JSON.stringify(it.customizations) : null,
           quantity: 1,
           price: i === 0 ? Number(priceDraft) : 0,
         };
@@ -189,11 +218,7 @@ export default function OrderDetail() {
         status: statusDraft,
         notes: notesDraft || null,
         items: nextItems,
-        customizations: Object.entries(selectedCustomizations).map(([optId, data]) => ({
-          option_id: Number(optId),
-          price_modifier: Number(data.priceModifier),
-          note: data.note || null,
-        })),
+        customizations: [],
       });
     },
     onSuccess: async () => {
@@ -341,19 +366,61 @@ export default function OrderDetail() {
                           e.currentTarget.value = "";
                         }}
                       />
-                      <Input
-                        placeholder="Note"
-                        value={item.note ?? ""}
-                        onChange={(e) => updateItemField(index, "note", e.target.value)}
-                        className="flex-1"
-                      />
+                      <div className="flex-1 flex flex-col gap-2 min-w-0">
+                        <Input
+                          placeholder="Note"
+                          value={item.note ?? ""}
+                          onChange={(e) => updateItemField(index, "note", e.target.value)}
+                          className="w-full"
+                        />
+                        <div className="flex items-center gap-4 px-1">
+                          <label className="flex items-center gap-1.5 text-xs text-muted-foreground cursor-pointer select-none">
+                            <input
+                              type="checkbox"
+                              checked={item.handwork}
+                              onChange={(e) => updateItemField(index, "handwork", e.target.checked)}
+                              className="rounded border-input text-primary focus:ring-primary h-3.5 w-3.5"
+                            />
+                            Handwork
+                          </label>
+
+                          <div className="flex items-center gap-1.5">
+                            <label className="flex items-center gap-1.5 text-xs text-muted-foreground cursor-pointer select-none">
+                              <input
+                                type="checkbox"
+                                checked={Object.keys(item.customizations).length > 0}
+                                onChange={(e) => {
+                                  if (!e.target.checked) {
+                                    updateItemField(index, "customizations", {});
+                                  } else {
+                                    setActiveCustomizationRowIndex(index);
+                                  }
+                                }}
+                                className="rounded border-input text-primary focus:ring-primary h-3.5 w-3.5"
+                              />
+                              Advanced Customization
+                            </label>
+                            {Object.keys(item.customizations).length > 0 && (
+                              <span 
+                                onClick={() => setActiveCustomizationRowIndex(index)}
+                                className="text-xs text-primary font-medium hover:underline cursor-pointer"
+                              >
+                                ({Object.keys(item.customizations)
+                                  .map((id) => optionsMap.get(Number(id)) || "")
+                                  .filter(Boolean)
+                                  .join(", ")})
+                              </span>
+                            )}
+                          </div>
+                        </div>
+                      </div>
                       <Button
                         type="button"
                         variant="ghost"
                         size="icon"
                         onClick={() => removeItemRow(index)}
                         disabled={itemsDraft.length <= 1}
-                        className="h-10 w-10 shrink-0 text-destructive hover:text-destructive"
+                        className="h-10 w-10 shrink-0 text-destructive hover:text-destructive align-top"
                       >
                         <Trash2 className="h-4 w-4" />
                       </Button>
@@ -368,25 +435,50 @@ export default function OrderDetail() {
                   {items.length === 0 ? (
                     <p className="text-sm text-muted-foreground">No items.</p>
                   ) : (
-                    items.map((item, i) => (
-                      <div key={i} className="flex items-start gap-4 p-2 border border-border rounded-xl bg-muted/10">
-                        <div className="flex items-center gap-2">
-                          <span className="text-sm font-medium text-muted-foreground w-6 text-center">{i + 1}.</span>
-                          <div className="w-12 h-12 shrink-0 rounded-lg bg-muted/30 flex items-center justify-center overflow-hidden border border-border">
-                            {item.icon_path ? (
-                              <ImagePreviewDialog src={resolvePublicUrl(item.icon_path)!} alt="Icon">
-                                <img src={resolvePublicUrl(item.icon_path) ?? ""} alt="Icon" className="w-full h-full object-cover cursor-pointer" />
-                              </ImagePreviewDialog>
-                            ) : (
-                              <Camera className="h-5 w-5 text-muted-foreground" />
-                            )}
+                    items.map((item, i) => {
+                      let flags: string[] = [];
+                      if (item.customization_flags) {
+                        try {
+                          const parsed = JSON.parse(item.customization_flags);
+                          flags = Object.keys(parsed)
+                            .map((id) => optionsMap.get(Number(id)) || "")
+                            .filter(Boolean);
+                        } catch (e) {
+                          flags = [];
+                        }
+                      }
+                      return (
+                        <div key={i} className="flex items-start gap-4 p-2 border border-border rounded-xl bg-muted/10">
+                          <div className="flex items-center gap-2">
+                            <span className="text-sm font-medium text-muted-foreground w-6 text-center">{i + 1}.</span>
+                            <div className="w-12 h-12 shrink-0 rounded-lg bg-muted/30 flex items-center justify-center overflow-hidden border border-border">
+                              {item.icon_path ? (
+                                <ImagePreviewDialog src={resolvePublicUrl(item.icon_path)!} alt="Icon">
+                                  <img src={resolvePublicUrl(item.icon_path) ?? ""} alt="Icon" className="w-full h-full object-cover cursor-pointer" />
+                                </ImagePreviewDialog>
+                              ) : (
+                                <Camera className="h-5 w-5 text-muted-foreground" />
+                              )}
+                            </div>
+                          </div>
+                          <div className="min-w-0 flex-1 py-1">
+                            <p className="text-sm text-foreground flex flex-wrap items-center gap-1.5">
+                              <span>{item.note || "No note"}</span>
+                              {!!item.handwork && (
+                                <span className="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-semibold bg-blue-100 text-blue-800 border border-blue-200">
+                                  Handwork
+                                </span>
+                              )}
+                              {flags.length > 0 && (
+                                <span className="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-semibold bg-amber-100 text-amber-800 border border-amber-200">
+                                  Customizations: {flags.join(", ")}
+                                </span>
+                              )}
+                            </p>
                           </div>
                         </div>
-                        <div className="min-w-0 flex-1">
-                          <p className="text-sm text-foreground">{item.note || "No note"}</p>
-                        </div>
-                      </div>
-                    ))
+                      );
+                    })
                   )}
                 </>
               )}
@@ -396,24 +488,12 @@ export default function OrderDetail() {
 
         <SectionCard title="Notes">
           <div className="space-y-4">
-
             <div>
               {isEditing ? (
                 <Textarea value={notesDraft} onChange={(e) => setNotesDraft(e.target.value)} rows={3} />
               ) : (
                 <p className="text-sm font-medium">{order.notes ?? "No notes"}</p>
               )}
-            </div>
-
-            <div className="pt-2 flex justify-end">
-              <button
-                type="button"
-                onClick={() => setCustomizationModalOpen(true)}
-                className="text-sm font-medium text-primary hover:underline flex items-center gap-1.5 transition-colors"
-              >
-                Advance Customisation
-                <span className="flex items-center justify-center w-4 h-4 rounded-full border border-primary text-[10px] font-bold">?</span>
-              </button>
             </div>
           </div>
         </SectionCard>
@@ -481,15 +561,19 @@ export default function OrderDetail() {
       </SectionCard>
 
       <OrderCustomizationDialog
-        open={customizationModalOpen}
-        onOpenChange={setCustomizationModalOpen}
-        selectedOptions={selectedCustomizations}
-        onSelectionChange={(s) => {
-          if (!isEditing) {
-            toast({ title: "Read-only mode", description: "Click Edit to change customisations.", variant: "destructive" });
-            return;
+        open={activeCustomizationRowIndex !== null}
+        onOpenChange={(isOpen) => {
+          if (!isOpen) setActiveCustomizationRowIndex(null);
+        }}
+        selectedOptions={
+          activeCustomizationRowIndex !== null
+            ? itemsDraft[activeCustomizationRowIndex]?.customizations ?? {}
+            : {}
+        }
+        onSelectionChange={(newCustomizations) => {
+          if (activeCustomizationRowIndex !== null) {
+            updateItemField(activeCustomizationRowIndex, "customizations", newCustomizations);
           }
-          setSelectedCustomizations(s);
         }}
       />
     </div>

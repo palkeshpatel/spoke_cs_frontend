@@ -107,24 +107,17 @@ export function OrderCustomizationDialog({ open, onOpenChange, selectedOptions, 
                               key={opt.id}
                               type="button"
                               onClick={() => handleSelect(category.id, opt.id, priceNum)}
-                              className={`flex flex-col items-center p-2 rounded-xl border-2 transition-all ${
+                              className={`flex flex-col items-center justify-center px-4 py-2 rounded-lg border text-xs font-medium transition-all ${
                                 isSelected
-                                  ? "border-primary bg-primary text-primary-foreground shadow-sm"
-                                  : "border-border hover:border-primary/50 hover:bg-muted/50"
+                                  ? "border-primary bg-primary text-primary-foreground shadow-sm font-semibold"
+                                  : "border-border bg-background text-foreground hover:border-primary/50 hover:bg-muted/50"
                               }`}
                             >
-                              <div className="w-full aspect-square bg-white rounded-lg mb-2 overflow-hidden flex items-center justify-center p-1">
-                                {opt.image_path ? (
-                                  <img src={resolvePublicUrl(opt.image_path)!} alt={opt.name} className="w-full h-full object-contain mix-blend-multiply" />
-                                ) : (
-                                  <span className="text-muted-foreground text-xs">No img</span>
-                                )}
-                              </div>
-                              <span className="text-xs font-medium text-center w-full truncate leading-tight">
+                              <span className="text-center w-full truncate leading-tight">
                                 {opt.name}
                               </span>
                               {priceNum > 0 && (
-                                <span className={`text-[10px] mt-0.5 ${isSelected ? 'text-primary-foreground/80' : 'text-muted-foreground'}`}>
+                                <span className={`text-[9px] mt-0.5 ${isSelected ? 'text-primary-foreground/80' : 'text-muted-foreground'}`}>
                                   +${priceNum.toFixed(2)}
                                 </span>
                               )}
