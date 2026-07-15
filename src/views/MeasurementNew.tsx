@@ -10,6 +10,16 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { toast } from "@/hooks/use-toast";
 import { listCustomers, getCustomer, uploadCustomerBodyImage } from "@/services/customers";
 import { resolvePublicUrl } from "@/services/api";
@@ -71,6 +81,29 @@ export default function MeasurementNew() {
   const [deliveryDate, setDeliveryDate] = useState<string>("");
   const [valuesDraft, setValuesDraft] = useState<Record<number, string>>({});
   const [isEditing, setIsEditing] = useState<boolean>(false);
+
+  const [pendingChange, setPendingChange] = useState<{
+    fieldId: number;
+    fieldName: string;
+    prevValue: string;
+    newValue: string;
+  } | null>(null);
+  const [originalValue, setOriginalValue] = useState<string>("");
+
+  const handleFieldFocus = (val: string) => {
+    setOriginalValue(val);
+  };
+
+  const handleFieldBlur = (fieldId: number, fieldName: string, currentVal: string) => {
+    if (isEditMode && currentVal !== originalValue) {
+      setPendingChange({
+        fieldId,
+        fieldName,
+        prevValue: originalValue,
+        newValue: currentVal,
+      });
+    }
+  };
 
   const notesRef = useRef<HTMLTextAreaElement>(null);
 
@@ -1036,6 +1069,8 @@ table { width: 100%; border-collapse: collapse; }
                                 type="number"
                                 value={valuesDraft[f.id] ?? ""}
                                 onChange={(e) => handleMeasurementChange(f.id, e.target.value, false)}
+                                onFocus={(e) => handleFieldFocus(e.target.value)}
+                                onBlur={(e) => handleFieldBlur(f.id, f.field_name, e.target.value)}
                                 placeholder={f.unit}
                                 disabled={!canEdit}
                               />
@@ -1074,6 +1109,8 @@ table { width: 100%; border-collapse: collapse; }
                           type="number"
                           value={valuesDraft[f.id] ?? ""}
                           onChange={(e) => handleMeasurementChange(f.id, e.target.value, false)}
+                          onFocus={(e) => handleFieldFocus(e.target.value)}
+                          onBlur={(e) => handleFieldBlur(f.id, f.field_name, e.target.value)}
                           placeholder={f.unit}
                           disabled={!canEdit}
                         />
@@ -1210,6 +1247,35 @@ table { width: 100%; border-collapse: collapse; }
           ))}
         </div>
       ) : null}
+
+      <AlertDialog open={pendingChange !== null} onOpenChange={(open) => !open && setPendingChange(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Confirm Measurement Change</AlertDialogTitle>
+            <AlertDialogDescription>
+              Are you sure you want to change the {pendingChange?.fieldName} measurement?
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel
+              onClick={() => {
+                if (pendingChange) {
+                  setValuesDraft((prev) => ({
+                    ...prev,
+                    [pendingChange.fieldId]: pendingChange.prevValue,
+                  }));
+                }
+                setPendingChange(null);
+              }}
+            >
+              No
+            </AlertDialogCancel>
+            <AlertDialogAction onClick={() => setPendingChange(null)}>
+              Yes
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }
