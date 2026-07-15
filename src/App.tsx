@@ -66,7 +66,7 @@ function RequireAuth() {
 
   if (phase === "checking") {
     return (
-      <div className="flex h-screen items-center justify-center bg-background text-muted-foreground text-sm">
+      <div className="flex h-[100dvh] items-center justify-center bg-background text-muted-foreground text-sm">
         Verifying session…
       </div>
     );
