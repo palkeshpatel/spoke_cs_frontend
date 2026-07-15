@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { Link, Outlet, useLocation, useNavigate } from 'react-router-dom';
 import {
-  Home, LayoutDashboard, Users, Calendar, Ruler, Package, Receipt,
+  Home, LayoutDashboard, Users, Calendar, Ruler, Package, Receipt, History,
   BarChart3, Settings, ChevronLeft, ChevronRight, ChevronDown, Scissors, Menu, X, LogOut, Shield, Bell, MoreHorizontal
 } from 'lucide-react';
 import { logout as logoutApi } from '@/services/auth';
@@ -71,6 +71,7 @@ export default function Layout() {
       items: [
         { path: '/settings/roles', label: 'Role & Permission', icon: Shield, permission: 'manage_roles' },
         { path: '/reports', label: 'Report', icon: BarChart3, permission: 'view_reports' },
+        { path: '/activity-logs', label: 'Activity Logs', icon: History, permission: 'view_reports' },
       ].filter(canViewItem),
     },
     {

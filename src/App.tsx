@@ -35,6 +35,7 @@ import RoleDetail from "@/views/RoleDetail";
 import CustomizationSettings from "@/views/CustomizationSettings";
 import CalendarView from "@/views/CalendarView";
 import Wishes from "@/views/Wishes";
+import ActivityLogList from "@/views/ActivityLogList";
 
 const queryClient = new QueryClient();
 
@@ -122,6 +123,7 @@ const App = () => (
               <Route path="/settings/roles/edit/:id" element={<RoleDetail />} />
               <Route path="/settings/customizations" element={<CustomizationSettings />} />
               <Route path="/settings" element={<SettingsPage />} />
+              <Route path="/activity-logs" element={<ActivityLogList />} />
               <Route path="*" element={<NotFound />} />
             </Route>
           </Route>

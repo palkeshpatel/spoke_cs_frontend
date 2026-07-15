@@ -47,7 +47,7 @@ type GarmentDraft = {
 };
 const GARMENT_TYPES: GarmentType[] = ["Body", "Suit", "Shirt", "Pants"];
 // These Body fields are hidden from the Body tab view (they appear within Suit/Shirt/Pants sections instead)
-const BODY_HIDDEN_FIELDS = ["Chest", "Waist", "Hip", "Shoulder Width", "Arm Length", "Neck Size", "Wrist Size"];
+const BODY_HIDDEN_FIELDS = ["Chest", "Waist", "Hip"];
 
 const formatDateString = (str: string | null | undefined): string => {
   if (!str) return "";
@@ -1050,7 +1050,7 @@ table { width: 100%; border-collapse: collapse; }
                   (Object.keys(fieldsByGarment) as GarmentType[]).map((g) => {
                     let grpFields = fieldsByGarment[g] ?? [];
                     if (g === "Body") {
-                      const hiddenFields = ["Chest", "Waist", "Hip", "Shoulder Width", "Arm Length", "Neck Size", "Wrist Size"];
+                      const hiddenFields = ["Chest", "Waist", "Hip"];
                       grpFields = grpFields.filter((f) => !hiddenFields.includes(f.field_name));
                     }
                     if (grpFields.length === 0) return null;
