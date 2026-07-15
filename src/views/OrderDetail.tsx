@@ -467,19 +467,38 @@ export default function OrderDetail() {
                             </div>
                           </div>
                           <div className="min-w-0 flex-1 py-1">
-                            <p className="text-sm text-foreground flex flex-wrap items-center gap-1.5">
-                              <span>{item.note || "No note"}</span>
-                              {!!item.handwork && (
-                                <span className="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-semibold bg-blue-100 text-blue-800 border border-blue-200">
-                                  Handwork
-                                </span>
-                              )}
-                              {flags.length > 0 && (
-                                <span className="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-semibold bg-amber-100 text-amber-800 border border-amber-200">
-                                  Customizations: {flags.join(", ")}
-                                </span>
-                              )}
+                            <p className="text-sm text-foreground">
+                              {item.note || "No note"}
                             </p>
+                            
+                            <div className="flex flex-wrap items-center gap-4 mt-2">
+                              <label className="flex items-center gap-1.5 text-xs text-muted-foreground cursor-not-allowed select-none">
+                                <input
+                                  type="checkbox"
+                                  checked={!!item.handwork}
+                                  disabled
+                                  className="rounded border-input text-primary focus:ring-primary h-3.5 w-3.5 opacity-70"
+                                />
+                                Handwork
+                              </label>
+
+                              <div className="flex items-center gap-1.5">
+                                <label className="flex items-center gap-1.5 text-xs text-muted-foreground cursor-not-allowed select-none">
+                                  <input
+                                    type="checkbox"
+                                    checked={flags.length > 0}
+                                    disabled
+                                    className="rounded border-input text-primary focus:ring-primary h-3.5 w-3.5 opacity-70"
+                                  />
+                                  Advanced Customization
+                                </label>
+                                {flags.length > 0 && (
+                                  <span className="text-xs text-muted-foreground font-medium">
+                                    ({flags.join(", ")})
+                                  </span>
+                                )}
+                              </div>
+                            </div>
                           </div>
                         </div>
                       );
