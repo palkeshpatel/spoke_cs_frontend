@@ -7,6 +7,8 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import PageHeader from "@/components/PageHeader";
 import { listMeasurements } from "@/services/measurements";
+import { getMe } from "@/services/auth";
+import { canEditMeasurements } from "@/lib/permissions";
 
 function measurementEntryPath(g: {
   customerId: number;
@@ -23,6 +25,9 @@ function measurementEntryPath(g: {
 
 export default function MeasurementList() {
   const [search, setSearch] = useState("");
+
+  const { data: meData } = useQuery({ queryKey: ["me"], queryFn: getMe, staleTime: 60_000 });
+  const userCanEdit = canEditMeasurements(meData?.user);
 
   const measurementsQuery = useQuery({
     queryKey: ["measurements", "list"],
@@ -91,11 +96,13 @@ export default function MeasurementList() {
         title="Measurements"
         subtitle="Customer measurement records"
         actions={
-          <Button asChild size="sm">
-            <Link to="/measurements/new">
-              <Plus className="h-4 w-4 mr-1" /> New
-            </Link>
-          </Button>
+          userCanEdit ? (
+            <Button asChild size="sm">
+              <Link to="/measurements/new">
+                <Plus className="h-4 w-4 mr-1" /> New
+              </Link>
+            </Button>
+          ) : undefined
         }
       />
 
@@ -112,11 +119,13 @@ export default function MeasurementList() {
         ) : filtered.length === 0 ? (
           <div className="text-sm text-muted-foreground flex items-center justify-between bg-card rounded-xl card-shadow p-5">
             <span>No measurements found</span>
-            <Button asChild size="sm">
-              <Link to="/measurements/new">
-                <Plus className="h-4 w-4 mr-1" /> New
-              </Link>
-            </Button>
+            {userCanEdit && (
+              <Button asChild size="sm">
+                <Link to="/measurements/new">
+                  <Plus className="h-4 w-4 mr-1" /> New
+                </Link>
+              </Button>
+            )}
           </div>
         ) : (
           filtered.map((g) => (

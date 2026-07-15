@@ -1123,15 +1123,17 @@ table { width: 100%; border-collapse: collapse; }
                         <ImagePreviewDialog src={preview} alt={type.label}>
                           <img src={preview} alt={type.label} className="h-full w-full object-cover" />
                         </ImagePreviewDialog>
-                        <button
-                          type="button"
-                          onClick={() => openBodyImagePicker(type.key)}
-                          className="absolute bottom-2 right-2 bg-black/60 hover:bg-black/80 text-white rounded px-1.5 py-0.5 text-[10px] font-medium transition-colors"
-                        >
-                          Change
-                        </button>
+                        {userCanEdit && (
+                          <button
+                            type="button"
+                            onClick={() => openBodyImagePicker(type.key)}
+                            className="absolute bottom-2 right-2 bg-black/60 hover:bg-black/80 text-white rounded px-1.5 py-0.5 text-[10px] font-medium transition-colors"
+                          >
+                            Change
+                          </button>
+                        )}
                       </div>
-                    ) : (
+                    ) : userCanEdit ? (
                       <button
                         type="button"
                         onClick={() => openBodyImagePicker(type.key)}
@@ -1142,6 +1144,13 @@ table { width: 100%; border-collapse: collapse; }
                           <span className="text-[11px]">Upload</span>
                         </div>
                       </button>
+                    ) : (
+                      <div className="w-full h-28 rounded-lg border border-dashed border-border bg-muted/5 flex items-center justify-center overflow-hidden">
+                        <div className="flex flex-col items-center gap-1 text-muted-foreground/50">
+                          <FileImage className="h-4 w-4" />
+                          <span className="text-[11px]">No image</span>
+                        </div>
+                      </div>
                     )}
                     <input
                       ref={(el) => {
