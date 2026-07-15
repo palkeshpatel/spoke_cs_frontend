@@ -15,7 +15,7 @@ import { getCustomer, uploadCustomerBodyImage } from "@/services/customers";
 import { resolvePublicUrl } from "@/services/api";
 import { ImagePreviewDialog } from "@/components/ImagePreviewDialog";
 
-import { Camera, FileImage, Loader2, Plus, Trash2 } from "lucide-react";
+import { Camera, FileImage, Loader2, Plus, Trash2, Eye } from "lucide-react";
 import { OrderCustomizationDialog } from "@/components/OrderCustomizationDialog";
 import DatePicker from "@/components/DatePicker";
 import { OrderStatusStepper } from "@/components/OrderStatusStepper";
@@ -454,7 +454,12 @@ export default function OrderDetail() {
                             <div className="w-12 h-12 shrink-0 rounded-lg bg-muted/30 flex items-center justify-center overflow-hidden border border-border">
                               {item.icon_path ? (
                                 <ImagePreviewDialog src={resolvePublicUrl(item.icon_path)!} alt="Icon">
-                                  <img src={resolvePublicUrl(item.icon_path) ?? ""} alt="Icon" className="w-full h-full object-cover cursor-pointer" />
+                                  <div className="relative w-full h-full group">
+                                    <img src={resolvePublicUrl(item.icon_path) ?? ""} alt="Icon" className="w-full h-full object-cover cursor-pointer" />
+                                    <div className="absolute inset-0 bg-black/40 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-200">
+                                      <Eye className="h-4 w-4 text-white" />
+                                    </div>
+                                  </div>
                                 </ImagePreviewDialog>
                               ) : (
                                 <Camera className="h-5 w-5 text-muted-foreground" />

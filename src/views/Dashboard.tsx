@@ -291,7 +291,7 @@ export default function Dashboard() {
               <div key={i} className="h-[12rem] rounded-xl bg-muted/80 animate-pulse border border-border/50" />
             ))}
           </div>
-        ) : showData ? (
+        ) : (false && showData) ? (
           <div className="grid grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
             <QuickAccessTile
               to="/appointments"
