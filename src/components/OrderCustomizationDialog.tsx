@@ -86,7 +86,9 @@ export function OrderCustomizationDialog({ open, onOpenChange, selectedOptions, 
             <div className="px-6 pt-2">
               <TabsList className="mb-4">
                 {garments.map((g) => (
-                  <TabsTrigger key={g} value={g} className="capitalize">{g}</TabsTrigger>
+                  <TabsTrigger key={g} value={g}>
+                    {g.toLowerCase() === "shirt" ? "Shirt/Kurta" : g.charAt(0).toUpperCase() + g.slice(1)}
+                  </TabsTrigger>
                 ))}
               </TabsList>
             </div>
