@@ -41,6 +41,21 @@ export type OrderCustomizationDto = {
   note: string | null;
 };
 
+export type OrderActivityDto = {
+  id: number;
+  order_id: number;
+  user_id: number | null;
+  action: string;
+  description: string;
+  created_at: string;
+  updated_at: string;
+  user?: {
+    id: number;
+    name: string;
+    email: string;
+  } | null;
+};
+
 export type OrderDto = {
   id: number;
   order_number: string;
@@ -57,6 +72,7 @@ export type OrderDto = {
   items?: OrderItemDto[];
   status_history?: OrderStatusHistoryDto[];
   customizations?: OrderCustomizationDto[];
+  activities?: OrderActivityDto[];
 };
 
 export type Paginated<T> = {

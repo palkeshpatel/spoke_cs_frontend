@@ -491,17 +491,44 @@ export default function OrderDetail() {
           </div>
         </SectionCard>
 
-        <SectionCard title="Notes">
-          <div className="space-y-4">
-            <div>
-              {isEditing ? (
-                <Textarea value={notesDraft} onChange={(e) => setNotesDraft(e.target.value)} rows={3} />
+        <div className="space-y-4 sm:space-y-6">
+          <SectionCard title="Notes">
+            <div className="space-y-4">
+              <div>
+                {isEditing ? (
+                  <Textarea value={notesDraft} onChange={(e) => setNotesDraft(e.target.value)} rows={3} />
+                ) : (
+                  <p className="text-sm font-medium">{order.notes ?? "No notes"}</p>
+                )}
+              </div>
+            </div>
+          </SectionCard>
+
+          <SectionCard title="Activity History">
+            <div className="space-y-4 max-h-[350px] overflow-y-auto pr-1">
+              {!order.activities || order.activities.length === 0 ? (
+                <p className="text-xs text-muted-foreground">No activity logged yet.</p>
               ) : (
-                <p className="text-sm font-medium">{order.notes ?? "No notes"}</p>
+                <div className="relative pl-4 border-l-2 border-muted space-y-5 py-1">
+                  {order.activities.map((act) => (
+                    <div key={act.id} className="relative flex flex-col gap-0.5">
+                      {/* Bullet marker */}
+                      <div className="absolute -left-[21px] top-1.5 h-2.5 w-2.5 rounded-full bg-primary border border-background" />
+                      
+                      <p className="text-xs text-foreground">
+                        <span className="font-semibold">{act.user?.name ?? "System"}</span>{" "}
+                        <span>{act.description}</span>
+                      </p>
+                      <span className="text-[10px] text-muted-foreground">
+                        {format(new Date(act.created_at), "dd MMM yyyy, hh:mm a")}
+                      </span>
+                    </div>
+                  ))}
+                </div>
               )}
             </div>
-          </div>
-        </SectionCard>
+          </SectionCard>
+        </div>
       </div>
 
       <SectionCard title="Add Images Section">

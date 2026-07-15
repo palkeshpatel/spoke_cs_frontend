@@ -72,6 +72,16 @@ export default function MeasurementNew() {
   const [valuesDraft, setValuesDraft] = useState<Record<number, string>>({});
   const [isEditing, setIsEditing] = useState<boolean>(false);
 
+  const notesRef = useRef<HTMLTextAreaElement>(null);
+
+  useEffect(() => {
+    if (notesRef.current) {
+      notesRef.current.style.height = "auto";
+      const scrollHeight = notesRef.current.scrollHeight;
+      notesRef.current.style.height = `${Math.max(38, Math.min(scrollHeight, 120))}px`;
+    }
+  }, [notes]);
+
 
   useEffect(() => {
     if (isEditMode) return;
@@ -891,11 +901,14 @@ table { width: 100%; border-collapse: collapse; }
           </SectionCard>
 
           <SectionCard title="Notes">
-            <Input
+            <Textarea
+              ref={notesRef}
               placeholder="Notes..."
               value={notes}
               onChange={(e) => setNotes(e.target.value)}
               disabled={!canEdit}
+              rows={1}
+              className="min-h-[38px] max-h-[120px] resize-none overflow-y-auto py-2 leading-normal"
             />
           </SectionCard>
         </div>
