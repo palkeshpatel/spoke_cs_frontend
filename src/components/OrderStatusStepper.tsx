@@ -90,7 +90,7 @@ export function OrderStatusStepper({
                   className={cn(
                     "rounded-full flex items-center justify-center transition-all duration-300 border-[3px] bg-background z-10 shrink-0",
                     "w-6 h-6",
-                    isCompleted && "bg-green-500 border-green-500 text-white",
+                    isCompleted && "bg-[#066429] border-[#066429] text-white",
                     isActive && "border-primary bg-primary text-primary-foreground ring-4 ring-primary/20 scale-110",
                     isUpcoming && "border-muted-foreground/30 text-muted-foreground",
                     isEditing && "cursor-pointer group-hover:scale-110 group-hover:border-primary/50",
@@ -104,7 +104,7 @@ export function OrderStatusStepper({
                     "font-semibold transition-colors text-center sm:whitespace-nowrap max-sm:text-[8px] max-sm:leading-tight max-sm:px-0.5",
                     "max-sm:break-words max-sm:w-full min-w-0",
                     isSm ? "text-[10px]" : "text-[11px] sm:text-xs",
-                    isCompleted ? "text-green-600" : isActive ? "text-primary" : "text-muted-foreground"
+                    isCompleted ? "text-[#066429]" : isActive ? "text-primary" : "text-muted-foreground"
                   )}
                 >
                   {step.label}
