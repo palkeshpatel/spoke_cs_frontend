@@ -9,6 +9,7 @@ import { OrderStatusStepper } from "@/components/OrderStatusStepper";
 import { StatusBadge } from "@/components/StatusBadge";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
+import { DashboardCalendar } from "@/components/DashboardCalendar";
 
 const IMG = {
   appointments: "https://images.unsplash.com/photo-1521791136064-7986c2920216?auto=format&fit=crop&w=900&q=80",
@@ -212,8 +213,9 @@ export default function Dashboard() {
 
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {/* Today's Schedule */}
-        <section className="bg-card rounded-xl border border-border/60 shadow-sm overflow-hidden flex flex-col">
+        <div className="flex flex-col gap-6">
+          {/* Today's Schedule */}
+          <section className="bg-card rounded-xl border border-border/60 shadow-sm overflow-hidden flex flex-col">
           <div className="p-4 border-b border-border/50 flex items-center justify-between">
             <h2 className="text-sm font-bold tracking-widest uppercase text-foreground">Today's Schedule</h2>
             <Link to="/appointments" className="text-sm text-primary hover:underline font-medium">View Calendar</Link>
@@ -246,7 +248,9 @@ export default function Dashboard() {
               </div>
             )}
           </div>
-        </section>
+          </section>
+          <DashboardCalendar />
+        </div>
 
         {/* Active Orders */}
         <section className="bg-card rounded-xl border border-border/60 shadow-sm overflow-hidden flex flex-col">
