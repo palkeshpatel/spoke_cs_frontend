@@ -20,29 +20,29 @@ export function ImagePreviewDialog({ src, alt, children }: ImagePreviewDialogPro
           {children}
         </div>
       </DialogTrigger>
-      <DialogContent className="max-w-4xl w-[95vw] h-[85vh] p-0 overflow-hidden bg-black/95 border-none relative">
+      <DialogContent className="max-w-md w-[90vw] p-4 bg-background rounded-lg border shadow-lg overflow-hidden flex flex-col items-center justify-center">
         <DialogTitle className="sr-only">{alt || "Image Preview"}</DialogTitle>
         
-        {/* Prominent, high-visibility close button */}
-        <div className="absolute right-4 top-4 z-50">
-          <DialogClose className="rounded-full bg-black/60 p-2 text-white hover:bg-black/80 transition-colors border border-white/20">
-            <X className="h-5 w-5" />
+        {/* Prominent, clean close button */}
+        <div className="absolute right-3 top-3 z-50">
+          <DialogClose className="rounded-full bg-muted/80 p-1.5 text-foreground hover:bg-muted transition-colors">
+            <X className="h-4 w-4" />
           </DialogClose>
         </div>
 
-        <div className="w-full h-full flex items-center justify-center p-6">
+        <div className="w-full flex items-center justify-center pt-6">
           {isPdf ? (
             <iframe
               src={src}
               title={alt || "Image Preview"}
-              className="w-full h-full border-none bg-transparent"
+              className="w-full aspect-[3/4] border-none bg-transparent"
               sandbox="allow-same-origin"
             />
           ) : (
             <img
               src={src}
               alt={alt || "Image Preview"}
-              className="max-w-full max-h-full object-contain"
+              className="max-w-full max-h-[70vh] object-contain rounded-md"
             />
           )}
         </div>

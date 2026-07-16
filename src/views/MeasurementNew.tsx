@@ -49,6 +49,52 @@ const GARMENT_TYPES: GarmentType[] = ["Body", "Suit", "Shirt", "Pants"];
 // These Body fields are hidden from the Body tab view (they appear within Suit/Shirt/Pants sections instead)
 const BODY_HIDDEN_FIELDS = ["Chest", "Waist", "Hip"];
 
+const FIELD_ORDER = [
+  "Blazer Shoulder",
+  "Shirt Shoulder",
+  "Blazer Sleeve Length",
+  "Shirt Sleeve Length",
+  "Chest",
+  "Stomach",
+  "Hip",
+  "Collar/Neck",
+  "Bicep",
+  "Fore-arm",
+  "Front Chest (FC)",
+  "Half Chest",
+  "Back Chest (BC)",
+  "Arm Hole",
+  "Trouser Length",
+  "In-Seam Length",
+  "Waist",
+  "Knee",
+  "Thigh",
+  "Bottom",
+  "Calf",
+  "SR",
+  "Fly",
+  "Height",
+  "Weight"
+];
+
+function sortFields(fields: any[]) {
+  return [...fields].sort((a, b) => {
+    const idxA = FIELD_ORDER.indexOf(a.field_name);
+    const idxB = FIELD_ORDER.indexOf(b.field_name);
+    if (idxA === -1 && idxB === -1) return a.field_name.localeCompare(b.field_name);
+    if (idxA === -1) return 1;
+    if (idxB === -1) return -1;
+    return idxA - idxB;
+  });
+}
+
+const getGarmentCommentLabel = (g: string) => {
+  if (g === "Suit") return "Blazer Comments";
+  if (g === "Shirt") return "Shirt Comments";
+  if (g === "Pants") return "Trouser Comments";
+  return `${g} Comments`;
+};
+
 const formatDateString = (str: string | null | undefined): string => {
   if (!str) return "";
   if (str.includes("T")) {
@@ -1026,24 +1072,66 @@ table { width: 100%; border-collapse: collapse; }
                     }
                   }
 
-                  const uniqueFields = Array.from(uniqueFieldsMap.values());
+                  const uniqueFields = sortFields(Array.from(uniqueFieldsMap.values()));
 
                   return (
-                    <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
-                      {uniqueFields.map((f) => (
-                        <div key={f.id} className="space-y-1">
-                          <div className="text-xs text-muted-foreground">
-                            {f.field_name}
+                    <div className="space-y-6">
+                      <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
+                        {uniqueFields.map((f) => (
+                          <div key={f.id} className="space-y-1">
+                            <div className="text-xs text-muted-foreground">
+                              {f.field_name}
+                            </div>
+                            <Input
+                              type="number"
+                              value={valuesDraft[f.id] ?? ""}
+                              onChange={(e) => handleMeasurementChange(f.id, e.target.value, true, f.field_name)}
+                              placeholder={f.unit}
+                              disabled={!canEdit}
+                            />
                           </div>
-                          <Input
-                            type="number"
-                            value={valuesDraft[f.id] ?? ""}
-                            onChange={(e) => handleMeasurementChange(f.id, e.target.value, true, f.field_name)}
-                            placeholder={f.unit}
+                        ))}
+                      </div>
+
+                      {/* Suit, Shirt, and Pants Notes at the bottom of the fields */}
+                      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 pt-4 border-t border-border">
+                        <div>
+                          <label className="text-xs font-semibold text-muted-foreground block mb-1">
+                            Blazer Comments
+                          </label>
+                          <Textarea
+                            placeholder="Type here..."
+                            value={suitNotes}
+                            onChange={(e) => setSuitNotes(e.target.value)}
                             disabled={!canEdit}
+                            className="h-20 text-xs"
                           />
                         </div>
-                      ))}
+                        <div>
+                          <label className="text-xs font-semibold text-muted-foreground block mb-1">
+                            Shirt Comments
+                          </label>
+                          <Textarea
+                            placeholder="Type here..."
+                            value={shirtNotes}
+                            onChange={(e) => setShirtNotes(e.target.value)}
+                            disabled={!canEdit}
+                            className="h-20 text-xs"
+                          />
+                        </div>
+                        <div>
+                          <label className="text-xs font-semibold text-muted-foreground block mb-1">
+                            Trouser Comments
+                          </label>
+                          <Textarea
+                            placeholder="Type here..."
+                            value={pantNotes}
+                            onChange={(e) => setPantNotes(e.target.value)}
+                            disabled={!canEdit}
+                            className="h-20 text-xs"
+                          />
+                        </div>
+                      </div>
                     </div>
                   );
                 })() : (
@@ -1054,6 +1142,7 @@ table { width: 100%; border-collapse: collapse; }
                       grpFields = grpFields.filter((f) => !hiddenFields.includes(f.field_name));
                     }
                     if (grpFields.length === 0) return null;
+                    grpFields = sortFields(grpFields);
                     return (
                       <div key={g} className="space-y-3">
                         <h3 className="text-sm font-semibold border-b border-border pb-1 text-primary">
@@ -1079,7 +1168,7 @@ table { width: 100%; border-collapse: collapse; }
                         </div>
                         {g !== "Body" && (
                           <div className="mt-4">
-                            <div className="text-xs text-muted-foreground mb-1">{g} Notes</div>
+                            <div className="text-xs text-muted-foreground mb-1">{getGarmentCommentLabel(g)}</div>
                             <Textarea
                               value={g === "Suit" ? suitNotes : g === "Shirt" ? shirtNotes : pantNotes}
                               onChange={(e) => {
@@ -1087,7 +1176,7 @@ table { width: 100%; border-collapse: collapse; }
                                 else if (g === "Shirt") setShirtNotes(e.target.value);
                                 else setPantNotes(e.target.value);
                               }}
-                              placeholder={`Any specific notes for ${g.toLowerCase()}...`}
+                              placeholder="Type here..."
                               disabled={!canEdit}
                               className="h-20"
                             />
@@ -1100,7 +1189,7 @@ table { width: 100%; border-collapse: collapse; }
               ) : (
                 <>
                   <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
-                    {(fieldsByGarment[garmentType as GarmentType] ?? []).map((f) => (
+                    {sortFields(fieldsByGarment[garmentType as GarmentType] ?? []).map((f) => (
                       <div key={f.id} className="space-y-1">
                         <div className="text-xs text-muted-foreground">
                           {f.field_name}
@@ -1119,7 +1208,7 @@ table { width: 100%; border-collapse: collapse; }
                   </div>
                   {garmentType !== "Body" && (
                     <div className="mt-6">
-                      <div className="text-sm font-medium mb-2">{garmentType} Notes</div>
+                      <div className="text-sm font-medium mb-2">{getGarmentCommentLabel(garmentType)}</div>
                       <Textarea
                         value={garmentType === "Suit" ? suitNotes : garmentType === "Shirt" ? shirtNotes : pantNotes}
                         onChange={(e) => {
@@ -1127,7 +1216,7 @@ table { width: 100%; border-collapse: collapse; }
                           else if (garmentType === "Shirt") setShirtNotes(e.target.value);
                           else setPantNotes(e.target.value);
                         }}
-                        placeholder={`Any specific notes for ${garmentType.toLowerCase()}...`}
+                        placeholder="Type here..."
                         disabled={!canEdit}
                         className="h-24"
                       />

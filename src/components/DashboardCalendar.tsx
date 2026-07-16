@@ -228,9 +228,7 @@ export function DashboardCalendar() {
   const isLoading = apptLoading || orderLoading;
 
   return (
-    <div className="space-y-4">
-
-
+    <section className="bg-card rounded-xl border border-border/60 p-4 shadow-sm space-y-4">
       {/* Legend */}
       <div className="flex flex-wrap items-center gap-3 text-xs font-medium">
         <span className="flex items-center gap-1.5">
@@ -247,7 +245,7 @@ export function DashboardCalendar() {
         </span>
       </div>
 
-      <div className="rounded-xl border border-border/60 bg-muted/15 p-3 shadow-sm sm:p-4">
+      <div className="w-full">
         <div className="mb-3 flex flex-wrap items-center justify-between gap-2 border-b border-border/40 pb-3">
           <p className="text-sm text-muted-foreground">
             {isLoading
@@ -288,6 +286,6 @@ export function DashboardCalendar() {
           Tap an event to open it. Blue = Appointment · Amber = Trial Date · Green = Delivery Date
         </p>
       </div>
-    </div>
+    </section>
   );
 }

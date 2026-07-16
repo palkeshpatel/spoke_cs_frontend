@@ -569,12 +569,17 @@ export default function OrderDetail() {
                   ) : preview ? (
                     <div className="relative w-full h-28 rounded-lg overflow-hidden group border border-border bg-muted/20">
                       <ImagePreviewDialog src={preview} alt={type.label}>
-                        <img src={preview} alt={type.label} className="h-full w-full object-cover" />
+                        <div className="relative w-full h-full cursor-pointer">
+                          <img src={preview} alt={type.label} className="h-full w-full object-cover" />
+                          <div className="absolute inset-0 bg-black/40 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-200">
+                            <Eye className="h-5 w-5 text-white" />
+                          </div>
+                        </div>
                       </ImagePreviewDialog>
                       <button
                         type="button"
                         onClick={() => openBodyImagePicker(type.key)}
-                        className="absolute bottom-2 right-2 bg-black/60 hover:bg-black/80 text-white rounded px-1.5 py-0.5 text-[10px] font-medium transition-colors"
+                        className="absolute bottom-2 right-2 bg-black/60 hover:bg-black/80 text-white rounded px-1.5 py-0.5 text-[10px] font-medium transition-colors z-10"
                       >
                         Change
                       </button>

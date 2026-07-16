@@ -252,36 +252,54 @@ export default function Dashboard() {
           <DashboardCalendar />
         </div>
 
-        {/* Active Orders */}
-        <section className="bg-card rounded-xl border border-border/60 shadow-sm overflow-hidden flex flex-col">
-          <div className="p-4 border-b border-border/50 flex items-center justify-between">
-            <h2 className="text-sm font-bold tracking-widest uppercase text-foreground">Active Orders</h2>
-            <Link to="/orders" className="text-sm text-primary hover:underline font-medium">View All</Link>
-          </div>
-          <div className="p-4 flex-1 space-y-4">
-            {ordersQuery.data?.data && ordersQuery.data.data.length > 0 ? (
-              ordersQuery.data.data.map((order) => (
-                <div key={order.id} className="flex gap-4 items-center">
-                  <div className="flex-1 min-w-0">
-                    <div className="flex items-center justify-between mb-1">
-                      <p className="text-xs text-muted-foreground">{order.order_number}</p>
-                      <StatusBadge status={order.status} />
-                    </div>
-                    <p className="text-sm font-bold text-foreground truncate">{order.customer?.name ?? "—"}</p>
-                    <p className="text-xs text-muted-foreground truncate">{order.fabric ?? "Fabric TBD"}</p>
-                    <div className="mt-2">
-                      <OrderStatusStepper status={order.status} isEditing={false} size="sm" />
+        {/* Right Column */}
+        <div className="flex flex-col gap-6">
+          {/* Active Orders */}
+          <section className="bg-card rounded-xl border border-border/60 shadow-sm overflow-hidden flex flex-col">
+            <div className="p-4 border-b border-border/50 flex items-center justify-between">
+              <h2 className="text-sm font-bold tracking-widest uppercase text-foreground">Active Orders</h2>
+              <Link to="/orders" className="text-sm text-primary hover:underline font-medium">View All</Link>
+            </div>
+            <div className="p-4 flex-1 space-y-4">
+              {ordersQuery.data?.data && ordersQuery.data.data.length > 0 ? (
+                ordersQuery.data.data.map((order) => (
+                  <div key={order.id} className="flex gap-4 items-center">
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center justify-between mb-1">
+                        <p className="text-xs text-muted-foreground">{order.order_number}</p>
+                        <StatusBadge status={order.status} />
+                      </div>
+                      <p className="text-sm font-bold text-foreground truncate">{order.customer?.name ?? "—"}</p>
+                      <p className="text-xs text-muted-foreground truncate">{order.fabric ?? "Fabric TBD"}</p>
+                      <div className="mt-2">
+                        <OrderStatusStepper status={order.status} isEditing={false} size="sm" />
+                      </div>
                     </div>
                   </div>
+                ))
+              ) : (
+                <div className="h-full flex items-center justify-center text-sm text-muted-foreground">
+                  No active orders found.
                 </div>
-              ))
-            ) : (
-              <div className="h-full flex items-center justify-center text-sm text-muted-foreground">
-                No active orders found.
-              </div>
-            )}
-          </div>
-        </section>
+              )}
+            </div>
+          </section>
+
+          {/* Customer Profile Tile */}
+          <QuickAccessTile
+            to="/customers"
+            title="Customer Profiles"
+            description="Customer database"
+            image={IMG.customers}
+            imageAlt="Tailored suit"
+            icon={<Users className="h-5 w-5" />}
+            iconClass="bg-orange-500"
+            leftLabel="Total"
+            leftValue={dashboardQuery.isPending ? "..." : (tiles.customers ?? 0)}
+            rightLabel="New"
+            rightValue={dashboardQuery.isPending ? "..." : (tiles.newThisMonth ?? 0)}
+          />
+        </div>
       </div>
 
       <section>
