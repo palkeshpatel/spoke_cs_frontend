@@ -36,6 +36,8 @@ import CustomizationSettings from "@/views/CustomizationSettings";
 import CalendarView from "@/views/CalendarView";
 import Wishes from "@/views/Wishes";
 import ActivityLogList from "@/views/ActivityLogList";
+import InventoryList from "@/views/InventoryList";
+import InventoryHistory from "@/views/InventoryHistory";
 
 const queryClient = new QueryClient();
 
@@ -124,6 +126,8 @@ const App = () => (
               <Route path="/settings/customizations" element={<CustomizationSettings />} />
               <Route path="/settings" element={<SettingsPage />} />
               <Route path="/activity-logs" element={<ActivityLogList />} />
+              <Route path="/inventory" element={<InventoryList />} />
+              <Route path="/inventory/history" element={<InventoryHistory />} />
               <Route path="*" element={<NotFound />} />
             </Route>
           </Route>

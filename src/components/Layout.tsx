@@ -42,6 +42,7 @@ export default function Layout() {
   const [openSections, setOpenSections] = useState<Record<string, boolean>>({
     system: true,
     staff: true,
+    inventory: true,
   });
   
   const location = useLocation();
@@ -64,6 +65,15 @@ export default function Layout() {
   const settingsNavItem = { path: '/settings', label: 'Settings', icon: Settings };
 
   const navSections = [
+    {
+      key: 'inventory',
+      title: 'Inventory',
+      icon: Package,
+      items: [
+        { path: '/inventory', label: 'Manage Stock', icon: Package, permission: 'manage_orders' },
+        { path: '/inventory/history', label: 'Stock History', icon: History, permission: 'manage_orders' },
+      ].filter(canViewItem),
+    },
     {
       key: 'system',
       title: 'System Management',
