@@ -264,7 +264,7 @@ export default function OrderNew() {
       }
 
       const newItem: OrderItemEntry = {
-        id: Math.random().toString(36).substring(7),
+        id: "stock-" + Date.now() + "-" + Math.random().toString(36).substring(2, 9),
         type: "in_stock",
         garmentName: selectedGarmentName,
         garmentId: selectedGarmentId,
@@ -299,7 +299,7 @@ export default function OrderNew() {
     }
 
     const newSwatch: SwatchDetail = {
-      id: Math.random().toString(36).substring(7),
+      id: "swatch-row-" + Date.now() + "-" + Math.random().toString(36).substring(2, 9),
       note: swatchNote,
       handwork: swatchHandwork,
       customizations: { ...swatchCustomizations },
@@ -351,7 +351,7 @@ export default function OrderNew() {
           });
         } else {
           const newCard: OrderItemEntry = {
-            id: Math.random().toString(36).substring(7),
+            id: "swatch-card-" + Date.now() + "-" + Math.random().toString(36).substring(2, 9),
             type: "swatch",
             garmentName: selectedGarmentName,
             garmentId: selectedGarmentId,
