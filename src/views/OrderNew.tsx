@@ -62,18 +62,18 @@ type OrderItemEntry = {
   customizations: Record<number, { priceModifier: number, note: string }>;
 };
 
-const categoryEmojis: Record<string, string> = {
-  "Nawabi / Sherwani": "👑",
-  "Kurta": "🥋",
-  "Trouser": "👖",
-  "Nehru Jacket": "🧥",
-  "Jodhpuri": "👔",
-  "Indo-Western": "🌟",
-  "Suits": "💼",
-  "Shirts": "👕",
-  "Jacket": "🧥",
-  "Tuxedo": "🎩",
-  "Co-ord Set": "👚",
+const categoryImages: Record<string, string> = {
+  "Nawabi / Sherwani": "nawabi.webp",
+  "Kurta": "kurta.webp",
+  "Trouser": "trouser.webp",
+  "Nehru Jacket": "nehru-jacket.webp",
+  "Jodhpuri": "jodhpuri.webp",
+  "Indo-Western": "indo-wester.webp",
+  "Suits": "suits.webp",
+  "Shirts": "shirts.webp",
+  "Jacket": "jacket.webp",
+  "Tuxedo": "tuxedo.webp",
+  "Co-ord Set": "co-ord-set.webp",
 };
 
 export default function OrderNew() {
@@ -799,7 +799,7 @@ export default function OrderNew() {
           
           <div className="grid grid-cols-3 gap-2 max-h-[380px] overflow-y-auto pr-1">
             {garments?.map((g) => {
-              const emoji = categoryEmojis[g.name] || "👔";
+              const imageName = categoryImages[g.name];
               const isSelected = selectedGarmentName === g.name;
               return (
                 <button
@@ -814,7 +814,17 @@ export default function OrderNew() {
                       : "border-border bg-card text-muted-foreground hover:bg-muted/30"
                   }`}
                 >
-                  <span className="text-2xl mb-1">{emoji}</span>
+                  <div className="h-8 w-8 mb-1.5 flex items-center justify-center">
+                    {imageName ? (
+                      <img
+                        src={`${apiBaseUrl}/uploads/cat/${imageName}`}
+                        alt={g.name}
+                        className="max-h-full max-w-full object-contain"
+                      />
+                    ) : (
+                      <span className="text-2xl">👔</span>
+                    )}
+                  </div>
                   <span className="text-[10px] text-center line-clamp-2 leading-tight">{g.name}</span>
                 </button>
               );
