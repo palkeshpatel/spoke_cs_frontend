@@ -20,11 +20,20 @@ import { listCustomizations } from "@/services/customizations";
 import { listGarments, listInventoryStocks } from "@/services/inventory";
 import { apiBaseUrl } from "@/services/api";
 import { Badge } from "@/components/ui/badge";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogFooter,
+} from "@/components/ui/dialog";
 
 type SwatchDetail = {
   id: string;
   note: string;
   handwork: boolean;
+  handworkPrice?: number | null;
+  handworkNotes?: string | null;
   customizations: Record<number, { priceModifier: number, note: string }>;
   customImage: string | null;
   isUploading?: boolean;
@@ -48,6 +57,8 @@ type OrderItemEntry = {
   // Common parameters for in-stock inline details:
   note: string;
   handwork: boolean;
+  handworkPrice?: number | null;
+  handworkNotes?: string | null;
   customizations: Record<number, { priceModifier: number, note: string }>;
 };
 
@@ -88,6 +99,8 @@ export default function OrderNew() {
   // Swatch / On Demand fields
   const [swatchNote, setSwatchNote] = useState<string>("");
   const [swatchHandwork, setSwatchHandwork] = useState<boolean>(false);
+  const [swatchHandworkPrice, setSwatchHandworkPrice] = useState<number | null>(null);
+  const [swatchHandworkNotes, setSwatchHandworkNotes] = useState<string>("");
   const [swatchCustomizations, setSwatchCustomizations] = useState<Record<number, { priceModifier: number, note: string }>>({});
   const [swatchImage, setSwatchImage] = useState<string | null>(null);
   const [swatchUploading, setSwatchUploading] = useState<boolean>(false);
@@ -95,8 +108,18 @@ export default function OrderNew() {
   // Step 3: Fabric Details options / Staged Swatches Details options
   const [stagedSwatches, setStagedSwatches] = useState<SwatchDetail[]>([]);
   const [fabricHandwork, setFabricHandwork] = useState<boolean>(false);
+  const [fabricHandworkPrice, setFabricHandworkPrice] = useState<number | null>(null);
+  const [fabricHandworkNotes, setFabricHandworkNotes] = useState<string>("");
   const [fabricCustomizations, setFabricCustomizations] = useState<Record<number, { priceModifier: number, note: string }>>({});
   const [fabricMeter, setFabricMeter] = useState<number>(3.25);
+
+  // Handwork Details Dialog state
+  const [handworkDialogOpen, setHandworkDialogOpen] = useState<boolean>(false);
+  const [handworkPriceInput, setHandworkPriceInput] = useState<string>("");
+  const [handworkNotesInput, setHandworkNotesInput] = useState<string>("");
+  const [activeHandworkTarget, setActiveHandworkTarget] = useState<
+    "fabric" | "swatch" | { type: "staged_swatch"; index: number } | null
+  >(null);
 
   // Master lists
   const [orderItems, setOrderItems] = useState<OrderItemEntry[]>([]);
@@ -181,9 +204,13 @@ export default function OrderNew() {
     setStagedSwatches([]);
     setFabricMeter(3.25);
     setFabricHandwork(false);
+    setFabricHandworkPrice(null);
+    setFabricHandworkNotes("");
     setFabricCustomizations({});
     setSwatchNote("");
     setSwatchHandwork(false);
+    setSwatchHandworkPrice(null);
+    setSwatchHandworkNotes("");
     setSwatchCustomizations({});
     setSwatchImage(null);
     setEditingItemIndex(null);
@@ -211,11 +238,57 @@ export default function OrderNew() {
     try {
       const uploaded = await uploadOrderItemIcon({ blob: file, fileName: file.name });
       setStagedSwatches(prev => prev.map((sw, i) => i === index ? { ...sw, customImage: uploaded.icon_path, isUploading: false } : sw));
-      toast({ title: "Image uploaded", description: "Swatch photo uploaded successfully." });
+      toast({ title: "Image uploaded", description: "Swatch photo updated successfully." });
     } catch (err: any) {
       setStagedSwatches(prev => prev.map((sw, i) => i === index ? { ...sw, isUploading: false } : sw));
       toast({ title: "Upload failed", description: err.message || "Unable to upload photo.", variant: "destructive" });
     }
+  };
+
+  // Handwork Dialog handlers
+  const handleOpenHandworkDialog = (target: typeof activeHandworkTarget) => {
+    setActiveHandworkTarget(target);
+    if (target === "fabric") {
+      setHandworkPriceInput(fabricHandworkPrice ? String(fabricHandworkPrice) : "");
+      setHandworkNotesInput(fabricHandworkNotes || "");
+    } else if (target === "swatch") {
+      setHandworkPriceInput(swatchHandworkPrice ? String(swatchHandworkPrice) : "");
+      setHandworkNotesInput(swatchHandworkNotes || "");
+    } else if (target?.type === "staged_swatch") {
+      const sw = stagedSwatches[target.index];
+      if (sw) {
+        setHandworkPriceInput(sw.handworkPrice ? String(sw.handworkPrice) : "");
+        setHandworkNotesInput(sw.handworkNotes || "");
+      }
+    }
+    setHandworkDialogOpen(true);
+  };
+
+  const handleSaveHandworkDetails = () => {
+    const price = parseFloat(handworkPriceInput) || 0;
+    const detailsNote = handworkNotesInput;
+
+    if (activeHandworkTarget === "fabric") {
+      setFabricHandwork(true);
+      setFabricHandworkPrice(price);
+      setFabricHandworkNotes(detailsNote);
+    } else if (activeHandworkTarget === "swatch") {
+      setSwatchHandwork(true);
+      setSwatchHandworkPrice(price);
+      setSwatchHandworkNotes(detailsNote);
+    } else if (activeHandworkTarget?.type === "staged_swatch") {
+      const idx = activeHandworkTarget.index;
+      setStagedSwatches(prev => prev.map((sw, i) => i === idx ? {
+        ...sw,
+        handwork: true,
+        handworkPrice: price,
+        handworkNotes: detailsNote
+      } : sw));
+    }
+
+    setHandworkDialogOpen(false);
+    setActiveHandworkTarget(null);
+    toast({ title: "Handwork details saved" });
   };
 
   // Add or Update In-Stock fabric item in order
@@ -234,7 +307,6 @@ export default function OrderNew() {
     }
 
     if (editingItemIndex !== null) {
-      // Edit existing item
       setOrderItems((prev) =>
         prev.map((item, idx) => {
           if (idx === editingItemIndex) {
@@ -247,6 +319,8 @@ export default function OrderNew() {
               pricePerMeter: parseFloat(String(activeFabric.price_per_meter)),
               meterRequired: fabricMeter,
               handwork: fabricHandwork,
+              handworkPrice: fabricHandworkPrice,
+              handworkNotes: fabricHandworkNotes,
               customizations: { ...fabricCustomizations },
               icon_path: activeFabric.image,
             };
@@ -257,7 +331,6 @@ export default function OrderNew() {
       setEditingItemIndex(null);
       toast({ title: "Item Updated", description: `${selectedGarmentName} order item updated.` });
     } else {
-      // Add new item
       if (fabricMeter > parseFloat(String(activeFabric.available_meter))) {
         toast({ title: "Validation Error", description: "Not enough stock available.", variant: "destructive" });
         return;
@@ -276,6 +349,8 @@ export default function OrderNew() {
         meterRequired: fabricMeter,
         note: "",
         handwork: fabricHandwork,
+        handworkPrice: fabricHandworkPrice,
+        handworkNotes: fabricHandworkNotes,
         customizations: { ...fabricCustomizations },
         icon_path: activeFabric.image,
         swatches: [],
@@ -288,6 +363,8 @@ export default function OrderNew() {
     setActiveFabric(null);
     setFabricMeter(3.25);
     setFabricHandwork(false);
+    setFabricHandworkPrice(null);
+    setFabricHandworkNotes("");
     setFabricCustomizations({});
   };
 
@@ -302,6 +379,8 @@ export default function OrderNew() {
       id: "swatch-row-" + Date.now() + "-" + Math.random().toString(36).substring(2, 9),
       note: swatchNote,
       handwork: swatchHandwork,
+      handworkPrice: swatchHandworkPrice,
+      handworkNotes: swatchHandworkNotes,
       customizations: { ...swatchCustomizations },
       customImage: swatchImage,
     };
@@ -312,6 +391,8 @@ export default function OrderNew() {
     // Clear Step 2 Swatch Form Fields
     setSwatchNote("");
     setSwatchHandwork(false);
+    setSwatchHandworkPrice(null);
+    setSwatchHandworkNotes("");
     setSwatchCustomizations({});
     setSwatchImage(null);
   };
@@ -368,10 +449,6 @@ export default function OrderNew() {
     setStagedSwatches([]);
   };
 
-  const handleUpdateItemField = (index: number, fields: Partial<OrderItemEntry>) => {
-    setOrderItems(prev => prev.map((item, i) => i === index ? { ...item, ...fields } : item));
-  };
-
   // Staged inline updates in Step 3
   const handleUpdateStagedSwatchField = (index: number, fields: Partial<SwatchDetail>) => {
     setStagedSwatches(prev => prev.map((sw, i) => i === index ? { ...sw, ...fields } : sw));
@@ -408,6 +485,8 @@ export default function OrderNew() {
       }
       setFabricMeter(item.meterRequired ?? 3.25);
       setFabricHandwork(item.handwork);
+      setFabricHandworkPrice(item.handworkPrice ?? null);
+      setFabricHandworkNotes(item.handworkNotes ?? "");
       setFabricCustomizations(item.customizations);
     } else {
       setActiveTab("swatch");
@@ -428,6 +507,72 @@ export default function OrderNew() {
       setActiveFabric(null);
       setStagedSwatches([]);
     }
+  };
+
+  const handleUpdateItemField = (index: number, fields: Partial<OrderItemEntry>) => {
+    setOrderItems(prev => prev.map((item, i) => i === index ? { ...item, ...fields } : item));
+  };
+
+  const handleUpdateSwatchField = (itemIndex: number, swatchIndex: number, fields: Partial<SwatchDetail>) => {
+    setOrderItems(prev => prev.map((item, i) => {
+      if (i === itemIndex) {
+        const updatedSwatches = item.swatches.map((sw, sIdx) =>
+          sIdx === swatchIndex ? { ...sw, ...fields } : sw
+        );
+        return { ...item, swatches: updatedSwatches };
+      }
+      return item;
+    }));
+  };
+
+  const handleSwatchRowUpload = async (itemIndex: number, swatchIndex: number, file: File | null) => {
+    if (!file) return;
+    setOrderItems(prev => prev.map((item, i) => {
+      if (i === itemIndex) {
+        const updatedSwatches = item.swatches.map((sw, sIdx) =>
+          sIdx === swatchIndex ? { ...sw, isUploading: true } : sw
+        );
+        return { ...item, swatches: updatedSwatches };
+      }
+      return item;
+    }));
+
+    try {
+      const uploaded = await uploadOrderItemIcon({ blob: file, fileName: file.name });
+      setOrderItems(prev => prev.map((item, i) => {
+        if (i === itemIndex) {
+          const updatedSwatches = item.swatches.map((sw, sIdx) =>
+            sIdx === swatchIndex ? { ...sw, customImage: uploaded.icon_path, isUploading: false } : sw
+          );
+          return { ...item, swatches: updatedSwatches };
+        }
+        return item;
+      }));
+      toast({ title: "Image uploaded", description: "Swatch image updated." });
+    } catch (err: any) {
+      setOrderItems(prev => prev.map((item, i) => {
+        if (i === itemIndex) {
+          const updatedSwatches = item.swatches.map((sw, sIdx) =>
+            sIdx === swatchIndex ? { ...sw, isUploading: false } : sw
+          );
+          return { ...item, swatches: updatedSwatches };
+        }
+        return item;
+      }));
+      toast({ title: "Upload failed", description: err.message || "Unable to upload image.", variant: "destructive" });
+    }
+  };
+
+  const handleRemoveSwatch = (itemIndex: number, swatchIndex: number) => {
+    setOrderItems(prev => {
+      return prev.map((item, i) => {
+        if (i === itemIndex) {
+          const filtered = item.swatches.filter((_, sIdx) => sIdx !== swatchIndex);
+          return { ...item, swatches: filtered };
+        }
+        return item;
+      }).filter(item => item.type !== "swatch" || item.swatches.length > 0);
+    });
   };
 
   const createMutation = useMutation({
@@ -500,10 +645,12 @@ export default function OrderNew() {
         itemsPayload.push({
           garment_type: item.garmentName,
           quantity: 1,
-          price: item.pricePerMeter! * item.meterRequired!,
+          price: (item.pricePerMeter! * item.meterRequired!) + (item.handworkPrice || 0),
           icon_path: item.icon_path || null,
           note: item.note || null,
           handwork: item.handwork,
+          handwork_price: item.handworkPrice || null,
+          handwork_notes: item.handworkNotes || null,
           inventory_stock_id: item.fabricId,
           meter_required: item.meterRequired,
           customization_flags: Object.keys(item.customizations).length > 0 ? JSON.stringify(item.customizations) : null,
@@ -513,10 +660,12 @@ export default function OrderNew() {
           itemsPayload.push({
             garment_type: item.garmentName,
             quantity: 1,
-            price: 0,
+            price: sw.handworkPrice || 0,
             icon_path: sw.customImage || null,
             note: sw.note || null,
             handwork: sw.handwork,
+            handwork_price: sw.handworkPrice || null,
+            handwork_notes: sw.handworkNotes || null,
             inventory_stock_id: null,
             meter_required: null,
             customization_flags: Object.keys(sw.customizations).length > 0 ? JSON.stringify(sw.customizations) : null,
@@ -541,9 +690,11 @@ export default function OrderNew() {
   const subTotal = useMemo(() => {
     return orderItems.reduce((acc, curr) => {
       if (curr.type === "in_stock") {
-        return acc + (curr.pricePerMeter! * curr.meterRequired!);
+        return acc + (curr.pricePerMeter! * curr.meterRequired!) + (curr.handworkPrice || 0);
+      } else {
+        const swatchesPriceSum = curr.swatches.reduce((sum, sw) => sum + (sw.handworkPrice || 0), 0);
+        return acc + swatchesPriceSum;
       }
-      return acc;
     }, 0);
   }, [orderItems]);
 
@@ -823,11 +974,27 @@ export default function OrderNew() {
                   <input
                     type="checkbox"
                     checked={swatchHandwork}
-                    onChange={(e) => setSwatchHandwork(e.target.checked)}
+                    onChange={(e) => {
+                      if (!e.target.checked) {
+                        setSwatchHandwork(false);
+                        setSwatchHandworkPrice(null);
+                        setSwatchHandworkNotes("");
+                      } else {
+                        handleOpenHandworkDialog("swatch");
+                      }
+                    }}
                     className="rounded border-input text-primary focus:ring-primary h-3.5 w-3.5"
                   />
                   Handwork
                 </label>
+                {swatchHandwork && (
+                  <span
+                    onClick={() => handleOpenHandworkDialog("swatch")}
+                    className="text-[10px] text-primary font-medium hover:underline cursor-pointer"
+                  >
+                    (Edit Details)
+                  </span>
+                )}
 
                 <div className="flex items-center gap-1.5">
                   <label className="flex items-center gap-1.5 text-xs text-muted-foreground cursor-pointer select-none">
@@ -950,11 +1117,25 @@ export default function OrderNew() {
                               <input
                                 type="checkbox"
                                 checked={sw.handwork}
-                                onChange={(e) => handleUpdateStagedSwatchField(index, { handwork: e.target.checked })}
+                                onChange={(e) => {
+                                  if (!e.target.checked) {
+                                    setStagedSwatches(prev => prev.map((item, i) => i === index ? { ...item, handwork: false, handworkPrice: null, handworkNotes: "" } : item));
+                                  } else {
+                                    handleOpenHandworkDialog({ type: "staged_swatch", index: index });
+                                  }
+                                }}
                                 className="rounded border-input text-primary focus:ring-primary h-3.5 w-3.5"
                               />
                               Handwork
                             </label>
+                            {sw.handwork && (
+                              <span
+                                onClick={() => handleOpenHandworkDialog({ type: "staged_swatch", index: index })}
+                                className="text-[9px] text-primary font-medium hover:underline cursor-pointer"
+                              >
+                                (Edit)
+                              </span>
+                            )}
 
                             <label className="flex items-center gap-1 text-[10px] text-muted-foreground cursor-pointer select-none">
                               <input
@@ -995,7 +1176,9 @@ export default function OrderNew() {
                 <div className="space-y-3 pt-2">
                   <div className="pt-2 flex justify-between items-center text-xs font-bold border-t border-dashed">
                     <span className="text-muted-foreground">Price Estimate ({stagedSwatches.length} Swatches)</span>
-                    <span className="text-base text-foreground">₹0</span>
+                    <span className="text-base text-foreground">
+                      ₹{stagedSwatches.reduce((sum, sw) => sum + (sw.handworkPrice || 0), 0).toLocaleString("en-IN")}
+                    </span>
                   </div>
 
                   <Button
@@ -1053,11 +1236,27 @@ export default function OrderNew() {
                   <input
                     type="checkbox"
                     checked={fabricHandwork}
-                    onChange={(e) => setFabricHandwork(e.target.checked)}
+                    onChange={(e) => {
+                      if (!e.target.checked) {
+                        setFabricHandwork(false);
+                        setFabricHandworkPrice(null);
+                        setFabricHandworkNotes("");
+                      } else {
+                        handleOpenHandworkDialog("fabric");
+                      }
+                    }}
                     className="rounded border-input text-primary focus:ring-primary h-3.5 w-3.5"
                   />
                   Handwork
                 </label>
+                {fabricHandwork && (
+                  <span
+                    onClick={() => handleOpenHandworkDialog("fabric")}
+                    className="text-[10px] text-primary font-medium hover:underline cursor-pointer"
+                  >
+                    (Edit Details)
+                  </span>
+                )}
 
                 <div className="flex items-center gap-1.5">
                   <label className="flex items-center gap-1.5 text-xs text-muted-foreground cursor-pointer select-none">
@@ -1123,7 +1322,9 @@ export default function OrderNew() {
 
               <div className="pt-2 flex justify-between items-center text-xs font-bold border-t border-dashed">
                 <span className="text-muted-foreground">Total Amount</span>
-                <span className="text-base text-foreground">₹{Math.round(parseFloat(String(activeFabric.price_per_meter)) * fabricMeter).toLocaleString("en-IN")}</span>
+                <span className="text-base text-foreground">
+                  ₹{Math.round((parseFloat(String(activeFabric.price_per_meter)) * fabricMeter) + (fabricHandworkPrice || 0)).toLocaleString("en-IN")}
+                </span>
               </div>
 
               <Button
@@ -1208,7 +1409,9 @@ export default function OrderNew() {
                             <span className="block font-medium">{item.fabricCode} | {item.color}</span>
                             <span className="block">{item.meterRequired} m</span>
                             {item.note && <span className="block italic text-muted-foreground">Note: "{item.note}"</span>}
-                            <span className="block font-bold text-foreground">₹{Math.round(item.pricePerMeter! * item.meterRequired!).toLocaleString("en-IN")}</span>
+                            <span className="block font-bold text-foreground">
+                              ₹{Math.round((item.pricePerMeter! * item.meterRequired!) + (item.handworkPrice || 0)).toLocaleString("en-IN")}
+                            </span>
                           </div>
                         </div>
                       </div>
@@ -1216,8 +1419,8 @@ export default function OrderNew() {
                       {/* Badges footer */}
                       <div className="flex flex-wrap gap-1 mt-1">
                         {item.handwork && (
-                          <span className="inline-flex items-center px-1.5 py-0.5 rounded-full text-[9px] font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200">
-                            Handwork
+                          <span className="inline-flex items-center px-1.5 py-0.5 rounded-full text-[9px] font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200" title={item.handworkNotes || undefined}>
+                            Handwork {item.handworkPrice ? `(₹${item.handworkPrice})` : ""}
                           </span>
                         )}
                         {Object.keys(item.customizations).length > 0 && (
@@ -1284,7 +1487,11 @@ export default function OrderNew() {
                               </div>
 
                               <div className="flex flex-wrap gap-1 mt-1">
-                                {sw.handwork && <span className="text-[8px] bg-emerald-50 text-emerald-700 px-1 border border-emerald-200 rounded font-semibold">Handwork</span>}
+                                {sw.handwork && (
+                                  <span className="text-[8px] bg-emerald-50 text-emerald-700 px-1 border border-emerald-200 rounded font-semibold" title={sw.handworkNotes || undefined}>
+                                    Handwork {sw.handworkPrice ? `(₹${sw.handworkPrice})` : ""}
+                                  </span>
+                                )}
                                 {Object.keys(sw.customizations).length > 0 && <span className="text-[8px] bg-blue-50 text-blue-700 px-1 border border-blue-200 rounded font-semibold">Custom ({Object.keys(sw.customizations).length})</span>}
                               </div>
                             </div>
@@ -1316,7 +1523,7 @@ export default function OrderNew() {
                           {item.garmentName} ({item.fabricCode} | {item.meterRequired} m)
                         </span>
                         <span className="font-medium">
-                          ₹{Math.round(item.pricePerMeter! * item.meterRequired!).toLocaleString("en-IN")}
+                          ₹{Math.round((item.pricePerMeter! * item.meterRequired!) + (item.handworkPrice || 0)).toLocaleString("en-IN")}
                         </span>
                       </div>
                     );
@@ -1326,7 +1533,9 @@ export default function OrderNew() {
                         <span className="text-muted-foreground truncate max-w-[180px]">
                           {item.garmentName} (Swatch × {item.swatches.length})
                         </span>
-                        <span className="font-medium">₹0</span>
+                        <span className="font-medium">
+                          ₹{item.swatches.reduce((sum, sw) => sum + (sw.handworkPrice || 0), 0).toLocaleString("en-IN")}
+                        </span>
                       </div>
                     );
                   }
@@ -1364,6 +1573,53 @@ export default function OrderNew() {
           </div>
         </div>
       </div>
+
+      {/* Handwork Details Dialog modal */}
+      <Dialog open={handworkDialogOpen} onOpenChange={(isOpen) => {
+        if (!isOpen) {
+          setHandworkDialogOpen(false);
+          setActiveHandworkTarget(null);
+        }
+      }}>
+        <DialogContent className="max-w-md bg-card border border-border rounded-xl p-6">
+          <DialogHeader>
+            <DialogTitle className="text-lg font-bold text-foreground">Handwork</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4 py-4">
+            <div className="space-y-1.5">
+              <label className="text-xs text-muted-foreground block font-medium">Price</label>
+              <Input
+                type="number"
+                placeholder="Enter handwork price..."
+                value={handworkPriceInput}
+                onChange={(e) => setHandworkPriceInput(e.target.value)}
+                className="bg-muted/10 border-border text-sm"
+              />
+            </div>
+            <div className="space-y-1.5">
+              <label className="text-xs text-muted-foreground block font-medium">Notes</label>
+              <Textarea
+                placeholder="Enter notes..."
+                value={handworkNotesInput}
+                onChange={(e) => setHandworkNotesInput(e.target.value)}
+                className="bg-muted/10 border-border text-sm"
+                rows={3}
+              />
+            </div>
+          </div>
+          <DialogFooter className="flex gap-2 justify-end">
+            <Button variant="outline" size="sm" onClick={() => {
+              setHandworkDialogOpen(false);
+              setActiveHandworkTarget(null);
+            }}>
+              Cancel
+            </Button>
+            <Button size="sm" onClick={handleSaveHandworkDetails} className="bg-primary text-white">
+              Save
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
 
       {/* Customer Body Images */}
       <SectionCard title="Add Images Section">
