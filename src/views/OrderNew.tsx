@@ -907,7 +907,7 @@ export default function OrderNew() {
                   <div className="h-8 w-8 mb-1.5 flex items-center justify-center">
                     {g.image_path ? (
                       <img
-                        src={`${apiBaseUrl()}/${g.image_path.startsWith('uploads') ? '' : 'storage/'}${g.image_path}`}
+                        src={resolvePublicUrl(g.image_path)!}
                         alt={g.name}
                         className="max-h-full max-w-full object-contain"
                       />
