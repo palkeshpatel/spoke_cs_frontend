@@ -1570,17 +1570,7 @@ export default function OrderNew() {
                 </div>
               </div>
             </div>
-          )}
-
-          <div className="flex gap-2 pt-2">
-            <Button variant="outline" className="flex-1 text-xs" onClick={() => navigate("/orders")}>
-              Cancel
-            </Button>
-            <Button onClick={submit} disabled={createMutation.isPending} className="flex-1 text-xs bg-primary text-white">
-              {createMutation.isPending ? "Creating..." : "Create Order"}
-            </Button>
-          </div>
-        </div>
+          )}        </div>
       </div>
 
       {/* Handwork Details Dialog modal */}
@@ -1691,6 +1681,15 @@ export default function OrderNew() {
           </div>
         </div>
       </SectionCard>
+
+      <div className="flex justify-end gap-4 pt-6 mt-4">
+        <Button variant="outline" className="w-32" onClick={() => navigate("/orders")}>
+          Cancel
+        </Button>
+        <Button onClick={submit} disabled={createMutation.isPending} className="w-48 bg-primary text-white">
+          {createMutation.isPending ? "Creating..." : "Create Order"}
+        </Button>
+      </div>
 
       {/* Customization Dialog */}
       <OrderCustomizationDialog
