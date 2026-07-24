@@ -92,8 +92,8 @@ export default function OrderNew() {
   const [swatchImage, setSwatchImage] = useState<string | null>(null);
   const [swatchUploading, setSwatchUploading] = useState<boolean>(false);
 
-  // Step 3: Fabric Details options / Swatch Details options
-  const [activeSwatchDetail, setActiveSwatchDetail] = useState<SwatchDetail | null>(null);
+  // Step 3: Fabric Details options / Staged Swatches Details options
+  const [stagedSwatches, setStagedSwatches] = useState<SwatchDetail[]>([]);
   const [fabricHandwork, setFabricHandwork] = useState<boolean>(false);
   const [fabricCustomizations, setFabricCustomizations] = useState<Record<number, { priceModifier: number, note: string }>>({});
   const [fabricMeter, setFabricMeter] = useState<number>(3.25);
@@ -102,15 +102,21 @@ export default function OrderNew() {
   const [orderItems, setOrderItems] = useState<OrderItemEntry[]>([]);
   const [editingItemIndex, setEditingItemIndex] = useState<number | null>(null);
   const [editingSwatchIndex, setEditingSwatchIndex] = useState<number | null>(null);
+  const [editingStagedSwatchIndex, setEditingStagedSwatchIndex] = useState<number | null>(null);
 
   // Dialog triggers
   const [customizationDialogOpen, setCustomizationDialogOpen] = useState<boolean>(false);
   const [activeCustomizationTarget, setActiveCustomizationTarget] = useState<
-    "fabric" | "swatch" | { type: "item"; index: number } | { type: "swatch_item"; itemIndex: number; swatchIndex: number } | null
+    | "fabric"
+    | "swatch"
+    | { type: "item"; index: number }
+    | { type: "swatch_item"; itemIndex: number; swatchIndex: number }
+    | { type: "staged_swatch"; index: number }
+    | null
   >(null);
 
   const fileInputRef = useRef<HTMLInputElement | null>(null);
-  const detailsSwatchFileInputRef = useRef<HTMLInputElement | null>(null);
+  const stagedSwatchFileInputRef = useRef<HTMLInputElement | null>(null);
   const itemFileInputRef = useRef<HTMLInputElement | null>(null);
   const bodyImageRefs = useRef<Record<string, HTMLInputElement | null>>({});
 
@@ -175,7 +181,7 @@ export default function OrderNew() {
   // Reset states when garment category changes
   useEffect(() => {
     setActiveFabric(null);
-    setActiveSwatchDetail(null);
+    setStagedSwatches([]);
     setFabricMeter(3.25);
     setFabricHandwork(false);
     setFabricCustomizations({});
@@ -200,14 +206,16 @@ export default function OrderNew() {
     }
   };
 
-  // Swatch image upload inside Step 3 Swatch Details
-  const handleDetailsSwatchImageUpload = async (file: File | null) => {
-    if (!file || !activeSwatchDetail) return;
+  // Swatch image upload inside Step 3 Staged Swatches Details
+  const handleStagedSwatchImageUpload = async (index: number, file: File | null) => {
+    if (!file) return;
+    setStagedSwatches(prev => prev.map((sw, i) => i === index ? { ...sw, isUploading: true } : sw));
     try {
       const uploaded = await uploadOrderItemIcon({ blob: file, fileName: file.name });
-      setActiveSwatchDetail(prev => prev ? { ...prev, customImage: uploaded.icon_path } : null);
+      setStagedSwatches(prev => prev.map((sw, i) => i === index ? { ...sw, customImage: uploaded.icon_path, isUploading: false } : sw));
       toast({ title: "Image uploaded", description: "Swatch photo uploaded successfully." });
     } catch (err: any) {
+      setStagedSwatches(prev => prev.map((sw, i) => i === index ? { ...sw, isUploading: false } : sw));
       toast({ title: "Upload failed", description: err.message || "Unable to upload photo.", variant: "destructive" });
     }
   };
@@ -260,8 +268,8 @@ export default function OrderNew() {
     toast({ title: "Item added", description: `${newItem.garmentName} added to order items.` });
   };
 
-  // Step 2: clicking "+ Add" sends swatch data to Step 3
-  const handleAddSwatchToStep3 = () => {
+  // Step 2: Clicking "+ Add" appends swatch to Staging List in Step 3
+  const handleAddSwatchToStep3Staged = () => {
     if (!selectedGarmentName) {
       toast({ title: "Validation Error", description: "Please select a category first.", variant: "destructive" });
       return;
@@ -275,21 +283,21 @@ export default function OrderNew() {
       customImage: swatchImage,
     };
 
-    setActiveSwatchDetail(newSwatch);
+    setStagedSwatches((prev) => [...prev, newSwatch]);
     setActiveFabric(null); // Clear selected fabric if any
 
-    // Clear Step 2 fields
+    // Clear Step 2 Swatch Form Fields
     setSwatchNote("");
     setSwatchHandwork(false);
     setSwatchCustomizations({});
     setSwatchImage(null);
 
-    toast({ title: "Swatch Loaded", description: "Configure and add to order in Step 3." });
+    toast({ title: "Swatch Added to Step 3", description: "Swatch staged under Step 3 Swatch Details." });
   };
 
-  // Step 3: Add Swatch / On Demand item to order
-  const handleAddSwatchToOrder = () => {
-    if (!selectedGarmentName || !activeSwatchDetail) return;
+  // Step 3: Add Staged Swatches to order list
+  const handleAddStagedSwatchesToOrder = () => {
+    if (!selectedGarmentName || stagedSwatches.length === 0) return;
 
     setOrderItems((prev) => {
       // Find if we already have a swatch card for this garment type
@@ -299,7 +307,7 @@ export default function OrderNew() {
           if (idx === existingIdx) {
             return {
               ...item,
-              swatches: [...item.swatches, activeSwatchDetail],
+              swatches: [...item.swatches, ...stagedSwatches],
             };
           }
           return item;
@@ -311,7 +319,7 @@ export default function OrderNew() {
           type: "swatch",
           garmentName: selectedGarmentName,
           garmentId: selectedGarmentId,
-          swatches: [activeSwatchDetail],
+          swatches: [...stagedSwatches],
           note: "",
           handwork: false,
           customizations: {},
@@ -320,8 +328,17 @@ export default function OrderNew() {
       }
     });
 
-    setActiveSwatchDetail(null);
-    toast({ title: "Swatch Added", description: `Added swatch to ${selectedGarmentName}.` });
+    setStagedSwatches([]);
+    toast({ title: "Swatches Added", description: `Added swatches to ${selectedGarmentName} order items.` });
+  };
+
+  // Staged inline updates in Step 3
+  const handleUpdateStagedSwatchField = (index: number, fields: Partial<SwatchDetail>) => {
+    setStagedSwatches(prev => prev.map((sw, i) => i === index ? { ...sw, ...fields } : sw));
+  };
+
+  const handleRemoveStagedSwatch = (index: number) => {
+    setStagedSwatches(prev => prev.filter((_, i) => i !== index));
   };
 
   // Item inline updates
@@ -706,7 +723,6 @@ export default function OrderNew() {
                           className={`hover:bg-muted/20 cursor-pointer ${activeFabric?.id === item.id ? "bg-muted/50" : ""}`}
                           onClick={() => {
                             setActiveFabric(item);
-                            setActiveSwatchDetail(null); // Clear swatch details when fabric is clicked
                           }}
                         >
                           <td className="p-2 font-medium flex items-center gap-2">
@@ -827,7 +843,7 @@ export default function OrderNew() {
               </div>
 
               <Button
-                onClick={handleAddSwatchToStep3}
+                onClick={handleAddSwatchToStep3Staged}
                 disabled={!selectedGarmentName}
                 className="w-full bg-primary h-8 text-xs mt-2"
               >
@@ -837,110 +853,156 @@ export default function OrderNew() {
           )}
         </div>
 
-        {/* Step 3: Fabric Details or Swatch Details */}
+        {/* Step 3: Fabric Details or Multiple Staged Swatches Details */}
         <div className="space-y-4 pr-0">
           <div>
             <span className="text-xs font-bold text-primary uppercase tracking-wider block">Step 3</span>
             <h3 className="font-extrabold text-base text-foreground">
-              {activeSwatchDetail ? "Swatch Details" : "Fabric Details"}
+              {activeTab === "swatch" ? "Swatch Details" : "Fabric Details"}
             </h3>
           </div>
 
-          {activeSwatchDetail ? (
-            /* Swatch Details Preview Panel */
-            <div className="space-y-4 bg-muted/20 p-4 rounded-xl border border-border">
-              <div className="flex gap-3">
-                {activeSwatchDetail.customImage ? (
-                  <div className="relative h-16 w-20 rounded-lg overflow-hidden border bg-card group">
-                    <img src={resolvePublicUrl(activeSwatchDetail.customImage) ?? ""} className="h-full w-full object-cover" />
-                    <button
-                      type="button"
-                      onClick={() => detailsSwatchFileInputRef.current?.click()}
-                      className="absolute inset-0 bg-black/40 hover:bg-black/60 text-white flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"
-                    >
-                      <Camera className="h-4 w-4" />
-                    </button>
+          {activeTab === "swatch" ? (
+            /* Multiple Staged Swatches Preview Panel */
+            <div className="space-y-4">
+              {stagedSwatches.length === 0 ? (
+                <div className="flex flex-col items-center justify-center h-48 border border-dashed rounded-xl p-4 text-center text-xs text-muted-foreground">
+                  <Info className="h-6 w-6 mb-2 text-muted-foreground/60" />
+                  Please add swatches in Step 2.
+                </div>
+              ) : (
+                <div className="space-y-3 max-h-[300px] overflow-y-auto pr-1">
+                  {stagedSwatches.map((sw, index) => {
+                    const preview = sw.customImage ? resolvePublicUrl(sw.customImage) : null;
+                    return (
+                      <div key={sw.id} className="p-3 border rounded-xl bg-muted/20 space-y-2 relative">
+                        <div className="flex gap-2">
+                          {sw.isUploading ? (
+                            <div className="h-12 w-12 shrink-0 rounded bg-muted/10 border flex items-center justify-center">
+                              <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                            </div>
+                          ) : preview ? (
+                            <div className="relative h-12 w-12 shrink-0 rounded overflow-hidden border bg-card group">
+                              <img src={preview} className="h-full w-full object-cover" />
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  setEditingStagedSwatchIndex(index);
+                                  stagedSwatchFileInputRef.current?.click();
+                                }}
+                                className="absolute inset-0 bg-black/40 hover:bg-black/60 text-white flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"
+                              >
+                                <Camera className="h-3 w-3" />
+                              </button>
+                            </div>
+                          ) : (
+                            <button
+                              type="button"
+                              onClick={() => {
+                                  setEditingStagedSwatchIndex(index);
+                                  stagedSwatchFileInputRef.current?.click();
+                              }}
+                              className="h-12 w-12 shrink-0 rounded border border-dashed flex flex-col items-center justify-center text-muted-foreground hover:bg-muted/10"
+                            >
+                              <Camera className="h-4 w-4" />
+                            </button>
+                          )}
+
+                          <div className="flex-1 min-w-0 pr-6">
+                            <span className="text-[10px] font-bold text-muted-foreground block">Swatch #{index + 1}</span>
+                            <Input
+                              placeholder="Stitching Note"
+                              value={sw.note}
+                              onChange={(e) => handleUpdateStagedSwatchField(index, { note: e.target.value })}
+                              className="h-7 text-xs bg-card mt-1"
+                            />
+                          </div>
+
+                          <button
+                            type="button"
+                            onClick={() => handleRemoveStagedSwatch(index)}
+                            className="absolute top-2 right-2 text-muted-foreground hover:text-destructive p-0.5"
+                          >
+                            <Trash2 className="h-3 w-3" />
+                          </button>
+                        </div>
+
+                        <div className="flex items-center justify-between pt-1 border-t border-dashed">
+                          <div className="flex items-center gap-3">
+                            <label className="flex items-center gap-1 text-[10px] text-muted-foreground cursor-pointer select-none">
+                              <input
+                                type="checkbox"
+                                checked={sw.handwork}
+                                onChange={(e) => handleUpdateStagedSwatchField(index, { handwork: e.target.checked })}
+                                className="rounded border-input text-primary focus:ring-primary h-3.5 w-3.5"
+                              />
+                              Handwork
+                            </label>
+
+                            <label className="flex items-center gap-1 text-[10px] text-muted-foreground cursor-pointer select-none">
+                              <input
+                                type="checkbox"
+                                checked={Object.keys(sw.customizations).length > 0}
+                                onChange={(e) => {
+                                  if (!e.target.checked) {
+                                    handleUpdateStagedSwatchField(index, { customizations: {} });
+                                  } else {
+                                    setActiveCustomizationTarget({ type: "staged_swatch", index: index });
+                                    setCustomizationDialogOpen(true);
+                                  }
+                                }}
+                                className="rounded border-input text-primary focus:ring-primary h-3.5 w-3.5"
+                              />
+                              Customization
+                            </label>
+                          </div>
+                          {Object.keys(sw.customizations).length > 0 && (
+                            <span
+                              onClick={() => {
+                                setActiveCustomizationTarget({ type: "staged_swatch", index: index });
+                                setCustomizationDialogOpen(true);
+                              }}
+                              className="text-[9px] text-primary font-medium hover:underline cursor-pointer"
+                            >
+                              ({Object.keys(sw.customizations).length} Options)
+                            </span>
+                          )}
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
+
+              {stagedSwatches.length > 0 && (
+                <div className="space-y-3 pt-2">
+                  <div className="pt-2 flex justify-between items-center text-xs font-bold border-t border-dashed">
+                    <span className="text-muted-foreground">Price Estimate ({stagedSwatches.length} Swatches)</span>
+                    <span className="text-base text-foreground">₹0</span>
                   </div>
-                ) : (
+
                   <Button
-                    type="button"
-                    variant="outline"
-                    onClick={() => detailsSwatchFileInputRef.current?.click()}
-                    className="h-16 w-20 rounded-lg flex flex-col gap-1 border-dashed shrink-0"
+                    onClick={handleAddStagedSwatchesToOrder}
+                    className="w-full bg-primary"
                   >
-                    <Camera className="h-4 w-4" />
-                    <span className="text-[10px]">Photo</span>
+                    Add to Order
                   </Button>
-                )}
-                <input
-                  ref={detailsSwatchFileInputRef}
-                  type="file"
-                  accept="image/*"
-                  className="hidden"
-                  onChange={(e) => handleDetailsSwatchImageUpload(e.target.files?.[0] ?? null)}
-                />
-
-                <div className="flex-1 min-w-0">
-                  <h4 className="font-bold text-sm text-foreground truncate">{selectedGarmentName || "Swatch item"}</h4>
-                  <p className="text-xs text-muted-foreground line-clamp-2 italic">
-                    Note: "{activeSwatchDetail.note || "No note added"}"
-                  </p>
                 </div>
-              </div>
+              )}
 
-              <div className="flex items-center gap-4 px-0.5 pt-1">
-                <label className="flex items-center gap-1.5 text-xs text-muted-foreground cursor-pointer select-none">
-                  <input
-                    type="checkbox"
-                    checked={activeSwatchDetail.handwork}
-                    onChange={(e) => setActiveSwatchDetail(prev => prev ? { ...prev, handwork: e.target.checked } : null)}
-                    className="rounded border-input text-primary focus:ring-primary h-3.5 w-3.5"
-                  />
-                  Handwork
-                </label>
-
-                <div className="flex items-center gap-1.5">
-                  <label className="flex items-center gap-1.5 text-xs text-muted-foreground cursor-pointer select-none">
-                    <input
-                      type="checkbox"
-                      checked={Object.keys(activeSwatchDetail.customizations).length > 0}
-                      onChange={(e) => {
-                        if (!e.target.checked) {
-                          setActiveSwatchDetail(prev => prev ? { ...prev, customizations: {} } : null);
-                        } else {
-                          setActiveCustomizationTarget("swatch");
-                          setCustomizationDialogOpen(true);
-                        }
-                      }}
-                      className="rounded border-input text-primary focus:ring-primary h-3.5 w-3.5"
-                    />
-                    Advanced Customization
-                  </label>
-                  {Object.keys(activeSwatchDetail.customizations).length > 0 && (
-                    <span
-                      onClick={() => {
-                        setActiveCustomizationTarget("swatch");
-                        setCustomizationDialogOpen(true);
-                      }}
-                      className="text-[10px] text-primary font-medium hover:underline cursor-pointer"
-                    >
-                      ({Object.keys(activeSwatchDetail.customizations).length} Selected)
-                    </span>
-                  )}
-                </div>
-              </div>
-
-              <div className="pt-2 flex justify-between items-center text-xs font-bold border-t border-dashed">
-                <span className="text-muted-foreground">Price Estimate</span>
-                <span className="text-base text-foreground">₹0</span>
-              </div>
-
-              <Button
-                onClick={handleAddSwatchToOrder}
-                className="w-full bg-primary mt-2"
-              >
-                Add to Order
-              </Button>
+              <input
+                ref={stagedSwatchFileInputRef}
+                type="file"
+                accept="image/*"
+                className="hidden"
+                onChange={(e) => {
+                  const file = e.target.files?.[0] ?? null;
+                  if (editingStagedSwatchIndex !== null) {
+                    handleStagedSwatchImageUpload(editingStagedSwatchIndex, file);
+                  }
+                  e.currentTarget.value = "";
+                }}
+              />
             </div>
           ) : activeFabric ? (
             /* In-Stock Fabric Details Preview Panel */
@@ -1490,21 +1552,21 @@ export default function OrderNew() {
             ? orderItems[activeCustomizationTarget.index]?.customizations ?? {}
             : activeCustomizationTarget?.type === "swatch_item"
             ? orderItems[activeCustomizationTarget.itemIndex]?.swatches[activeCustomizationTarget.swatchIndex]?.customizations ?? {}
+            : activeCustomizationTarget?.type === "staged_swatch"
+            ? stagedSwatches[activeCustomizationTarget.index]?.customizations ?? {}
             : {}
         }
         onSelectionChange={(newCustomizations) => {
           if (activeCustomizationTarget === "fabric") {
             setFabricCustomizations(newCustomizations);
           } else if (activeCustomizationTarget === "swatch") {
-            if (activeSwatchDetail) {
-              setActiveSwatchDetail(prev => prev ? { ...prev, customizations: newCustomizations } : null);
-            } else {
-              setSwatchCustomizations(newCustomizations);
-            }
+            setSwatchCustomizations(newCustomizations);
           } else if (activeCustomizationTarget?.type === "item") {
             handleUpdateItemField(activeCustomizationTarget.index, { customizations: newCustomizations });
           } else if (activeCustomizationTarget?.type === "swatch_item") {
             handleUpdateSwatchField(activeCustomizationTarget.itemIndex, activeCustomizationTarget.swatchIndex, { customizations: newCustomizations });
+          } else if (activeCustomizationTarget?.type === "staged_swatch") {
+            handleUpdateStagedSwatchField(activeCustomizationTarget.index, { customizations: newCustomizations });
           }
         }}
       />
