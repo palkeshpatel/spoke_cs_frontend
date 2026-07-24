@@ -131,11 +131,10 @@ export default function OrderNew() {
     queryFn: listGarments,
   });
 
-  // Fetch fabrics for currently selected category (garment)
+  // Fetch fabrics (unconditional, no category filtering)
   const { data: fabricStocksData, isLoading: isLoadingFabrics } = useQuery({
-    queryKey: ["order_fabric_stocks", selectedGarmentId],
-    queryFn: () => listInventoryStocks({ garment_id: selectedGarmentId }),
-    enabled: !!selectedGarmentId,
+    queryKey: ["order_fabric_stocks"],
+    queryFn: () => listInventoryStocks({}),
   });
 
   // Filter fabrics based on search query
@@ -544,11 +543,7 @@ export default function OrderNew() {
                 className="h-8 text-xs"
               />
 
-              {!selectedGarmentName ? (
-                <div className="flex flex-col items-center justify-center h-48 border border-dashed rounded-lg p-4 text-center text-xs text-muted-foreground">
-                  Please select garment category in Step 1.
-                </div>
-              ) : isLoadingFabrics ? (
+              {isLoadingFabrics ? (
                 <div className="flex h-36 items-center justify-center">
                   <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" />
                 </div>
