@@ -81,13 +81,23 @@ export const getSessionBranch = (): SessionBranch | null => {
   }
 };
 
-/** Full URL for public paths returned by the API (e.g. `/uploads/...`) or absolute URLs. */
 export function resolvePublicUrl(path: string | null | undefined): string | null {
   if (path == null || path === "") return null;
   if (path.startsWith("http://") || path.startsWith("https://")) return path;
   const base = apiBaseUrl().replace(/\/$/, "");
+  
+  // If the path is a seeded frontend asset in the backend's public dir
+  if (path.startsWith("uploads/") || path.startsWith("/uploads/")) {
+    const p = path.startsWith("/") ? path : `/${path}`;
+    return `${base}${p}`;
+  }
+  
+  // Otherwise it's a manual upload in storage/app/public
   const p = path.startsWith("/") ? path : `/${path}`;
-  return `${base}${p}`;
+  if (p.startsWith("/storage/")) {
+    return `${base}${p}`;
+  }
+  return `${base}/storage${p}`;
 }
 
 export async function apiRequest<TResponse>(

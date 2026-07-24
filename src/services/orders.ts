@@ -130,6 +130,12 @@ export async function createOrder(payload: {
     note?: string | null;
     quantity?: number;
     price?: number;
+    handwork?: boolean;
+    handwork_price?: number | null;
+    handwork_notes?: string | null;
+    inventory_stock_id?: number | null;
+    meter_required?: number | null;
+    customization_flags?: string | null;
   }>;
   customizations?: Array<{
     option_id: number;
@@ -157,6 +163,12 @@ export async function updateOrder(
       note?: string | null;
       quantity?: number;
       price?: number;
+      handwork?: boolean;
+      handwork_price?: number | null;
+      handwork_notes?: string | null;
+      inventory_stock_id?: number | null;
+      meter_required?: number | null;
+      customization_flags?: string | null;
     }>;
     status_note: string | null;
     customizations: Array<{

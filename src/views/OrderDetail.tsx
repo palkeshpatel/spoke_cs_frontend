@@ -15,7 +15,7 @@ import { getCustomer, uploadCustomerBodyImage } from "@/services/customers";
 import { resolvePublicUrl } from "@/services/api";
 import { ImagePreviewDialog } from "@/components/ImagePreviewDialog";
 
-import { Camera, FileImage, Loader2, Plus, Trash2, Eye } from "lucide-react";
+import { Camera, FileImage, Loader2, Plus, Trash2, Eye, Pencil } from "lucide-react";
 import { OrderCustomizationDialog } from "@/components/OrderCustomizationDialog";
 import DatePicker from "@/components/DatePicker";
 import { OrderStatusStepper } from "@/components/OrderStatusStepper";
@@ -35,6 +35,7 @@ type ItemDraft = {
 export default function OrderDetail() {
   const { id } = useParams();
   const queryClient = useQueryClient();
+  const navigate = useNavigate();
   const orderId = id ? Number(id) : NaN;
 
   const [isEditing, setIsEditing] = useState(false);
@@ -252,16 +253,13 @@ export default function OrderDetail() {
         title={order.order_number}
         subtitle={order.customer?.name ?? "—"}
         backTo="/orders"
-        isEditing={isEditing}
-        onEdit={() => {
-          initDraft();
-          setIsEditing(true);
-        }}
-        onSave={() => saveMutation.mutate()}
-        onCancel={() => {
-          initDraft();
-          setIsEditing(false);
-        }}
+        isEditing={false}
+        actions={
+          <Button variant="outline" onClick={() => navigate(`/orders/edit/${orderId}`)}>
+            <Pencil className="h-4 w-4 mr-2" />
+            Edit Full Order
+          </Button>
+        }
       />
 
       <div className="grid md:grid-cols-2 gap-4 sm:gap-6 mb-6">

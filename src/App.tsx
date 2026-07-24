@@ -109,6 +109,7 @@ const App = () => (
               <Route path="/measurements/:id" element={<MeasurementNew />} />
               <Route path="/orders" element={<OrderList />} />
               <Route path="/orders/new" element={<OrderNew />} />
+              <Route path="/orders/edit/:id" element={<OrderNew />} />
               <Route path="/orders/:id" element={<OrderDetail />} />
               <Route path="/calendar" element={<CalendarView />} />
               <Route path="/wishes" element={<Wishes />} />

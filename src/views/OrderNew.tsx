@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { useLocation, useNavigate } from "react-router-dom";
+import { useLocation, useNavigate, useParams } from "react-router-dom";
 import { Camera, FileImage, Loader2, Plus, Trash2, Sliders, Check, Minus, Info, Edit2 } from "lucide-react";
 import PageHeader from "@/components/PageHeader";
 import SectionCard from "@/components/SectionCard";
@@ -9,7 +9,7 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
 import { toast } from "@/hooks/use-toast";
-import { createOrder, uploadOrderItemIcon } from "@/services/orders";
+import { createOrder, updateOrder, getOrder, uploadOrderItemIcon } from "@/services/orders";
 import { resolvePublicUrl } from "@/services/api";
 import { ImagePreviewDialog } from "@/components/ImagePreviewDialog";
 import { getCustomer, uploadCustomerBodyImage } from "@/services/customers";
@@ -80,6 +80,15 @@ export default function OrderNew() {
   const navigate = useNavigate();
   const location = useLocation();
   const queryClient = useQueryClient();
+  const { id } = useParams();
+  const isEdit = !!id;
+  const orderId = isEdit ? Number(id) : NaN;
+
+  const orderQuery = useQuery({
+    queryKey: ["orders", "detail", orderId],
+    queryFn: () => getOrder(orderId),
+    enabled: isEdit && !Number.isNaN(orderId),
+  });
 
   const [customerId, setCustomerId] = useState<string | undefined>(undefined);
   const [notes, setNotes] = useState<string>("");
@@ -189,6 +198,78 @@ export default function OrderNew() {
       return matchStatus && matchQuery;
     });
   }, [fabricStocksData, fabricSearch]);
+
+  useEffect(() => {
+    if (isEdit && orderQuery.data) {
+      const order = orderQuery.data;
+      setCustomerId(order.customer_id.toString());
+      setNotes(order.notes || "");
+      setStatus(order.status as any);
+      setTrialDate(order.trial_date || "");
+      setDeliveryDate(order.delivery_date || "");
+      
+      const items: OrderItemEntry[] = [];
+      const swatchesByGarment = new Map<string, any[]>();
+
+      order.items?.forEach((it: any) => {
+        const parsedCustomizations = typeof it.customization_flags === "string" && it.customization_flags.length > 0 
+          ? JSON.parse(it.customization_flags) 
+          : (it.customization_flags || {});
+          
+        if (it.inventory_stock_id) {
+          // In Stock
+          items.push({
+            id: it.id.toString() + Math.random(),
+            type: "in_stock",
+            garmentName: it.garment_type || "",
+            fabricId: it.inventory_stock_id,
+            fabricCode: it.inventory_stock?.fabric_code || "Unknown",
+            fabricName: it.inventory_stock?.fabric_name || "Unknown",
+            color: it.inventory_stock?.color || "",
+            pricePerMeter: it.inventory_stock?.price_per_meter ? Number(it.inventory_stock.price_per_meter) : 0,
+            meterRequired: Number(it.meter_required),
+            icon_path: it.icon_path,
+            note: it.note || "",
+            handwork: !!it.handwork,
+            handworkPrice: it.handwork_price,
+            handworkNotes: it.handwork_notes,
+            customizations: parsedCustomizations,
+            swatches: [],
+          });
+        } else {
+          // Swatch
+          const garment = it.garment_type || "Unknown";
+          if (!swatchesByGarment.has(garment)) {
+            swatchesByGarment.set(garment, []);
+          }
+          swatchesByGarment.get(garment)!.push({
+            id: it.id.toString() + Math.random(),
+            note: it.note || "",
+            handwork: !!it.handwork,
+            handworkPrice: it.handwork_price,
+            handworkNotes: it.handwork_notes,
+            customizations: parsedCustomizations,
+            customImage: it.icon_path,
+          });
+        }
+      });
+
+      // Group swatches
+      swatchesByGarment.forEach((swatches, garmentName) => {
+        items.push({
+          id: garmentName + Math.random(),
+          type: "swatch",
+          garmentName,
+          note: "",
+          handwork: false,
+          customizations: {},
+          swatches,
+        });
+      });
+
+      setOrderItems(items);
+    }
+  }, [isEdit, orderQuery.data]);
 
   const selectedCustomerId = customerId ? Number(customerId) : NaN;
 
@@ -574,18 +655,15 @@ export default function OrderNew() {
 
   const createMutation = useMutation({
     mutationFn: createOrder,
-    onSuccess: async (created) => {
-      await queryClient.invalidateQueries({ queryKey: ["orders"] });
-      toast({
-        title: "Order created",
-        description: `Order #${created.order_number} created.`,
-      });
-      navigate(`/orders/${created.id}`);
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["orders"] });
+      toast({ title: "Order created successfully" });
+      navigate("/orders");
     },
     onError: (err: any) => {
       toast({
-        title: "Create failed",
-        description: err.message || "Unable to create order.",
+        title: "Failed to create order",
+        description: err?.message || "Please check your input",
         variant: "destructive",
       });
     },
@@ -597,27 +675,37 @@ export default function OrderNew() {
     enabled: Number.isFinite(selectedCustomerId),
   });
 
+  const updateMutation = useMutation({
+    mutationFn: (payload: any) => updateOrder(orderId, payload),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["orders"] });
+      queryClient.invalidateQueries({ queryKey: ["orders", "detail", orderId] });
+      toast({ title: "Order updated successfully" });
+      navigate("/orders");
+    },
+    onError: (err: any) => {
+      toast({
+        title: "Failed to update order",
+        description: err?.message || "Please check your input",
+        variant: "destructive",
+      });
+    },
+  });
+
   const bodyImageUploadMutation = useMutation({
     mutationFn: async (params: { imageType: string; file: File }) =>
       uploadCustomerBodyImage({
-        customerId: selectedCustomerId,
+        customerId: Number(customerId),
         imageType: params.imageType,
         blob: params.file,
         fileName: params.file.name,
       }),
     onSuccess: async () => {
-      await queryClient.invalidateQueries({ queryKey: ["customers", "detail", selectedCustomerId] });
-      toast({
-        title: "Image uploaded",
-        description: "Client body image uploaded successfully.",
-      });
+      await queryClient.invalidateQueries({ queryKey: ["customers", "detail", Number(customerId)] });
+      toast({ title: "Image uploaded", description: "Client body image uploaded successfully." });
     },
-    onError: (err: any) => {
-      toast({
-        title: "Upload failed",
-        description: err.message || "Unable to upload body image.",
-        variant: "destructive",
-      });
+    onError: () => {
+      toast({ title: "Upload failed", variant: "destructive" });
     },
   });
 
@@ -671,7 +759,7 @@ export default function OrderNew() {
       }
     });
 
-    createMutation.mutate({
+    const payload = {
       customer_id: Number(customerId),
       fabric: orderItems.filter(i => i.type === "in_stock").map(i => i.fabricCode).join(", "),
       notes: notes || null,
@@ -680,7 +768,13 @@ export default function OrderNew() {
       delivery_date: deliveryDate || null,
       items: itemsPayload,
       customizations: [],
-    });
+    };
+
+    if (isEdit) {
+      updateMutation.mutate(payload);
+    } else {
+      createMutation.mutate(payload);
+    }
   };
 
   // Pricing calculations
@@ -731,9 +825,9 @@ export default function OrderNew() {
   return (
     <div className="space-y-6">
       <PageHeader
-        title="New Order"
-        subtitle="Create a new order"
-        backTo="/orders"
+        title={isEdit ? (orderQuery.data?.order_number || "Edit Order") : "New Order"}
+        subtitle={isEdit ? "Update order details" : "Create a new order"}
+        backTo={isEdit ? `/orders/${orderId}` : "/orders"}
       />
 
       <div className="grid md:grid-cols-2 gap-4 sm:gap-6">
@@ -773,27 +867,24 @@ export default function OrderNew() {
         </SectionCard>
 
         {/* Global Notes */}
-        <SectionCard title="Notes">
-          <div className="space-y-4">
-            <div>
-              <Textarea
-                placeholder="Add order notes..."
-                rows={4}
-                value={notes}
-                onChange={(e) => setNotes(e.target.value)}
-              />
-            </div>
+        <SectionCard title="Notes" className="h-full flex flex-col">
+          <div className="flex-1 h-full">
+            <Textarea
+              placeholder="Add order notes..."
+              className="h-full min-h-[150px] resize-none"
+              value={notes}
+              onChange={(e) => setNotes(e.target.value)}
+            />
           </div>
         </SectionCard>
       </div>
 
       {/* 3-Step Selection Flow Layout */}
-      <div className="grid lg:grid-cols-3 gap-6 bg-card border border-border rounded-xl p-4 sm:p-6 shadow-sm">
+      <div className="grid lg:grid-cols-12 gap-6 bg-card border border-border rounded-xl p-4 sm:p-6 shadow-sm">
         
         {/* Step 1: Select Category */}
-        <div className="space-y-4 border-r border-border pr-0 lg:pr-6">
+        <div className="lg:col-span-4 space-y-4 border-r border-border pr-0 lg:pr-6">
           <div>
-            <span className="text-xs font-bold text-primary uppercase tracking-wider block">Step 1</span>
             <h3 className="font-extrabold text-base text-foreground">Select Category</h3>
           </div>
           
@@ -832,9 +923,8 @@ export default function OrderNew() {
         </div>
 
         {/* Step 2: Select Fabric */}
-        <div className="space-y-4 border-r border-border pr-0 lg:pr-6">
+        <div className="lg:col-span-5 space-y-4 border-r border-border pr-0 lg:pr-6">
           <div>
-            <span className="text-xs font-bold text-primary uppercase tracking-wider block">Step 2</span>
             <h3 className="font-extrabold text-base text-foreground">Select Fabric</h3>
           </div>
 
@@ -884,8 +974,8 @@ export default function OrderNew() {
                   <table className="w-full text-left text-xs border-collapse">
                     <thead>
                       <tr className="bg-muted/40 text-muted-foreground border-b font-medium">
-                        <th className="p-2">Fabric</th>
                         <th className="p-2">Code</th>
+                        <th className="p-2">Color</th>
                         <th className="p-2 text-right">Price/M</th>
                         <th className="p-2 text-right">Available</th>
                       </tr>
@@ -899,19 +989,8 @@ export default function OrderNew() {
                             setActiveFabric(item);
                           }}
                         >
-                          <td className="p-2 font-medium flex items-center gap-2">
-                            <div className="h-6 w-6 rounded bg-muted overflow-hidden shrink-0">
-                              {item.image ? (
-                                <img src={`${apiBaseUrl()}/storage/${item.image}`} className="h-full w-full object-cover" />
-                              ) : (
-                                <div className="h-full w-full flex items-center justify-center bg-muted text-[8px] font-bold">
-                                  {item.fabric_code.substring(0, 2)}
-                                </div>
-                              )}
-                            </div>
-                            <span className="truncate max-w-[80px]">{item.fabric_name}</span>
-                          </td>
                           <td className="p-2 uppercase font-semibold text-muted-foreground">{item.fabric_code}</td>
+                          <td className="p-2 text-muted-foreground">{item.color ?? "—"}</td>
                           <td className="p-2 text-right">₹{parseFloat(String(item.price_per_meter)).toLocaleString("en-IN")}</td>
                           <td className="p-2 text-right">
                             {(() => {
@@ -1058,9 +1137,8 @@ export default function OrderNew() {
         </div>
 
         {/* Step 3: Fabric Details or Multiple Staged Swatches Details */}
-        <div className="space-y-4 pr-0">
+        <div className="lg:col-span-3 space-y-4 pr-0">
           <div>
-            <span className="text-xs font-bold text-primary uppercase tracking-wider block">Step 3</span>
             <h3 className="font-extrabold text-base text-foreground">
               {activeTab === "swatch" ? "Swatch Details" : "Fabric Details"}
             </h3>
@@ -1232,8 +1310,8 @@ export default function OrderNew() {
                   {activeFabric.image ? (
                     <img src={`${apiBaseUrl()}/storage/${activeFabric.image}`} className="h-full w-full object-cover" />
                   ) : (
-                    <div className="h-full w-full flex items-center justify-center bg-muted text-muted-foreground font-bold">
-                      {activeFabric.fabric_code}
+                    <div className="h-full w-full flex items-center justify-center bg-muted text-muted-foreground text-xl font-bold opacity-30 uppercase">
+                      {activeFabric.fabric_code.substring(0, 2)}
                     </div>
                   )}
                 </div>
@@ -1317,7 +1395,7 @@ export default function OrderNew() {
               {/* Meter Required */}
               <div className="space-y-1.5">
                 <label className="text-xs text-muted-foreground block font-medium">Meter Required</label>
-                <div className="flex items-center border rounded-lg overflow-hidden bg-card w-[180px]">
+                <div className="flex items-center border rounded-lg overflow-hidden bg-card w-full">
                   <Button
                     type="button"
                     variant="ghost"
@@ -1332,7 +1410,7 @@ export default function OrderNew() {
                     step="0.01"
                     value={fabricMeter}
                     onChange={(e) => setFabricMeter(Math.max(0.1, parseFloat(e.target.value) || 0))}
-                    className="w-20 h-8 border-none text-center font-bold focus-visible:ring-0 text-sm [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+                    className="flex-1 h-8 border-none text-center font-bold focus-visible:ring-0 text-sm [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
                   />
                   <Button
                     type="button"
@@ -1712,8 +1790,10 @@ export default function OrderNew() {
         <Button variant="outline" className="w-32" onClick={() => navigate("/orders")}>
           Cancel
         </Button>
-        <Button onClick={submit} disabled={createMutation.isPending} className="w-48 bg-primary text-white">
-          {createMutation.isPending ? "Creating..." : "Create Order"}
+        <Button onClick={submit} disabled={createMutation.isPending || updateMutation.isPending} className="w-48 bg-primary text-white">
+          {isEdit 
+            ? (updateMutation.isPending ? "Updating..." : "Update Order") 
+            : (createMutation.isPending ? "Creating..." : "Create Order")}
         </Button>
       </div>
 
