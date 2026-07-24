@@ -816,7 +816,7 @@ export default function OrderNew() {
                   <div className="h-8 w-8 mb-1.5 flex items-center justify-center">
                     {g.image_path ? (
                       <img
-                        src={`${apiBaseUrl}/${g.image_path.startsWith('uploads') ? '' : 'storage/'}${g.image_path}`}
+                        src={`${apiBaseUrl()}/${g.image_path.startsWith('uploads') ? '' : 'storage/'}${g.image_path}`}
                         alt={g.name}
                         className="max-h-full max-w-full object-contain"
                       />
@@ -902,7 +902,7 @@ export default function OrderNew() {
                           <td className="p-2 font-medium flex items-center gap-2">
                             <div className="h-6 w-6 rounded bg-muted overflow-hidden shrink-0">
                               {item.image ? (
-                                <img src={`${apiBaseUrl}/storage/${item.image}`} className="h-full w-full object-cover" />
+                                <img src={`${apiBaseUrl()}/storage/${item.image}`} className="h-full w-full object-cover" />
                               ) : (
                                 <div className="h-full w-full flex items-center justify-center bg-muted text-[8px] font-bold">
                                   {item.fabric_code.substring(0, 2)}
@@ -1230,7 +1230,7 @@ export default function OrderNew() {
               <div className="flex gap-3">
                 <div className="h-16 w-20 rounded-lg bg-muted border overflow-hidden shrink-0">
                   {activeFabric.image ? (
-                    <img src={`${apiBaseUrl}/storage/${activeFabric.image}`} className="h-full w-full object-cover" />
+                    <img src={`${apiBaseUrl()}/storage/${activeFabric.image}`} className="h-full w-full object-cover" />
                   ) : (
                     <div className="h-full w-full flex items-center justify-center bg-muted text-muted-foreground font-bold">
                       {activeFabric.fabric_code}

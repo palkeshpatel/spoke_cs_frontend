@@ -7,8 +7,7 @@ import { Label } from "@/components/ui/label";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { useToast } from "@/components/ui/use-toast";
 import { fetchGarments, createGarment, updateGarment, deleteGarment, Garment } from "@/services/inventory";
-
-const apiBaseUrl = import.meta.env.VITE_API_BASE_URL || "http://localhost:8000";
+import { apiBaseUrl } from "@/services/api";
 
 export default function GarmentCategoryList() {
   const { toast } = useToast();
@@ -129,7 +128,7 @@ export default function GarmentCategoryList() {
                     <td className="p-4">
                       <div className="h-12 w-12 rounded-lg border border-border bg-muted/30 flex items-center justify-center overflow-hidden">
                         {g.image_path ? (
-                          <img src={`${apiBaseUrl}/storage/${g.image_path}`} alt={g.name} className="h-full w-full object-contain p-1" />
+                          <img src={`${apiBaseUrl()}/storage/${g.image_path}`} alt={g.name} className="h-full w-full object-contain p-1" />
                         ) : (
                           <span className="text-muted-foreground text-xs">No img</span>
                         )}
