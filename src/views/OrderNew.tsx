@@ -1517,14 +1517,23 @@ export default function OrderNew() {
               <div className="space-y-2 max-h-48 overflow-y-auto pr-1">
                 {orderItems.map((item, idx) => {
                   if (item.type === "in_stock") {
+                    const fabricPrice = item.pricePerMeter! * item.meterRequired!;
                     return (
-                      <div key={idx} className="flex justify-between text-xs">
-                        <span className="text-muted-foreground truncate max-w-[180px]">
-                          {item.garmentName} ({item.fabricCode} | {item.meterRequired} m)
-                        </span>
-                        <span className="font-medium">
-                          ₹{Math.round((item.pricePerMeter! * item.meterRequired!) + (item.handworkPrice || 0)).toLocaleString("en-IN")}
-                        </span>
+                      <div key={idx} className="space-y-0.5">
+                        <div className="flex justify-between text-xs">
+                          <span className="text-muted-foreground truncate max-w-[180px]">
+                            {item.garmentName} ({item.fabricCode} | {item.meterRequired} m)
+                          </span>
+                          <span className="font-medium">
+                            ₹{Math.round(fabricPrice).toLocaleString("en-IN")}
+                          </span>
+                        </div>
+                        {item.handwork && (
+                          <div className="flex justify-between text-[11px] pl-3 italic text-muted-foreground">
+                            <span>+ Handwork</span>
+                            <span>₹{Math.round(item.handworkPrice || 0).toLocaleString("en-IN")}</span>
+                          </div>
+                        )}
                       </div>
                     );
                   } else {
