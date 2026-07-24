@@ -143,6 +143,7 @@ export async function apiRequest<TResponse>(
   const data = isJson ? await res.json().catch(() => null) : await res.text().catch(() => null);
 
   if (!res.ok) {
+
     if (res.status === 401 && options?.auth !== false && getAuthToken()) {
       clearAuthToken();
       if (typeof window !== "undefined" && !window.location.pathname.startsWith("/login")) {
@@ -153,11 +154,10 @@ export async function apiRequest<TResponse>(
       typeof data === "object" && data !== null && "message" in data
         ? String((data as { message?: unknown }).message ?? "Request failed")
         : "Request failed";
-    const err: ApiError = {
-      message: errorMessage,
-      status: res.status,
-      details: data,
-    };
+    const err: any = new Error(errorMessage);
+    err.status = res.status;
+    err.details = data;
+    err.response = { data };
     throw err;
   }
 
