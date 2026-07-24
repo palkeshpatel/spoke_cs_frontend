@@ -193,24 +193,13 @@ export default function InventoryList() {
   });
 
   const onSubmitFabric = (data: any) => {
-    if (selectedFormGarments.length === 0) {
-      toast.error("Please select at least one garment");
-      return;
-    }
     const formData = new FormData();
     if (editingFabric) {
       formData.append("id", String(editingFabric.id));
     }
     formData.append("fabric_code", data.fabric_code);
-    formData.append("fabric_name", data.fabric_name);
-    selectedFormGarments.forEach((gId) => {
-      formData.append("garment_ids[]", gId);
-    });
+    formData.append("fabric_name", data.fabric_code);
     formData.append("color", data.color || "");
-    formData.append("composition", data.composition || "");
-    formData.append("width_cm", data.width_cm || "");
-    formData.append("weight_gsm", data.weight_gsm || "");
-    formData.append("lead_time_days", data.lead_time_days || "");
     formData.append("price_per_meter", data.price_per_meter);
     formData.append("total_stock_meter", data.total_stock_meter);
 
@@ -372,11 +361,8 @@ export default function InventoryList() {
                 <tr className="border-b border-border bg-muted/40 font-medium text-muted-foreground">
                   <th className="p-3.5">Fabric</th>
                   <th className="p-3.5">Code</th>
-                  <th className="p-3.5">Garment</th>
                   <th className="p-3.5">Color</th>
                   <th className="p-3.5">Price/Meter</th>
-                  <th className="p-3.5 text-right">Total Stock</th>
-                  <th className="p-3.5 text-right">Reserved</th>
                   <th className="p-3.5 text-right">Available</th>
                   <th className="p-3.5">Status</th>
                   <th className="p-3.5 text-center">Action</th>
@@ -406,20 +392,11 @@ export default function InventoryList() {
                     <td className="p-3.5 font-bold uppercase text-xs text-muted-foreground">
                       {item.fabric_code}
                     </td>
-                    <td className="p-3.5 text-muted-foreground max-w-[150px] truncate" title={item.garments?.map(g => g.name).join(", ")}>
-                      {item.garments?.map(g => g.name).join(", ") || "—"}
-                    </td>
                     <td className="p-3.5">
                       {item.color ?? "—"}
                     </td>
                     <td className="p-3.5 font-medium">
                       ₹{parseFloat(String(item.price_per_meter)).toLocaleString("en-IN", { minimumFractionDigits: 2 })}
-                    </td>
-                    <td className="p-3.5 text-right font-medium">
-                      {Number(item.total_stock_meter).toFixed(2)} m
-                    </td>
-                    <td className="p-3.5 text-right font-medium text-amber-600">
-                      {Number(item.reserved_meter).toFixed(2)} m
                     </td>
                     <td className="p-3.5 text-right font-bold text-emerald-600">
                       {Number(item.available_meter).toFixed(2)} m
@@ -500,81 +477,20 @@ export default function InventoryList() {
                 <Input id="fabric_code" required {...register("fabric_code")} />
               </div>
               <div>
-                <Label htmlFor="fabric_name">Fabric Name *</Label>
-                <Input id="fabric_name" required {...register("fabric_name")} />
-              </div>
-            </div>
-
-            <div>
-              <div className="flex items-center justify-between mb-1.5">
-                <Label>Garments (Select all that apply) *</Label>
-                <Button
-                  type="button"
-                  variant="outline"
-                  size="sm"
-                  onClick={() => setNewGarmentOpen(true)}
-                  className="h-7 gap-1 px-2 text-xs"
-                >
-                  <Plus className="h-3 w-3" /> New Garment
-                </Button>
-              </div>
-              <div className="grid grid-cols-2 sm:grid-cols-3 gap-2.5 max-h-36 overflow-y-auto p-3 border rounded-lg bg-muted/20">
-                {garments?.map((g) => {
-                  const isChecked = selectedFormGarments.includes(String(g.id));
-                  return (
-                    <label key={g.id} className="flex items-center gap-2 text-xs text-foreground cursor-pointer select-none">
-                      <input
-                        type="checkbox"
-                        checked={isChecked}
-                        onChange={(e) => {
-                          if (e.target.checked) {
-                            setSelectedFormGarments(prev => [...prev, String(g.id)]);
-                          } else {
-                            setSelectedFormGarments(prev => prev.filter(id => id !== String(g.id)));
-                          }
-                        }}
-                        className="rounded border-input text-primary focus:ring-primary h-3.5 w-3.5"
-                      />
-                      {g.name}
-                    </label>
-                  );
-                })}
-              </div>
-            </div>
-
-            <div className="grid grid-cols-3 gap-4">
-              <div>
                 <Label htmlFor="color">Color</Label>
                 <Input id="color" {...register("color")} />
               </div>
-              <div>
-                <Label htmlFor="composition">Composition</Label>
-                <Input id="composition" placeholder="100% Cotton etc" {...register("composition")} />
-              </div>
-              <div>
-                <Label htmlFor="lead_time_days">Lead Time (Days)</Label>
-                <Input id="lead_time_days" type="number" {...register("lead_time_days")} />
-              </div>
             </div>
 
-            <div className="grid grid-cols-3 gap-4">
-              <div>
-                <Label htmlFor="width_cm">Width (cm)</Label>
-                <Input id="width_cm" type="number" step="0.01" {...register("width_cm")} />
-              </div>
-              <div>
-                <Label htmlFor="weight_gsm">GSM</Label>
-                <Input id="weight_gsm" type="number" step="0.01" {...register("weight_gsm")} />
-              </div>
+            <div className="grid grid-cols-2 gap-4">
               <div>
                 <Label htmlFor="price_per_meter">Price/Meter *</Label>
                 <Input id="price_per_meter" type="number" step="0.01" required {...register("price_per_meter")} />
               </div>
-            </div>
-
-            <div>
-              <Label htmlFor="total_stock_meter">Total Stock (Meters) *</Label>
-              <Input id="total_stock_meter" type="number" step="0.01" required {...register("total_stock_meter")} />
+              <div>
+                <Label htmlFor="total_stock_meter">Total Stock (Meters) *</Label>
+                <Input id="total_stock_meter" type="number" step="0.01" required {...register("total_stock_meter")} />
+              </div>
             </div>
 
             <div>
