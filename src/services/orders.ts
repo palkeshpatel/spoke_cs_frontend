@@ -16,9 +16,18 @@ export type OrderItemDto = {
   icon_path: string | null;
   note: string | null;
   handwork?: boolean | number;
+  handwork_price?: number | null;
   customization_flags?: string | null;
   quantity: number;
   price: string | number;
+  inventory_stock_id?: number | null;
+  meter_required?: number | null;
+  inventory_stock?: {
+    fabric_code: string;
+    fabric_name: string;
+    color: string | null;
+    price_per_meter: number | string;
+  } | null;
   created_at: string;
   updated_at: string;
 };
