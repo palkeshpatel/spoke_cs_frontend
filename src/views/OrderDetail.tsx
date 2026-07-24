@@ -257,7 +257,7 @@ export default function OrderDetail() {
         actions={
           <Button variant="outline" onClick={() => navigate(`/orders/edit/${orderId}`)}>
             <Pencil className="h-4 w-4 mr-2" />
-            Edit Full Order
+            Edit
           </Button>
         }
       />
@@ -446,10 +446,8 @@ export default function OrderDetail() {
                         }
                       }
                       return (
-                        <div key={i} className="flex items-start gap-4 p-2 border border-border rounded-xl bg-muted/10">
-                          <div className="flex items-center gap-2">
-                            <span className="text-sm font-medium text-muted-foreground w-6 text-center">{i + 1}.</span>
-                            <div className="w-12 h-12 shrink-0 rounded-lg bg-muted/30 flex items-center justify-center overflow-hidden border border-border">
+                        <div key={i} className="flex gap-4 p-3 border bg-card rounded-xl shadow-sm">
+                           <div className="w-14 h-14 shrink-0 rounded bg-muted/30 flex items-center justify-center overflow-hidden border border-border">
                               {item.icon_path ? (
                                 <ImagePreviewDialog src={resolvePublicUrl(item.icon_path)!} alt="Icon">
                                   <div className="relative w-full h-full group">
@@ -460,44 +458,35 @@ export default function OrderDetail() {
                                   </div>
                                 </ImagePreviewDialog>
                               ) : (
-                                <Camera className="h-5 w-5 text-muted-foreground" />
+                                <Camera className="h-5 w-5 text-muted-foreground/50" />
                               )}
-                            </div>
-                          </div>
-                          <div className="min-w-0 flex-1 py-1">
-                            <p className="text-sm text-foreground">
-                              {item.note || "No note"}
-                            </p>
-                            
-                            <div className="flex flex-wrap items-center gap-4 mt-2">
-                              <label className="flex items-center gap-1.5 text-xs text-muted-foreground cursor-not-allowed select-none">
-                                <input
-                                  type="checkbox"
-                                  checked={!!item.handwork}
-                                  disabled
-                                  className="rounded border-input text-primary focus:ring-primary h-3.5 w-3.5 opacity-70"
-                                />
-                                Handwork
-                              </label>
-
-                              <div className="flex items-center gap-1.5">
-                                <label className="flex items-center gap-1.5 text-xs text-muted-foreground cursor-not-allowed select-none">
-                                  <input
-                                    type="checkbox"
-                                    checked={flags.length > 0}
-                                    disabled
-                                    className="rounded border-input text-primary focus:ring-primary h-3.5 w-3.5 opacity-70"
-                                  />
-                                  Advanced Customization
-                                </label>
+                           </div>
+                           <div className="flex-1 min-w-0 flex flex-col justify-between">
+                              <div>
+                                <h4 className="font-bold text-sm text-foreground">{item.garment_type || "Unknown Category"}</h4>
+                                {item.inventory_stock && (
+                                  <p className="text-xs text-muted-foreground font-medium mt-0.5">{item.inventory_stock.fabric_code} | {item.inventory_stock.color}</p>
+                                )}
+                              </div>
+                              <p className="text-xs text-muted-foreground mt-1.5">{item.note ? `"${item.note}"` : "No note added"}</p>
+                              
+                              <div className="flex flex-wrap gap-1.5 mt-2.5">
+                                {!!item.handwork && (
+                                  <span className="inline-flex items-center px-1.5 py-0.5 rounded text-[9px] font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200">
+                                    Handwork {item.handwork_price ? `(₹${item.handwork_price})` : ""}
+                                  </span>
+                                )}
                                 {flags.length > 0 && (
-                                  <span className="text-xs text-muted-foreground font-medium">
-                                    ({flags.join(", ")})
+                                  <span className="inline-flex items-center px-1.5 py-0.5 rounded text-[9px] font-semibold bg-blue-50 text-blue-700 border border-blue-200" title={flags.join(", ")}>
+                                    Advanced Customization ({flags.length})
                                   </span>
                                 )}
                               </div>
-                            </div>
-                          </div>
+                           </div>
+                           <div className="text-right flex flex-col items-end gap-1">
+                              <span className="font-extrabold text-sm text-foreground">₹{Math.round(Number(item.price)).toLocaleString("en-IN")}</span>
+                              {item.meter_required && <span className="block text-xs font-semibold text-muted-foreground bg-muted px-1.5 py-0.5 rounded">{item.meter_required} m</span>}
+                           </div>
                         </div>
                       );
                     })
