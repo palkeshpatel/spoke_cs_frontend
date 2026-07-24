@@ -21,6 +21,15 @@ import { listGarments, listInventoryStocks } from "@/services/inventory";
 import { apiBaseUrl } from "@/services/api";
 import { Badge } from "@/components/ui/badge";
 
+type SwatchDetail = {
+  id: string;
+  note: string;
+  handwork: boolean;
+  customizations: Record<number, { priceModifier: number, note: string }>;
+  customImage: string | null;
+  isUploading?: boolean;
+};
+
 type OrderItemEntry = {
   id: string; // Unique local identifier
   type: "in_stock" | "swatch";
@@ -35,9 +44,8 @@ type OrderItemEntry = {
   meterRequired?: number;
   icon_path?: string | null;
   // For swatch items:
-  customImage?: string | null;
-  isUploading?: boolean;
-  // Common parameters:
+  swatches: SwatchDetail[];
+  // Common parameters for in-stock inline details:
   note: string;
   handwork: boolean;
   customizations: Record<number, { priceModifier: number, note: string }>;
@@ -92,19 +100,22 @@ export default function OrderNew() {
   // Master lists
   const [orderItems, setOrderItems] = useState<OrderItemEntry[]>([]);
   const [editingItemIndex, setEditingItemIndex] = useState<number | null>(null);
+  const [editingSwatchIndex, setEditingSwatchIndex] = useState<number | null>(null);
+
+  // Dialog triggers
+  const [customizationDialogOpen, setCustomizationDialogOpen] = useState<boolean>(false);
+  const [activeCustomizationTarget, setActiveCustomizationTarget] = useState<
+    "fabric" | "swatch" | { type: "item"; index: number } | { type: "swatch_item"; itemIndex: number; swatchIndex: number } | null
+  >(null);
+
+  const fileInputRef = useRef<HTMLInputElement | null>(null);
+  const itemFileInputRef = useRef<HTMLInputElement | null>(null);
+  const bodyImageRefs = useRef<Record<string, HTMLInputElement | null>>({});
 
   const isAlreadyAdded = useMemo(() => {
     if (!activeFabric) return false;
     return orderItems.some((item) => item.fabricId === activeFabric.id);
   }, [activeFabric, orderItems]);
-
-  // Dialog triggers
-  const [customizationDialogOpen, setCustomizationDialogOpen] = useState<boolean>(false);
-  const [activeCustomizationTarget, setActiveCustomizationTarget] = useState<"fabric" | "swatch" | { type: "item"; index: number } | null>(null);
-
-  const fileInputRef = useRef<HTMLInputElement | null>(null);
-  const itemFileInputRef = useRef<HTMLInputElement | null>(null);
-  const bodyImageRefs = useRef<Record<string, HTMLInputElement | null>>({});
 
   // Fetch customizations
   const { data: customizationsData } = useQuery({
@@ -189,7 +200,7 @@ export default function OrderNew() {
   // Add In-Stock fabric item to order
   const handleAddInStockItem = () => {
     if (!selectedGarmentName) {
-      toast({ title: "Validation Error", description: "Please select a category first.", variant: "destructive" });
+      toast({ title: "Validation Error", description: "Please select Jodhpuri / category first.", variant: "destructive" });
       return;
     }
     if (!activeFabric) {
@@ -220,6 +231,7 @@ export default function OrderNew() {
       handwork: fabricHandwork,
       customizations: { ...fabricCustomizations },
       icon_path: activeFabric.image,
+      swatches: [],
     };
 
     setOrderItems((prev) => [...prev, newItem]);
@@ -233,25 +245,49 @@ export default function OrderNew() {
     toast({ title: "Item added", description: `${newItem.garmentName} added to order items.` });
   };
 
-  // Add Swatch / On Demand item to order
+  // Add Swatch / On Demand item to order (Append to existing card if it exists)
   const handleAddSwatchItem = () => {
     if (!selectedGarmentName) {
       toast({ title: "Validation Error", description: "Please select a category first.", variant: "destructive" });
       return;
     }
 
-    const newItem: OrderItemEntry = {
+    const newSwatch: SwatchDetail = {
       id: Math.random().toString(36).substring(7),
-      type: "swatch",
-      garmentName: selectedGarmentName,
-      garmentId: selectedGarmentId,
       note: swatchNote,
       handwork: swatchHandwork,
       customizations: { ...swatchCustomizations },
       customImage: swatchImage,
     };
 
-    setOrderItems((prev) => [...prev, newItem]);
+    setOrderItems((prev) => {
+      // Find if we already have a swatch card for this garment type
+      const existingIdx = prev.findIndex(item => item.type === "swatch" && item.garmentName === selectedGarmentName);
+      if (existingIdx !== -1) {
+        return prev.map((item, idx) => {
+          if (idx === existingIdx) {
+            return {
+              ...item,
+              swatches: [...item.swatches, newSwatch],
+            };
+          }
+          return item;
+        });
+      } else {
+        // Create new swatch card
+        const newCard: OrderItemEntry = {
+          id: Math.random().toString(36).substring(7),
+          type: "swatch",
+          garmentName: selectedGarmentName,
+          garmentId: selectedGarmentId,
+          swatches: [newSwatch],
+          note: "",
+          handwork: false,
+          customizations: {},
+        };
+        return [...prev, newCard];
+      }
+    });
 
     // Clear form
     setSwatchNote("");
@@ -259,7 +295,7 @@ export default function OrderNew() {
     setSwatchCustomizations({});
     setSwatchImage(null);
 
-    toast({ title: "Item added", description: `${newItem.garmentName} added to order items.` });
+    toast({ title: "Swatch Added", description: `Added swatch to ${selectedGarmentName}.` });
   };
 
   // Item inline updates
@@ -267,17 +303,66 @@ export default function OrderNew() {
     setOrderItems(prev => prev.map((item, i) => i === index ? { ...item, ...fields } : item));
   };
 
-  const handleItemImageUpload = async (index: number, file: File | null) => {
+  const handleUpdateSwatchField = (itemIndex: number, swatchIndex: number, fields: Partial<SwatchDetail>) => {
+    setOrderItems(prev => prev.map((item, i) => {
+      if (i === itemIndex) {
+        const updatedSwatches = item.swatches.map((sw, sIdx) =>
+          sIdx === swatchIndex ? { ...sw, ...fields } : sw
+        );
+        return { ...item, swatches: updatedSwatches };
+      }
+      return item;
+    }));
+  };
+
+  const handleSwatchRowUpload = async (itemIndex: number, swatchIndex: number, file: File | null) => {
     if (!file) return;
-    setOrderItems(prev => prev.map((item, i) => i === index ? { ...item, isUploading: true } : item));
+    setOrderItems(prev => prev.map((item, i) => {
+      if (i === itemIndex) {
+        const updatedSwatches = item.swatches.map((sw, sIdx) =>
+          sIdx === swatchIndex ? { ...sw, isUploading: true } : sw
+        );
+        return { ...item, swatches: updatedSwatches };
+      }
+      return item;
+    }));
+
     try {
       const uploaded = await uploadOrderItemIcon({ blob: file, fileName: file.name });
-      setOrderItems(prev => prev.map((item, i) => i === index ? { ...item, customImage: uploaded.icon_path, isUploading: false } : item));
-      toast({ title: "Image uploaded", description: "Item image updated." });
+      setOrderItems(prev => prev.map((item, i) => {
+        if (i === itemIndex) {
+          const updatedSwatches = item.swatches.map((sw, sIdx) =>
+            sIdx === swatchIndex ? { ...sw, customImage: uploaded.icon_path, isUploading: false } : sw
+          );
+          return { ...item, swatches: updatedSwatches };
+        }
+        return item;
+      }));
+      toast({ title: "Image uploaded", description: "Swatch image updated." });
     } catch (err: any) {
-      setOrderItems(prev => prev.map((item, i) => i === index ? { ...item, isUploading: false } : item));
+      setOrderItems(prev => prev.map((item, i) => {
+        if (i === itemIndex) {
+          const updatedSwatches = item.swatches.map((sw, sIdx) =>
+            sIdx === swatchIndex ? { ...sw, isUploading: false } : sw
+          );
+          return { ...item, swatches: updatedSwatches };
+        }
+        return item;
+      }));
       toast({ title: "Upload failed", description: err.message || "Unable to upload image.", variant: "destructive" });
     }
+  };
+
+  const handleRemoveSwatch = (itemIndex: number, swatchIndex: number) => {
+    setOrderItems(prev => {
+      return prev.map((item, i) => {
+        if (i === itemIndex) {
+          const filtered = item.swatches.filter((_, sIdx) => sIdx !== swatchIndex);
+          return { ...item, swatches: filtered };
+        }
+        return item;
+      }).filter(item => item.type !== "swatch" || item.swatches.length > 0);
+    });
   };
 
   const handleRemoveItem = (index: number) => {
@@ -348,6 +433,38 @@ export default function OrderNew() {
       return;
     }
 
+    // FlatMap so each swatch in a swatch category becomes a separate DB order item
+    const itemsPayload: any[] = [];
+    orderItems.forEach((item) => {
+      if (item.type === "in_stock") {
+        itemsPayload.push({
+          garment_type: item.garmentName,
+          quantity: 1,
+          price: item.pricePerMeter! * item.meterRequired!,
+          icon_path: item.icon_path || null,
+          note: item.note || null,
+          handwork: item.handwork,
+          inventory_stock_id: item.fabricId,
+          meter_required: item.meterRequired,
+          customization_flags: Object.keys(item.customizations).length > 0 ? JSON.stringify(item.customizations) : null,
+        });
+      } else {
+        item.swatches.forEach((sw) => {
+          itemsPayload.push({
+            garment_type: item.garmentName,
+            quantity: 1,
+            price: 0,
+            icon_path: sw.customImage || null,
+            note: sw.note || null,
+            handwork: sw.handwork,
+            inventory_stock_id: null,
+            meter_required: null,
+            customization_flags: Object.keys(sw.customizations).length > 0 ? JSON.stringify(sw.customizations) : null,
+          });
+        });
+      }
+    });
+
     createMutation.mutate({
       customer_id: Number(customerId),
       fabric: orderItems.filter(i => i.type === "in_stock").map(i => i.fabricCode).join(", "),
@@ -355,17 +472,7 @@ export default function OrderNew() {
       status: status,
       trial_date: trialDate || null,
       delivery_date: deliveryDate || null,
-      items: orderItems.map((item) => ({
-        garment_type: item.garmentName,
-        quantity: 1,
-        price: item.type === "in_stock" ? (item.pricePerMeter! * item.meterRequired!) : 0,
-        icon_path: item.type === "in_stock" ? (item.customImage || item.icon_path || null) : (item.customImage || null),
-        note: item.note || null,
-        handwork: item.handwork,
-        inventory_stock_id: item.type === "in_stock" ? item.fabricId : null,
-        meter_required: item.type === "in_stock" ? item.meterRequired : null,
-        customization_flags: Object.keys(item.customizations).length > 0 ? JSON.stringify(item.customizations) : null,
-      })),
+      items: itemsPayload,
       customizations: [],
     });
   };
@@ -835,7 +942,7 @@ export default function OrderNew() {
         {/* Left: Order Items List */}
         <div className="lg:col-span-8 space-y-4">
           <div className="flex justify-between items-center bg-card p-3 border border-border rounded-xl shadow-xs">
-            <h3 className="font-extrabold text-sm text-foreground">Order Item ({orderItems.length})</h3>
+            <h3 className="font-extrabold text-sm text-foreground">Order Item ({orderItems.reduce((acc, curr) => acc + (curr.type === 'swatch' ? curr.swatches.length : 1), 0)})</h3>
             {orderItems.length > 0 && (
               <Button variant="ghost" size="sm" onClick={() => setOrderItems([])} className="h-7 text-xs text-destructive hover:bg-destructive/5">
                 Clear All
@@ -849,160 +956,244 @@ export default function OrderNew() {
             </div>
           ) : (
             <div className="grid sm:grid-cols-2 gap-4">
-              {orderItems.map((item, index) => {
-                const preview = item.customImage
-                  ? resolvePublicUrl(item.customImage)
-                  : null;
-
-                return (
-                  <div key={item.id} className="relative border border-border bg-card p-4 rounded-xl space-y-3 shadow-xs group">
-                    <div className="flex gap-3">
-                      {/* Thumbnail Upload/View */}
-                      {item.isUploading ? (
-                        <div className="h-16 w-16 shrink-0 rounded bg-muted/20 border flex items-center justify-center">
-                          <Loader2 className="h-4 w-4 animate-spin" />
-                        </div>
-                      ) : preview ? (
-                        <div className="relative h-16 w-16 shrink-0 rounded overflow-hidden border bg-muted/20 group/img">
-                          <ImagePreviewDialog src={preview} alt={item.garmentName}>
-                            <img src={preview} className="h-full w-full object-cover cursor-pointer" />
-                          </ImagePreviewDialog>
-                          <button
-                            type="button"
-                            onClick={() => {
-                              setEditingItemIndex(index);
-                              itemFileInputRef.current?.click();
-                            }}
-                            className="absolute inset-0 bg-black/40 hover:bg-black/60 text-white flex items-center justify-center opacity-0 group-hover/img:opacity-100 transition-opacity"
-                          >
-                            <Camera className="h-3.5 w-3.5" />
-                          </button>
-                        </div>
-                      ) : (
-                        <button
-                          type="button"
-                          onClick={() => {
-                            setEditingItemIndex(index);
-                            itemFileInputRef.current?.click();
-                          }}
-                          className="h-16 w-16 shrink-0 rounded border border-dashed flex flex-col items-center justify-center text-muted-foreground hover:bg-muted/10"
-                        >
-                          <Camera className="h-4 w-4" />
-                          <span className="text-[8px] mt-0.5">Photo</span>
-                        </button>
-                      )}
-
-                      <div className="min-w-0 flex-1">
-                        <div className="flex justify-between items-start gap-1">
-                          <span className="font-extrabold text-sm text-foreground block truncate">{item.garmentName}</span>
-                          <div className="flex gap-1">
-                            <button
-                              type="button"
-                              onClick={() => {
-                                setEditingItemIndex(index);
-                                setActiveCustomizationTarget({ type: "item", index });
-                                setCustomizationDialogOpen(true);
-                              }}
-                              className="text-muted-foreground hover:text-foreground p-0.5 rounded border border-border"
-                              title="Edit Customizations"
-                            >
-                              <Edit2 className="h-3 w-3" />
-                            </button>
-                            <button
-                              type="button"
-                              onClick={() => handleRemoveItem(index)}
-                              className="text-muted-foreground hover:text-destructive p-0.5 rounded border border-border"
-                              title="Remove item"
-                            >
-                              <Trash2 className="h-3 w-3" />
-                            </button>
+              {orderItems.map((item, itemIdx) => {
+                if (item.type === "in_stock") {
+                  const preview = item.icon_path ? resolvePublicUrl(item.icon_path) : null;
+                  return (
+                    <div key={item.id} className="relative border border-border bg-card p-4 rounded-xl space-y-3 shadow-xs group">
+                      <div className="flex gap-3">
+                        {preview ? (
+                          <div className="relative h-16 w-16 shrink-0 rounded overflow-hidden border bg-muted/20">
+                            <ImagePreviewDialog src={preview} alt={item.garmentName}>
+                              <img src={preview} className="h-full w-full object-cover cursor-pointer" />
+                            </ImagePreviewDialog>
                           </div>
-                        </div>
+                        ) : (
+                          <div className="h-16 w-16 shrink-0 rounded border border-dashed flex flex-col items-center justify-center text-muted-foreground bg-muted/10 font-bold text-[10px]">
+                            {item.fabricCode?.substring(0,2)}
+                          </div>
+                        )}
 
-                        {item.type === "in_stock" ? (
+                        <div className="min-w-0 flex-1">
+                          <div className="flex justify-between items-start gap-1">
+                            <span className="font-extrabold text-sm text-foreground block truncate">{item.garmentName}</span>
+                            <div className="flex gap-1">
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  setEditingItemIndex(itemIdx);
+                                  setActiveCustomizationTarget({ type: "item", index: itemIdx });
+                                  setCustomizationDialogOpen(true);
+                                }}
+                                className="text-muted-foreground hover:text-foreground p-0.5 rounded border border-border"
+                                title="Edit Customizations"
+                              >
+                                <Edit2 className="h-3 w-3" />
+                              </button>
+                              <button
+                                type="button"
+                                onClick={() => handleRemoveItem(itemIdx)}
+                                className="text-muted-foreground hover:text-destructive p-0.5 rounded border border-border"
+                                title="Remove item"
+                              >
+                                <Trash2 className="h-3 w-3" />
+                              </button>
+                            </div>
+                          </div>
+
                           <div className="text-[11px] text-muted-foreground space-y-0.5 mt-0.5">
                             <span className="block font-medium">{item.fabricCode} | {item.color}</span>
                             <span className="block">{item.meterRequired} m</span>
                             <span className="block font-bold text-foreground">₹{Math.round(item.pricePerMeter! * item.meterRequired!).toLocaleString("en-IN")}</span>
                           </div>
-                        ) : (
-                          <div className="text-[11px] text-muted-foreground space-y-0.5 mt-0.5">
-                            <span className="block italic">Swatch Item</span>
-                            <span className="block truncate font-medium">Note: {item.note || "—"}</span>
-                          </div>
+                        </div>
+                      </div>
+
+                      {/* Common editable controls inline */}
+                      <div className="space-y-2 pt-2 border-t border-dashed">
+                        <Input
+                          placeholder="Stitching Note"
+                          value={item.note}
+                          onChange={(e) => handleUpdateItemField(itemIdx, { note: e.target.value })}
+                          className="h-7 text-xs bg-muted/10 border-border"
+                        />
+
+                        <div className="flex items-center gap-3">
+                          <label className="flex items-center gap-1 text-[10px] text-muted-foreground cursor-pointer select-none">
+                            <input
+                              type="checkbox"
+                              checked={item.handwork}
+                              onChange={(e) => handleUpdateItemField(itemIdx, { handwork: e.target.checked })}
+                              className="rounded border-input text-primary focus:ring-primary h-3 w-3"
+                            />
+                            Handwork
+                          </label>
+
+                          <label className="flex items-center gap-1 text-[10px] text-muted-foreground cursor-pointer select-none">
+                            <input
+                              type="checkbox"
+                              checked={Object.keys(item.customizations).length > 0}
+                              onChange={(e) => {
+                                if (!e.target.checked) {
+                                  handleUpdateItemField(itemIdx, { customizations: {} });
+                                } else {
+                                  setEditingItemIndex(itemIdx);
+                                  setActiveCustomizationTarget({ type: "item", index: itemIdx });
+                                  setCustomizationDialogOpen(true);
+                                }
+                              }}
+                              className="rounded border-input text-primary focus:ring-primary h-3 w-3"
+                            />
+                            Customization
+                          </label>
+                        </div>
+                      </div>
+
+                      {/* Badges footer */}
+                      <div className="flex flex-wrap gap-1 mt-1">
+                        {item.handwork && (
+                          <span className="inline-flex items-center px-1.5 py-0.5 rounded-full text-[9px] font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200">
+                            Handwork
+                          </span>
+                        )}
+                        {Object.keys(item.customizations).length > 0 && (
+                          <span className="inline-flex items-center px-1.5 py-0.5 rounded-full text-[9px] font-semibold bg-blue-50 text-blue-700 border border-blue-200">
+                            Advance Customization
+                          </span>
                         )}
                       </div>
                     </div>
+                  );
+                } else {
+                  /* Swatch Category Card with Multiple Swatches */
+                  return (
+                    <div key={item.id} className="relative border border-border bg-card p-4 rounded-xl space-y-3 shadow-xs group">
+                      <div className="flex justify-between items-center pb-2 border-b">
+                        <span className="font-extrabold text-sm text-foreground block">{item.garmentName}</span>
+                        <span className="text-[10px] text-muted-foreground font-semibold">Swatch Item ({item.swatches.length})</span>
+                      </div>
 
-                    <input
-                      ref={itemFileInputRef}
-                      type="file"
-                      accept="image/*"
-                      className="hidden"
-                      onChange={(e) => {
-                        const file = e.target.files?.[0] ?? null;
-                        if (editingItemIndex !== null) {
-                          handleItemImageUpload(editingItemIndex, file);
-                        }
-                        e.currentTarget.value = "";
-                      }}
-                    />
+                      <div className="space-y-3 max-h-60 overflow-y-auto">
+                        {item.swatches.map((sw, swIdx) => {
+                          const preview = sw.customImage ? resolvePublicUrl(sw.customImage) : null;
+                          return (
+                            <div key={sw.id} className="p-2 border rounded-lg bg-muted/10 space-y-2">
+                              <div className="flex gap-2 items-start">
+                                {/* Swatch row image */}
+                                {sw.isUploading ? (
+                                  <div className="h-10 w-10 shrink-0 rounded bg-muted/20 border flex items-center justify-center">
+                                    <Loader2 className="h-3 w-3 animate-spin" />
+                                  </div>
+                                ) : preview ? (
+                                  <div className="relative h-10 w-10 shrink-0 rounded overflow-hidden border bg-muted/20 group/img">
+                                    <ImagePreviewDialog src={preview} alt={item.garmentName}>
+                                      <img src={preview} className="h-full w-full object-cover cursor-pointer" />
+                                    </ImagePreviewDialog>
+                                    <button
+                                      type="button"
+                                      onClick={() => {
+                                        setEditingItemIndex(itemIdx);
+                                        setEditingSwatchIndex(swIdx);
+                                        itemFileInputRef.current?.click();
+                                      }}
+                                      className="absolute inset-0 bg-black/40 hover:bg-black/60 text-white flex items-center justify-center opacity-0 group-hover/img:opacity-100 transition-opacity"
+                                    >
+                                      <Camera className="h-3 w-3" />
+                                    </button>
+                                  </div>
+                                ) : (
+                                  <button
+                                    type="button"
+                                    onClick={() => {
+                                      setEditingItemIndex(itemIdx);
+                                      setEditingSwatchIndex(swIdx);
+                                      itemFileInputRef.current?.click();
+                                    }}
+                                    className="h-10 w-10 shrink-0 rounded border border-dashed flex flex-col items-center justify-center text-muted-foreground hover:bg-muted/10"
+                                  >
+                                    <Camera className="h-3.5 w-3.5" />
+                                  </button>
+                                )}
 
-                    {/* Common editable controls inline */}
-                    <div className="space-y-2 pt-2 border-t border-dashed">
-                      <Input
-                        placeholder="Stitching Note"
-                        value={item.note}
-                        onChange={(e) => handleUpdateItemField(index, { note: e.target.value })}
-                        className="h-7 text-xs bg-muted/10 border-border"
-                      />
+                                <div className="flex-1 min-w-0">
+                                  <div className="flex justify-between items-start">
+                                    <span className="text-[10px] font-bold text-muted-foreground">Swatch #{swIdx + 1}</span>
+                                    <button
+                                      type="button"
+                                      onClick={() => handleRemoveSwatch(itemIdx, swIdx)}
+                                      className="text-muted-foreground hover:text-destructive p-0.5 rounded border"
+                                    >
+                                      <Trash2 className="h-2.5 w-2.5" />
+                                    </button>
+                                  </div>
+                                  <Input
+                                    placeholder="Stitching Note"
+                                    value={sw.note}
+                                    onChange={(e) => handleUpdateSwatchField(itemIdx, swIdx, { note: e.target.value })}
+                                    className="h-6 text-[10px] bg-card mt-1"
+                                  />
+                                </div>
+                              </div>
 
-                      <div className="flex items-center gap-3">
-                        <label className="flex items-center gap-1 text-[10px] text-muted-foreground cursor-pointer select-none">
-                          <input
-                            type="checkbox"
-                            checked={item.handwork}
-                            onChange={(e) => handleUpdateItemField(index, { handwork: e.target.checked })}
-                            className="rounded border-input text-primary focus:ring-primary h-3 w-3"
-                          />
-                          Handwork
-                        </label>
+                              <div className="flex items-center justify-between pt-1 border-t border-dashed">
+                                <div className="flex items-center gap-3">
+                                  <label className="flex items-center gap-1 text-[9px] text-muted-foreground cursor-pointer select-none">
+                                    <input
+                                      type="checkbox"
+                                      checked={sw.handwork}
+                                      onChange={(e) => handleUpdateSwatchField(itemIdx, swIdx, { handwork: e.target.checked })}
+                                      className="rounded border-input text-primary focus:ring-primary h-2.5 w-2.5"
+                                    />
+                                    Handwork
+                                  </label>
 
-                        <label className="flex items-center gap-1 text-[10px] text-muted-foreground cursor-pointer select-none">
-                          <input
-                            type="checkbox"
-                            checked={Object.keys(item.customizations).length > 0}
-                            onChange={(e) => {
-                              if (!e.target.checked) {
-                                handleUpdateItemField(index, { customizations: {} });
-                              } else {
-                                setEditingItemIndex(index);
-                                setActiveCustomizationTarget({ type: "item", index });
-                                setCustomizationDialogOpen(true);
-                              }
-                            }}
-                            className="rounded border-input text-primary focus:ring-primary h-3 w-3"
-                          />
-                          Customization
-                        </label>
+                                  <label className="flex items-center gap-1 text-[9px] text-muted-foreground cursor-pointer select-none">
+                                    <input
+                                      type="checkbox"
+                                      checked={Object.keys(sw.customizations).length > 0}
+                                      onChange={(e) => {
+                                        if (!e.target.checked) {
+                                          handleUpdateSwatchField(itemIdx, swIdx, { customizations: {} });
+                                        } else {
+                                          setEditingItemIndex(itemIdx);
+                                          setEditingSwatchIndex(swIdx);
+                                          setActiveCustomizationTarget({ type: "swatch_item", itemIndex: itemIdx, swatchIndex: swIdx });
+                                          setCustomizationDialogOpen(true);
+                                        }
+                                      }}
+                                      className="rounded border-input text-primary focus:ring-primary h-2.5 w-2.5"
+                                    />
+                                    Customization
+                                  </label>
+                                </div>
+
+                                <div className="flex gap-1">
+                                  {sw.handwork && <span className="text-[8px] bg-emerald-50 text-emerald-700 px-1 border border-emerald-200 rounded font-semibold">Handwork</span>}
+                                  {Object.keys(sw.customizations).length > 0 && <span className="text-[8px] bg-blue-50 text-blue-700 px-1 border border-blue-200 rounded font-semibold">Custom</span>}
+                                </div>
+                              </div>
+                            </div>
+                          );
+                        })}
+                      </div>
+
+                      <div className="pt-2 border-t">
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => {
+                            setSelectedGarmentName(item.garmentName);
+                            setSelectedGarmentId(item.garmentId);
+                            setActiveTab("swatch");
+                          }}
+                          className="w-full text-[10px] text-primary h-6 hover:bg-primary/5"
+                        >
+                          <Plus className="h-3 w-3 mr-1" /> Add More Swatches
+                        </Button>
                       </div>
                     </div>
-
-                    {/* Badges footer */}
-                    <div className="flex flex-wrap gap-1 mt-1">
-                      {item.handwork && (
-                        <span className="inline-flex items-center px-1.5 py-0.5 rounded-full text-[9px] font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200">
-                          Handwork
-                        </span>
-                      )}
-                      {Object.keys(item.customizations).length > 0 && (
-                        <span className="inline-flex items-center px-1.5 py-0.5 rounded-full text-[9px] font-semibold bg-blue-50 text-blue-700 border border-blue-200">
-                          Advance Customization
-                        </span>
-                      )}
-                    </div>
-                  </div>
-                );
+                  );
+                }
               })}
             </div>
           )}
@@ -1017,16 +1208,29 @@ export default function OrderNew() {
           ) : (
             <div className="space-y-3.5">
               <div className="space-y-2 max-h-48 overflow-y-auto pr-1">
-                {orderItems.map((item, idx) => (
-                  <div key={idx} className="flex justify-between text-xs">
-                    <span className="text-muted-foreground truncate max-w-[180px]">
-                      {item.garmentName} {item.type === "in_stock" ? `(${item.fabricCode} | ${item.meterRequired} m)` : "(Swatch)"}
-                    </span>
-                    <span className="font-medium">
-                      ₹{item.type === "in_stock" ? Math.round(item.pricePerMeter! * item.meterRequired!).toLocaleString("en-IN") : "0"}
-                    </span>
-                  </div>
-                ))}
+                {orderItems.map((item, idx) => {
+                  if (item.type === "in_stock") {
+                    return (
+                      <div key={idx} className="flex justify-between text-xs">
+                        <span className="text-muted-foreground truncate max-w-[180px]">
+                          {item.garmentName} ({item.fabricCode} | {item.meterRequired} m)
+                        </span>
+                        <span className="font-medium">
+                          ₹{Math.round(item.pricePerMeter! * item.meterRequired!).toLocaleString("en-IN")}
+                        </span>
+                      </div>
+                    );
+                  } else {
+                    return (
+                      <div key={idx} className="flex justify-between text-xs">
+                        <span className="text-muted-foreground truncate max-w-[180px]">
+                          {item.garmentName} (Swatch × {item.swatches.length})
+                        </span>
+                        <span className="font-medium">₹0</span>
+                      </div>
+                    );
+                  }
+                })}
               </div>
 
               <div className="border-t pt-3.5 space-y-2 text-xs">
@@ -1060,6 +1264,21 @@ export default function OrderNew() {
           </div>
         </div>
       </div>
+
+      {/* Hidden input for row swatch images */}
+      <input
+        ref={itemFileInputRef}
+        type="file"
+        accept="image/*"
+        className="hidden"
+        onChange={(e) => {
+          const file = e.target.files?.[0] ?? null;
+          if (editingItemIndex !== null && editingSwatchIndex !== null) {
+            handleSwatchRowUpload(editingItemIndex, editingSwatchIndex, file);
+          }
+          e.currentTarget.value = "";
+        }}
+      />
 
       {/* Customer Body Images */}
       <SectionCard title="Add Images Section">
@@ -1131,6 +1350,7 @@ export default function OrderNew() {
             setCustomizationDialogOpen(false);
             setActiveCustomizationTarget(null);
             setEditingItemIndex(null);
+            setEditingSwatchIndex(null);
           }
         }}
         selectedOptions={
@@ -1140,6 +1360,8 @@ export default function OrderNew() {
             ? swatchCustomizations
             : activeCustomizationTarget?.type === "item"
             ? orderItems[activeCustomizationTarget.index]?.customizations ?? {}
+            : activeCustomizationTarget?.type === "swatch_item"
+            ? orderItems[activeCustomizationTarget.itemIndex]?.swatches[activeCustomizationTarget.swatchIndex]?.customizations ?? {}
             : {}
         }
         onSelectionChange={(newCustomizations) => {
@@ -1149,6 +1371,8 @@ export default function OrderNew() {
             setSwatchCustomizations(newCustomizations);
           } else if (activeCustomizationTarget?.type === "item") {
             handleUpdateItemField(activeCustomizationTarget.index, { customizations: newCustomizations });
+          } else if (activeCustomizationTarget?.type === "swatch_item") {
+            handleUpdateSwatchField(activeCustomizationTarget.itemIndex, activeCustomizationTarget.swatchIndex, { customizations: newCustomizations });
           }
         }}
       />
