@@ -371,7 +371,7 @@ export default function InventoryList() {
               <tbody className="divide-y divide-border">
                 {stocksData?.data.map((item) => (
                   <tr key={item.id} className="hover:bg-muted/10 transition-colors">
-                    <td className="p-3.5 flex items-center gap-3">
+                    <td className="p-3.5 flex items-center justify-center w-16">
                       <div className="h-10 w-10 shrink-0 rounded bg-muted overflow-hidden border border-border">
                         {item.image ? (
                           <img
@@ -385,9 +385,6 @@ export default function InventoryList() {
                           </div>
                         )}
                       </div>
-                      <span className="font-semibold block max-w-[200px] truncate" title={item.fabric_name}>
-                        {item.fabric_name}
-                      </span>
                     </td>
                     <td className="p-3.5 font-bold uppercase text-xs text-muted-foreground">
                       {item.fabric_code}
