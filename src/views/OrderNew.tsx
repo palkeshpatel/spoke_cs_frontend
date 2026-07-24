@@ -515,19 +515,25 @@ export default function OrderNew() {
           </div>
 
           {/* Tabs */}
-          <div className="flex bg-muted/60 p-0.5 rounded-lg border border-border">
+          <div className="flex border-b border-border w-full">
             <button
+              type="button"
               onClick={() => setActiveTab("in_stock")}
-              className={`flex-1 text-center py-1 text-xs font-medium rounded-md transition-all ${
-                activeTab === "in_stock" ? "bg-white text-foreground shadow-sm" : "text-muted-foreground hover:text-foreground"
+              className={`flex-1 text-center pb-2 text-xs font-bold transition-all border-b-2 ${
+                activeTab === "in_stock"
+                  ? "border-[#6B3C15] text-[#6B3C15]"
+                  : "border-transparent text-muted-foreground hover:text-[#6B3C15]"
               }`}
             >
               In Stock
             </button>
             <button
+              type="button"
               onClick={() => setActiveTab("swatch")}
-              className={`flex-1 text-center py-1 text-xs font-medium rounded-md transition-all ${
-                activeTab === "swatch" ? "bg-white text-foreground shadow-sm" : "text-muted-foreground hover:text-foreground"
+              className={`flex-1 text-center pb-2 text-xs font-bold transition-all border-b-2 ${
+                activeTab === "swatch"
+                  ? "border-[#6B3C15] text-[#6B3C15]"
+                  : "border-transparent text-muted-foreground hover:text-[#6B3C15]"
               }`}
             >
               Swatch / On Demand
