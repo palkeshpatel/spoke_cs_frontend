@@ -331,10 +331,7 @@ export default function OrderNew() {
       setEditingItemIndex(null);
       toast({ title: "Item Updated", description: `${selectedGarmentName} order item updated.` });
     } else {
-      if (fabricMeter > parseFloat(String(activeFabric.available_meter))) {
-        toast({ title: "Validation Error", description: "Not enough stock available.", variant: "destructive" });
-        return;
-      }
+
 
       const newItem: OrderItemEntry = {
         id: "stock-" + Date.now() + "-" + Math.random().toString(36).substring(2, 9),
@@ -908,10 +905,24 @@ export default function OrderNew() {
                           <td className="p-2 uppercase font-semibold text-muted-foreground">{item.fabric_code}</td>
                           <td className="p-2 text-right">₹{parseFloat(String(item.price_per_meter)).toLocaleString("en-IN")}</td>
                           <td className="p-2 text-right">
-                            <span className="font-semibold block text-emerald-600">{Number(item.available_meter).toFixed(2)} m</span>
-                            <span className="text-[9px] text-muted-foreground">
-                              {item.status === "low_stock" ? "Low Stock" : "In Stock"}
-                            </span>
+                            {(() => {
+                              const avail = Number(item.available_meter);
+                              let colorClass = "text-emerald-600";
+                              let label = "In Stock";
+                              if (avail <= 0) {
+                                colorClass = "text-destructive";
+                                label = "Out of Stock";
+                              } else if (avail < 4) {
+                                colorClass = "text-orange-500";
+                                label = "Low Stock";
+                              }
+                              return (
+                                <>
+                                  <span className={`font-semibold block ${colorClass}`}>{avail.toFixed(2)} m</span>
+                                  <span className="text-[9px] text-muted-foreground">{label}</span>
+                                </>
+                              );
+                            })()}
                           </td>
                         </tr>
                       ))}
@@ -1228,7 +1239,13 @@ export default function OrderNew() {
                 <span className="text-muted-foreground">Price / Meter</span>
                 <span className="text-right font-bold text-foreground">₹{parseFloat(String(activeFabric.price_per_meter)).toLocaleString("en-IN", { minimumFractionDigits: 2 })}</span>
                 <span className="text-muted-foreground">Available</span>
-                <span className="text-right font-semibold text-emerald-600">{Number(activeFabric.available_meter).toFixed(2)} m</span>
+                {(() => {
+                  const avail = Number(activeFabric.available_meter);
+                  let colorClass = "text-emerald-600";
+                  if (avail <= 0) colorClass = "text-destructive";
+                  else if (avail < 4) colorClass = "text-orange-500";
+                  return <span className={`text-right font-semibold ${colorClass}`}>{avail.toFixed(2)} m</span>;
+                })()}
               </div>
 
               <div className="flex items-center gap-4 px-0.5">
