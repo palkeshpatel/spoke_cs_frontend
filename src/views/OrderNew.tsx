@@ -1366,21 +1366,6 @@ export default function OrderNew() {
                           );
                         })}
                       </div>
-
-                      <div className="pt-2 border-t">
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => {
-                            setSelectedGarmentName(item.garmentName);
-                            setSelectedGarmentId(item.garmentId);
-                            setActiveTab("swatch");
-                          }}
-                          className="w-full text-[10px] text-primary h-6 hover:bg-primary/5"
-                        >
-                          <Plus className="h-3 w-3 mr-1" /> Add More Swatches
-                        </Button>
-                      </div>
                     </div>
                   );
                 }
