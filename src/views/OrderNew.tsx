@@ -695,7 +695,7 @@ export default function OrderNew() {
                 disabled={!selectedGarmentName}
                 className="w-full bg-primary h-8 text-xs mt-2"
               >
-                <Plus className="h-3.5 w-3.5 mr-1" /> Add Swatch Item
+                <Plus className="h-3.5 w-3.5 mr-1" /> Add
               </Button>
             </div>
           )}
