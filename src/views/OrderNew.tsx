@@ -772,13 +772,13 @@ export default function OrderNew() {
               {/* Meter Required */}
               <div className="space-y-1.5">
                 <label className="text-xs text-muted-foreground block font-medium">Meter Required</label>
-                <div className="flex items-center border rounded-lg overflow-hidden bg-card w-[150px]">
+                <div className="flex items-center border rounded-lg overflow-hidden bg-card w-[180px]">
                   <Button
                     type="button"
                     variant="ghost"
                     size="icon"
                     onClick={() => setFabricMeter(m => Math.max(0.1, m - 0.25))}
-                    className="h-8 w-8 rounded-none border-r"
+                    className="h-8 w-8 rounded-none border-r shrink-0"
                   >
                     <Minus className="h-3.5 w-3.5" />
                   </Button>
@@ -787,14 +787,14 @@ export default function OrderNew() {
                     step="0.01"
                     value={fabricMeter}
                     onChange={(e) => setFabricMeter(Math.max(0.1, parseFloat(e.target.value) || 0))}
-                    className="w-14 h-8 border-none text-center font-bold focus-visible:ring-0 text-xs"
+                    className="w-20 h-8 border-none text-center font-bold focus-visible:ring-0 text-sm [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
                   />
                   <Button
                     type="button"
                     variant="ghost"
                     size="icon"
                     onClick={() => setFabricMeter(m => m + 0.25)}
-                    className="h-8 w-8 rounded-none border-l"
+                    className="h-8 w-8 rounded-none border-l shrink-0"
                   >
                     <Plus className="h-3.5 w-3.5" />
                   </Button>
