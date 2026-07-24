@@ -799,7 +799,6 @@ export default function OrderNew() {
           
           <div className="grid grid-cols-3 gap-2 max-h-[380px] overflow-y-auto pr-1">
             {garments?.map((g) => {
-              const imageName = categoryImages[g.name];
               const isSelected = selectedGarmentName === g.name;
               return (
                 <button
@@ -815,9 +814,9 @@ export default function OrderNew() {
                   }`}
                 >
                   <div className="h-8 w-8 mb-1.5 flex items-center justify-center">
-                    {imageName ? (
+                    {g.image_path ? (
                       <img
-                        src={`${apiBaseUrl}/uploads/cat/${imageName}`}
+                        src={`${apiBaseUrl}/${g.image_path.startsWith('uploads') ? '' : 'storage/'}${g.image_path}`}
                         alt={g.name}
                         className="max-h-full max-w-full object-contain"
                       />

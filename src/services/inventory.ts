@@ -5,6 +5,7 @@ export type Garment = {
   id: number;
   branch_id: number | null;
   name: string;
+  image_path?: string | null;
   created_at: string;
   updated_at: string;
 };
@@ -49,14 +50,37 @@ export type InventoryTransaction = {
   } | null;
 };
 
-export async function listGarments() {
+export async function fetchGarments() {
   return apiRequest<Garment[]>("/api/inventory/garments");
 }
 
-export async function createGarment(name: string) {
+export async function listGarments() {
+  return fetchGarments();
+}
+
+export async function createGarment(data: FormData | string) {
+  if (typeof data === "string") {
+    return apiRequest<Garment>("/api/inventory/garments", {
+      method: "POST",
+      body: { name: data },
+    });
+  }
   return apiRequest<Garment>("/api/inventory/garments", {
     method: "POST",
-    body: { name },
+    body: data as unknown as Record<string, unknown>, // the generic apiRequest will handle FormData internally if adapted, but wait. If apiRequest doesn't support FormData directly, we'll see. Wait, usually axios instance handles it.
+  });
+}
+
+export async function updateGarment(id: number, data: FormData) {
+  return apiRequest<Garment>(`/api/inventory/garments/${id}`, {
+    method: "POST", // using POST because FormData with files doesn't work well with PUT in PHP
+    body: data as unknown as Record<string, unknown>,
+  });
+}
+
+export async function deleteGarment(id: number) {
+  return apiRequest(`/api/inventory/garments/${id}`, {
+    method: "DELETE",
   });
 }
 

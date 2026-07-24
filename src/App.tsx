@@ -38,6 +38,7 @@ import Wishes from "@/views/Wishes";
 import ActivityLogList from "@/views/ActivityLogList";
 import InventoryList from "@/views/InventoryList";
 import InventoryHistory from "@/views/InventoryHistory";
+import GarmentCategoryList from "@/views/GarmentCategoryList";
 
 const queryClient = new QueryClient();
 
@@ -128,6 +129,7 @@ const App = () => (
               <Route path="/activity-logs" element={<ActivityLogList />} />
               <Route path="/inventory" element={<InventoryList />} />
               <Route path="/inventory/history" element={<InventoryHistory />} />
+              <Route path="/garment-categories" element={<GarmentCategoryList />} />
               <Route path="*" element={<NotFound />} />
             </Route>
           </Route>
