@@ -700,7 +700,7 @@ export default function OrderNew() {
 
   const sgst = useMemo(() => subTotal * 0.025, [subTotal]);
   const cgst = useMemo(() => subTotal * 0.025, [subTotal]);
-  const grandTotal = useMemo(() => subTotal + sgst + cgst, [subTotal, sgst, cgst]);
+  const grandTotal = subTotal;
 
   const imageTypes = [
     { key: "full_body", label: "Full Photo" },
@@ -1557,11 +1557,11 @@ export default function OrderNew() {
                   <span className="font-medium">₹{Math.round(subTotal).toLocaleString("en-IN")}</span>
                 </div>
                 <div className="flex justify-between">
-                  <span className="text-muted-foreground">SGST (2.5%)</span>
+                  <span className="text-muted-foreground">SGST (2.5% Included)</span>
                   <span className="font-medium">₹{Math.round(sgst).toLocaleString("en-IN")}</span>
                 </div>
                 <div className="flex justify-between">
-                  <span className="text-muted-foreground">CGST (2.5%)</span>
+                  <span className="text-muted-foreground">CGST (2.5% Included)</span>
                   <span className="font-medium">₹{Math.round(cgst).toLocaleString("en-IN")}</span>
                 </div>
                 <div className="flex justify-between text-sm font-extrabold border-t pt-2 mt-2">
