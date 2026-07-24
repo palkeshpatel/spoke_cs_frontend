@@ -92,7 +92,8 @@ export default function OrderNew() {
   const [swatchImage, setSwatchImage] = useState<string | null>(null);
   const [swatchUploading, setSwatchUploading] = useState<boolean>(false);
 
-  // Step 3: Fabric Details options
+  // Step 3: Fabric Details options / Swatch Details options
+  const [activeSwatchDetail, setActiveSwatchDetail] = useState<SwatchDetail | null>(null);
   const [fabricHandwork, setFabricHandwork] = useState<boolean>(false);
   const [fabricCustomizations, setFabricCustomizations] = useState<Record<number, { priceModifier: number, note: string }>>({});
   const [fabricMeter, setFabricMeter] = useState<number>(3.25);
@@ -109,6 +110,7 @@ export default function OrderNew() {
   >(null);
 
   const fileInputRef = useRef<HTMLInputElement | null>(null);
+  const detailsSwatchFileInputRef = useRef<HTMLInputElement | null>(null);
   const itemFileInputRef = useRef<HTMLInputElement | null>(null);
   const bodyImageRefs = useRef<Record<string, HTMLInputElement | null>>({});
 
@@ -173,6 +175,7 @@ export default function OrderNew() {
   // Reset states when garment category changes
   useEffect(() => {
     setActiveFabric(null);
+    setActiveSwatchDetail(null);
     setFabricMeter(3.25);
     setFabricHandwork(false);
     setFabricCustomizations({});
@@ -182,7 +185,7 @@ export default function OrderNew() {
     setSwatchImage(null);
   }, [selectedGarmentId]);
 
-  // Swatch image upload
+  // Swatch image upload in Step 2
   const handleSwatchImageUpload = async (file: File | null) => {
     if (!file) return;
     setSwatchUploading(true);
@@ -197,10 +200,22 @@ export default function OrderNew() {
     }
   };
 
+  // Swatch image upload inside Step 3 Swatch Details
+  const handleDetailsSwatchImageUpload = async (file: File | null) => {
+    if (!file || !activeSwatchDetail) return;
+    try {
+      const uploaded = await uploadOrderItemIcon({ blob: file, fileName: file.name });
+      setActiveSwatchDetail(prev => prev ? { ...prev, customImage: uploaded.icon_path } : null);
+      toast({ title: "Image uploaded", description: "Swatch photo uploaded successfully." });
+    } catch (err: any) {
+      toast({ title: "Upload failed", description: err.message || "Unable to upload photo.", variant: "destructive" });
+    }
+  };
+
   // Add In-Stock fabric item to order
   const handleAddInStockItem = () => {
     if (!selectedGarmentName) {
-      toast({ title: "Validation Error", description: "Please select Jodhpuri / category first.", variant: "destructive" });
+      toast({ title: "Validation Error", description: "Please select category first.", variant: "destructive" });
       return;
     }
     if (!activeFabric) {
@@ -245,8 +260,8 @@ export default function OrderNew() {
     toast({ title: "Item added", description: `${newItem.garmentName} added to order items.` });
   };
 
-  // Add Swatch / On Demand item to order (Append to existing card if it exists)
-  const handleAddSwatchItem = () => {
+  // Step 2: clicking "+ Add" sends swatch data to Step 3
+  const handleAddSwatchToStep3 = () => {
     if (!selectedGarmentName) {
       toast({ title: "Validation Error", description: "Please select a category first.", variant: "destructive" });
       return;
@@ -260,6 +275,22 @@ export default function OrderNew() {
       customImage: swatchImage,
     };
 
+    setActiveSwatchDetail(newSwatch);
+    setActiveFabric(null); // Clear selected fabric if any
+
+    // Clear Step 2 fields
+    setSwatchNote("");
+    setSwatchHandwork(false);
+    setSwatchCustomizations({});
+    setSwatchImage(null);
+
+    toast({ title: "Swatch Loaded", description: "Configure and add to order in Step 3." });
+  };
+
+  // Step 3: Add Swatch / On Demand item to order
+  const handleAddSwatchToOrder = () => {
+    if (!selectedGarmentName || !activeSwatchDetail) return;
+
     setOrderItems((prev) => {
       // Find if we already have a swatch card for this garment type
       const existingIdx = prev.findIndex(item => item.type === "swatch" && item.garmentName === selectedGarmentName);
@@ -268,7 +299,7 @@ export default function OrderNew() {
           if (idx === existingIdx) {
             return {
               ...item,
-              swatches: [...item.swatches, newSwatch],
+              swatches: [...item.swatches, activeSwatchDetail],
             };
           }
           return item;
@@ -280,7 +311,7 @@ export default function OrderNew() {
           type: "swatch",
           garmentName: selectedGarmentName,
           garmentId: selectedGarmentId,
-          swatches: [newSwatch],
+          swatches: [activeSwatchDetail],
           note: "",
           handwork: false,
           customizations: {},
@@ -289,12 +320,7 @@ export default function OrderNew() {
       }
     });
 
-    // Clear form
-    setSwatchNote("");
-    setSwatchHandwork(false);
-    setSwatchCustomizations({});
-    setSwatchImage(null);
-
+    setActiveSwatchDetail(null);
     toast({ title: "Swatch Added", description: `Added swatch to ${selectedGarmentName}.` });
   };
 
@@ -678,7 +704,10 @@ export default function OrderNew() {
                         <tr
                           key={item.id}
                           className={`hover:bg-muted/20 cursor-pointer ${activeFabric?.id === item.id ? "bg-muted/50" : ""}`}
-                          onClick={() => setActiveFabric(item)}
+                          onClick={() => {
+                            setActiveFabric(item);
+                            setActiveSwatchDetail(null); // Clear swatch details when fabric is clicked
+                          }}
                         >
                           <td className="p-2 font-medium flex items-center gap-2">
                             <div className="h-6 w-6 rounded bg-muted overflow-hidden shrink-0">
@@ -798,7 +827,7 @@ export default function OrderNew() {
               </div>
 
               <Button
-                onClick={handleAddSwatchItem}
+                onClick={handleAddSwatchToStep3}
                 disabled={!selectedGarmentName}
                 className="w-full bg-primary h-8 text-xs mt-2"
               >
@@ -808,14 +837,113 @@ export default function OrderNew() {
           )}
         </div>
 
-        {/* Step 3: Fabric Details */}
+        {/* Step 3: Fabric Details or Swatch Details */}
         <div className="space-y-4 pr-0">
           <div>
             <span className="text-xs font-bold text-primary uppercase tracking-wider block">Step 3</span>
-            <h3 className="font-extrabold text-base text-foreground">Fabric Details</h3>
+            <h3 className="font-extrabold text-base text-foreground">
+              {activeSwatchDetail ? "Swatch Details" : "Fabric Details"}
+            </h3>
           </div>
 
-          {activeFabric ? (
+          {activeSwatchDetail ? (
+            /* Swatch Details Preview Panel */
+            <div className="space-y-4 bg-muted/20 p-4 rounded-xl border border-border">
+              <div className="flex gap-3">
+                {activeSwatchDetail.customImage ? (
+                  <div className="relative h-16 w-20 rounded-lg overflow-hidden border bg-card group">
+                    <img src={resolvePublicUrl(activeSwatchDetail.customImage) ?? ""} className="h-full w-full object-cover" />
+                    <button
+                      type="button"
+                      onClick={() => detailsSwatchFileInputRef.current?.click()}
+                      className="absolute inset-0 bg-black/40 hover:bg-black/60 text-white flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"
+                    >
+                      <Camera className="h-4 w-4" />
+                    </button>
+                  </div>
+                ) : (
+                  <Button
+                    type="button"
+                    variant="outline"
+                    onClick={() => detailsSwatchFileInputRef.current?.click()}
+                    className="h-16 w-20 rounded-lg flex flex-col gap-1 border-dashed shrink-0"
+                  >
+                    <Camera className="h-4 w-4" />
+                    <span className="text-[10px]">Photo</span>
+                  </Button>
+                )}
+                <input
+                  ref={detailsSwatchFileInputRef}
+                  type="file"
+                  accept="image/*"
+                  className="hidden"
+                  onChange={(e) => handleDetailsSwatchImageUpload(e.target.files?.[0] ?? null)}
+                />
+
+                <div className="flex-1 min-w-0">
+                  <h4 className="font-bold text-sm text-foreground truncate">{selectedGarmentName || "Swatch item"}</h4>
+                  <p className="text-xs text-muted-foreground line-clamp-2 italic">
+                    Note: "{activeSwatchDetail.note || "No note added"}"
+                  </p>
+                </div>
+              </div>
+
+              <div className="flex items-center gap-4 px-0.5 pt-1">
+                <label className="flex items-center gap-1.5 text-xs text-muted-foreground cursor-pointer select-none">
+                  <input
+                    type="checkbox"
+                    checked={activeSwatchDetail.handwork}
+                    onChange={(e) => setActiveSwatchDetail(prev => prev ? { ...prev, handwork: e.target.checked } : null)}
+                    className="rounded border-input text-primary focus:ring-primary h-3.5 w-3.5"
+                  />
+                  Handwork
+                </label>
+
+                <div className="flex items-center gap-1.5">
+                  <label className="flex items-center gap-1.5 text-xs text-muted-foreground cursor-pointer select-none">
+                    <input
+                      type="checkbox"
+                      checked={Object.keys(activeSwatchDetail.customizations).length > 0}
+                      onChange={(e) => {
+                        if (!e.target.checked) {
+                          setActiveSwatchDetail(prev => prev ? { ...prev, customizations: {} } : null);
+                        } else {
+                          setActiveCustomizationTarget("swatch");
+                          setCustomizationDialogOpen(true);
+                        }
+                      }}
+                      className="rounded border-input text-primary focus:ring-primary h-3.5 w-3.5"
+                    />
+                    Advanced Customization
+                  </label>
+                  {Object.keys(activeSwatchDetail.customizations).length > 0 && (
+                    <span
+                      onClick={() => {
+                        setActiveCustomizationTarget("swatch");
+                        setCustomizationDialogOpen(true);
+                      }}
+                      className="text-[10px] text-primary font-medium hover:underline cursor-pointer"
+                    >
+                      ({Object.keys(activeSwatchDetail.customizations).length} Selected)
+                    </span>
+                  )}
+                </div>
+              </div>
+
+              <div className="pt-2 flex justify-between items-center text-xs font-bold border-t border-dashed">
+                <span className="text-muted-foreground">Price Estimate</span>
+                <span className="text-base text-foreground">₹0</span>
+              </div>
+
+              <Button
+                onClick={handleAddSwatchToOrder}
+                className="w-full bg-primary mt-2"
+              >
+                Add to Order
+              </Button>
+            </div>
+          ) : activeFabric ? (
+            /* In-Stock Fabric Details Preview Panel */
             <div className="space-y-4">
               <div className="flex gap-3">
                 <div className="h-16 w-20 rounded-lg bg-muted border overflow-hidden shrink-0">
@@ -1368,7 +1496,11 @@ export default function OrderNew() {
           if (activeCustomizationTarget === "fabric") {
             setFabricCustomizations(newCustomizations);
           } else if (activeCustomizationTarget === "swatch") {
-            setSwatchCustomizations(newCustomizations);
+            if (activeSwatchDetail) {
+              setActiveSwatchDetail(prev => prev ? { ...prev, customizations: newCustomizations } : null);
+            } else {
+              setSwatchCustomizations(newCustomizations);
+            }
           } else if (activeCustomizationTarget?.type === "item") {
             handleUpdateItemField(activeCustomizationTarget.index, { customizations: newCustomizations });
           } else if (activeCustomizationTarget?.type === "swatch_item") {
