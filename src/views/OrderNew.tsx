@@ -29,7 +29,8 @@ import {
 } from "@/components/ui/dialog";
 
 type SwatchDetail = {
-  id: string;
+  id: string;      // local unique key for React rendering
+  dbId?: number;   // actual order_item.id from DB — used to detect update vs insert
   note: string;
   handwork: boolean;
   handworkPrice?: number | null;
@@ -243,7 +244,8 @@ export default function OrderNew() {
             swatchesByGarment.set(garment, []);
           }
           swatchesByGarment.get(garment)!.push({
-            id: it.id.toString() + Math.random(),
+            id: "db-swatch-" + it.id,   // stable: never changes for same DB row
+            dbId: it.id,
             note: it.note || "",
             handwork: !!it.handwork,
             handworkPrice: it.handwork_price,
@@ -257,7 +259,7 @@ export default function OrderNew() {
       // Group swatches
       swatchesByGarment.forEach((swatches, garmentName) => {
         items.push({
-          id: garmentName + Math.random(),
+          id: "swatch-group-" + garmentName.replace(/\s+/g, '-').toLowerCase(),
           type: "swatch",
           garmentName,
           note: "",
@@ -509,6 +511,14 @@ export default function OrderNew() {
     }
 
     setStagedSwatches([]);
+    // Also reset form fields so next add starts clean
+    setSwatchNote("");
+    setSwatchHandwork(false);
+    setSwatchHandworkPrice(null);
+    setSwatchHandworkNotes("");
+    setSwatchCustomizations({});
+    setSwatchImage(null);
+    setStagedSwatches([]);
   };
 
   // Staged inline updates in Step 3
@@ -726,10 +736,14 @@ export default function OrderNew() {
         });
       } else {
         item.swatches.forEach((sw) => {
+          // Sum up all customization price modifiers
+          const customizationPriceSum = Object.values(sw.customizations).reduce(
+            (sum, c) => sum + (c.priceModifier || 0), 0
+          );
           itemsPayload.push({
             garment_type: item.garmentName,
             quantity: 1,
-            price: sw.handworkPrice || 0,
+            price: (sw.handworkPrice || 0) + customizationPriceSum,
             icon_path: sw.customImage || null,
             note: sw.note || null,
             handwork: sw.handwork,
@@ -738,6 +752,8 @@ export default function OrderNew() {
             inventory_stock_id: null,
             meter_required: null,
             customization_flags: Object.keys(sw.customizations).length > 0 ? JSON.stringify(sw.customizations) : null,
+            // Pass dbId so backend can UPDATE existing row instead of INSERTing a new one
+            ...(sw.dbId ? { id: sw.dbId } : {}),
           });
         });
       }
@@ -765,9 +781,17 @@ export default function OrderNew() {
   const subTotal = useMemo(() => {
     return orderItems.reduce((acc, curr) => {
       if (curr.type === "in_stock") {
-        return acc + (curr.pricePerMeter! * curr.meterRequired!) + (curr.handworkPrice || 0);
+        const customizationPriceSum = Object.values(curr.customizations).reduce(
+          (sum, c) => sum + (c.priceModifier || 0), 0
+        );
+        return acc + (curr.pricePerMeter! * curr.meterRequired!) + (curr.handworkPrice || 0) + customizationPriceSum;
       } else {
-        const swatchesPriceSum = curr.swatches.reduce((sum, sw) => sum + (sw.handworkPrice || 0), 0);
+        const swatchesPriceSum = curr.swatches.reduce((sum, sw) => {
+          const customizationPriceSum = Object.values(sw.customizations).reduce(
+            (sum2, c) => sum2 + (c.priceModifier || 0), 0
+          );
+          return sum + (sw.handworkPrice || 0) + customizationPriceSum;
+        }, 0);
         return acc + swatchesPriceSum;
       }
     }, 0);
@@ -1293,7 +1317,10 @@ export default function OrderNew() {
                   <div className="pt-2 flex justify-between items-center text-xs font-bold border-t border-dashed">
                     <span className="text-muted-foreground">Price Estimate ({stagedSwatches.length} Swatches)</span>
                     <span className="text-base text-foreground">
-                      ₹{stagedSwatches.reduce((sum, sw) => sum + (sw.handworkPrice || 0), 0).toLocaleString("en-IN")}
+                      ₹{stagedSwatches.reduce((sum, sw) => {
+                        const custSum = Object.values(sw.customizations).reduce((s, c) => s + (c.priceModifier || 0), 0);
+                        return sum + (sw.handworkPrice || 0) + custSum;
+                      }, 0).toLocaleString("en-IN")}
                     </span>
                   </div>
 
