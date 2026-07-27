@@ -150,9 +150,9 @@ export default function OrderNew() {
   const bodyImageRefs = useRef<Record<string, HTMLInputElement | null>>({});
 
   const isAlreadyAdded = useMemo(() => {
-    if (!activeFabric) return false;
-    return orderItems.some((item) => item.fabricId === activeFabric.id);
-  }, [activeFabric, orderItems]);
+    if (!activeFabric || !selectedGarmentId) return false;
+    return orderItems.some((item) => item.fabricId === activeFabric.id && item.garmentId === selectedGarmentId);
+  }, [activeFabric, selectedGarmentId, orderItems]);
 
   // Fetch customizations
   const { data: customizationsData } = useQuery({
@@ -279,23 +279,7 @@ export default function OrderNew() {
     if (cid) setCustomerId(cid);
   }, [location.search]);
 
-  // Reset states when garment category changes
-  useEffect(() => {
-    setActiveFabric(null);
-    setStagedSwatches([]);
-    setFabricMeter(3.25);
-    setFabricHandwork(false);
-    setFabricHandworkPrice(null);
-    setFabricHandworkNotes("");
-    setFabricCustomizations({});
-    setSwatchNote("");
-    setSwatchHandwork(false);
-    setSwatchHandworkPrice(null);
-    setSwatchHandworkNotes("");
-    setSwatchCustomizations({});
-    setSwatchImage(null);
-    setEditingItemIndex(null);
-  }, [selectedGarmentId]);
+
 
   // Swatch image upload in Step 2
   const handleSwatchImageUpload = async (file: File | null) => {
@@ -895,8 +879,24 @@ export default function OrderNew() {
                 <button
                   key={g.id}
                   onClick={() => {
-                    setSelectedGarmentName(g.name);
-                    setSelectedGarmentId(g.id);
+                    if (selectedGarmentId !== g.id) {
+                      setSelectedGarmentName(g.name);
+                      setSelectedGarmentId(g.id);
+                      setActiveFabric(null);
+                      setStagedSwatches([]);
+                      setFabricMeter(3.25);
+                      setFabricHandwork(false);
+                      setFabricHandworkPrice(null);
+                      setFabricHandworkNotes("");
+                      setFabricCustomizations({});
+                      setSwatchNote("");
+                      setSwatchHandwork(false);
+                      setSwatchHandworkPrice(null);
+                      setSwatchHandworkNotes("");
+                      setSwatchCustomizations({});
+                      setSwatchImage(null);
+                      setEditingItemIndex(null);
+                    }
                   }}
                   className={`flex flex-col items-center justify-center p-3 rounded-xl border transition-all ${
                     isSelected
