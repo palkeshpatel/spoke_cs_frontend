@@ -80,6 +80,7 @@ export default function Layout() {
       icon: Shield,
       items: [
         { path: '/garment-categories', label: 'Garment Categories', icon: Package, permission: 'manage_orders' },
+        { path: '/settings/customizations', label: 'Advanced Customization', icon: Shield, permission: 'manage_orders' },
         { path: '/settings/roles', label: 'Role & Permission', icon: Shield, permission: 'manage_roles' },
         { path: '/reports', label: 'Report', icon: BarChart3, permission: 'view_reports' },
         { path: '/activity-logs', label: 'Activity Logs', icon: History, permission: 'view_reports' },
