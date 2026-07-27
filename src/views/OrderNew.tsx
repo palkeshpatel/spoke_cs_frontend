@@ -1113,18 +1113,23 @@ export default function OrderNew() {
                       Advanced Customization
                     </label>
                     {Object.keys(swatchCustomizations).length > 0 && (
-                      <span
+                      <div
                         onClick={() => {
                           setActiveCustomizationTarget("swatch");
                           setCustomizationDialogOpen(true);
                         }}
-                        className="text-[10px] text-primary font-medium hover:underline cursor-pointer block mt-1"
+                        className="flex flex-wrap gap-1 mt-1.5 cursor-pointer"
                       >
-                        {Object.keys(swatchCustomizations)
-                          .map((id) => optionsMap.get(Number(id)))
-                          .filter(Boolean)
-                          .join(", ")}
-                      </span>
+                        {Object.keys(swatchCustomizations).map((id) => {
+                          const label = optionsMap.get(Number(id));
+                          if (!label) return null;
+                          return (
+                            <span key={id} className="text-[9px] bg-blue-50 text-blue-700 px-1.5 py-0.5 border border-blue-200 rounded font-semibold hover:bg-blue-100 transition-colors">
+                              {label}
+                            </span>
+                          );
+                        })}
+                      </div>
                     )}
                   </div>
                 </div>
@@ -1258,18 +1263,23 @@ export default function OrderNew() {
                             </label>
                           </div>
                           {Object.keys(sw.customizations).length > 0 && (
-                            <span
+                            <div
                               onClick={() => {
                                 setActiveCustomizationTarget({ type: "staged_swatch", index: index });
                                 setCustomizationDialogOpen(true);
                               }}
-                              className="text-[9px] text-primary font-medium hover:underline cursor-pointer block mt-1"
+                              className="flex flex-wrap gap-1 mt-1.5 cursor-pointer"
                             >
-                              {Object.keys(sw.customizations)
-                                .map((id) => optionsMap.get(Number(id)))
-                                .filter(Boolean)
-                                .join(", ")}
-                            </span>
+                              {Object.keys(sw.customizations).map((id) => {
+                                const label = optionsMap.get(Number(id));
+                                if (!label) return null;
+                                return (
+                                  <span key={id} className="text-[9px] bg-blue-50 text-blue-700 px-1.5 py-0.5 border border-blue-200 rounded font-semibold hover:bg-blue-100 transition-colors">
+                                    {label}
+                                  </span>
+                                );
+                              })}
+                            </div>
                           )}
                         </div>
                       </div>
@@ -1387,18 +1397,23 @@ export default function OrderNew() {
                     Advanced Customization
                   </label>
                   {Object.keys(fabricCustomizations).length > 0 && (
-                    <span
+                    <div
                       onClick={() => {
                         setActiveCustomizationTarget("fabric");
                         setCustomizationDialogOpen(true);
                       }}
-                      className="text-[10px] text-primary font-medium hover:underline cursor-pointer block mt-1"
+                      className="flex flex-wrap gap-1 mt-1.5 cursor-pointer"
                     >
-                      {Object.keys(fabricCustomizations)
-                        .map((id) => optionsMap.get(Number(id)))
-                        .filter(Boolean)
-                        .join(", ")}
-                    </span>
+                      {Object.keys(fabricCustomizations).map((id) => {
+                        const label = optionsMap.get(Number(id));
+                        if (!label) return null;
+                        return (
+                          <span key={id} className="text-[9px] bg-blue-50 text-blue-700 px-1.5 py-0.5 border border-blue-200 rounded font-semibold hover:bg-blue-100 transition-colors">
+                            {label}
+                          </span>
+                        );
+                      })}
+                    </div>
                   )}
                 </div>
               </div>
@@ -1539,12 +1554,15 @@ export default function OrderNew() {
                           </span>
                         )}
                         {Object.keys(item.customizations).length > 0 && (
-                          <span className="inline-flex items-center px-1.5 py-0.5 rounded-full text-[9px] font-semibold bg-blue-50 text-blue-700 border border-blue-200">
-                            Custom: {Object.keys(item.customizations)
-                              .map((id) => optionsMap.get(Number(id)))
-                              .filter(Boolean)
-                              .join(", ")}
-                          </span>
+                          Object.keys(item.customizations).map((id) => {
+                            const label = optionsMap.get(Number(id));
+                            if (!label) return null;
+                            return (
+                              <span key={id} className="inline-flex items-center px-1.5 py-0.5 rounded-full text-[9px] font-semibold bg-blue-50 text-blue-700 border border-blue-200">
+                                {label}
+                              </span>
+                            );
+                          })
                         )}
                       </div>
                     </div>
@@ -1610,7 +1628,15 @@ export default function OrderNew() {
                                     Handwork {sw.handworkPrice ? `(₹${sw.handworkPrice})` : ""}
                                   </span>
                                 )}
-                                {Object.keys(sw.customizations).length > 0 && <span className="text-[8px] bg-blue-50 text-blue-700 px-1 border border-blue-200 rounded font-semibold">Custom: {Object.keys(sw.customizations).map(id => optionsMap.get(Number(id))).filter(Boolean).join(", ")}</span>}
+                                {Object.keys(sw.customizations).map((id) => {
+                                  const label = optionsMap.get(Number(id));
+                                  if (!label) return null;
+                                  return (
+                                    <span key={id} className="text-[8px] bg-blue-50 text-blue-700 px-1 border border-blue-200 rounded font-semibold">
+                                      {label}
+                                    </span>
+                                  );
+                                })}
                               </div>
                             </div>
                           );
