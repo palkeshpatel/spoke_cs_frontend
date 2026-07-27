@@ -1118,9 +1118,12 @@ export default function OrderNew() {
                           setActiveCustomizationTarget("swatch");
                           setCustomizationDialogOpen(true);
                         }}
-                        className="text-[10px] text-primary font-medium hover:underline cursor-pointer"
+                        className="text-[10px] text-primary font-medium hover:underline cursor-pointer block mt-1"
                       >
-                        ({Object.keys(swatchCustomizations).length} Selected)
+                        {Object.keys(swatchCustomizations)
+                          .map((id) => optionsMap.get(Number(id)))
+                          .filter(Boolean)
+                          .join(", ")}
                       </span>
                     )}
                   </div>
@@ -1260,9 +1263,12 @@ export default function OrderNew() {
                                 setActiveCustomizationTarget({ type: "staged_swatch", index: index });
                                 setCustomizationDialogOpen(true);
                               }}
-                              className="text-[9px] text-primary font-medium hover:underline cursor-pointer"
+                              className="text-[9px] text-primary font-medium hover:underline cursor-pointer block mt-1"
                             >
-                              ({Object.keys(sw.customizations).length} Options)
+                              {Object.keys(sw.customizations)
+                                .map((id) => optionsMap.get(Number(id)))
+                                .filter(Boolean)
+                                .join(", ")}
                             </span>
                           )}
                         </div>
@@ -1386,9 +1392,12 @@ export default function OrderNew() {
                         setActiveCustomizationTarget("fabric");
                         setCustomizationDialogOpen(true);
                       }}
-                      className="text-[10px] text-primary font-medium hover:underline cursor-pointer"
+                      className="text-[10px] text-primary font-medium hover:underline cursor-pointer block mt-1"
                     >
-                      ({Object.keys(fabricCustomizations).length} Selected)
+                      {Object.keys(fabricCustomizations)
+                        .map((id) => optionsMap.get(Number(id)))
+                        .filter(Boolean)
+                        .join(", ")}
                     </span>
                   )}
                 </div>
@@ -1531,7 +1540,10 @@ export default function OrderNew() {
                         )}
                         {Object.keys(item.customizations).length > 0 && (
                           <span className="inline-flex items-center px-1.5 py-0.5 rounded-full text-[9px] font-semibold bg-blue-50 text-blue-700 border border-blue-200">
-                            Advance Customization
+                            Custom: {Object.keys(item.customizations)
+                              .map((id) => optionsMap.get(Number(id)))
+                              .filter(Boolean)
+                              .join(", ")}
                           </span>
                         )}
                       </div>
@@ -1598,7 +1610,7 @@ export default function OrderNew() {
                                     Handwork {sw.handworkPrice ? `(₹${sw.handworkPrice})` : ""}
                                   </span>
                                 )}
-                                {Object.keys(sw.customizations).length > 0 && <span className="text-[8px] bg-blue-50 text-blue-700 px-1 border border-blue-200 rounded font-semibold">Custom ({Object.keys(sw.customizations).length})</span>}
+                                {Object.keys(sw.customizations).length > 0 && <span className="text-[8px] bg-blue-50 text-blue-700 px-1 border border-blue-200 rounded font-semibold">Custom: {Object.keys(sw.customizations).map(id => optionsMap.get(Number(id))).filter(Boolean).join(", ")}</span>}
                               </div>
                             </div>
                           );
