@@ -1021,7 +1021,7 @@ export default function OrderNew() {
             </div>
           ) : (
             /* Swatch / On Demand Custom Form */
-            <div className="space-y-3 bg-muted/20 p-3 rounded-lg border border-border">
+            <div className={`space-y-3 bg-muted/20 p-3 rounded-lg border border-border transition-opacity ${stagedSwatches.length > 0 ? "opacity-50 pointer-events-none" : ""}`}>
               <div className="flex gap-3">
                 {swatchUploading ? (
                   <div className="h-14 w-14 shrink-0 rounded-md border border-dashed flex items-center justify-center bg-card">
@@ -1127,7 +1127,7 @@ export default function OrderNew() {
 
               <Button
                 onClick={handleAddSwatchToStep3Staged}
-                disabled={!selectedGarmentName}
+                disabled={!selectedGarmentName || stagedSwatches.length > 0}
                 className="w-full bg-primary h-8 text-xs mt-2"
               >
                 <Plus className="h-3.5 w-3.5 mr-1" /> Add
