@@ -1021,113 +1021,115 @@ export default function OrderNew() {
             </div>
           ) : (
             /* Swatch / On Demand Custom Form */
-            <div className={`space-y-3 bg-muted/20 p-3 rounded-lg border border-border transition-opacity ${stagedSwatches.length > 0 ? "opacity-50 pointer-events-none" : ""}`}>
-              <div className="flex gap-3">
-                {swatchUploading ? (
-                  <div className="h-14 w-14 shrink-0 rounded-md border border-dashed flex items-center justify-center bg-card">
-                    <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />
-                  </div>
-                ) : swatchImage ? (
-                  <div className="relative h-14 w-14 shrink-0 rounded-md border bg-card overflow-hidden group">
-                    <img src={resolvePublicUrl(swatchImage) ?? ""} className="h-full w-full object-cover" />
-                    <button
+            <div className="space-y-3 bg-muted/20 p-3 rounded-lg border border-border">
+              <div className="pointer-events-none opacity-50">
+                <div className="flex gap-3">
+                  {swatchUploading ? (
+                    <div className="h-14 w-14 shrink-0 rounded-md border border-dashed flex items-center justify-center bg-card">
+                      <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />
+                    </div>
+                  ) : swatchImage ? (
+                    <div className="relative h-14 w-14 shrink-0 rounded-md border bg-card overflow-hidden group">
+                      <img src={resolvePublicUrl(swatchImage) ?? ""} className="h-full w-full object-cover" />
+                      <button
+                        type="button"
+                        onClick={() => fileInputRef.current?.click()}
+                        className="absolute inset-0 bg-black/40 hover:bg-black/60 text-white flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"
+                      >
+                        <Camera className="h-4 w-4" />
+                      </button>
+                    </div>
+                  ) : (
+                    <Button
                       type="button"
+                      variant="outline"
                       onClick={() => fileInputRef.current?.click()}
-                      className="absolute inset-0 bg-black/40 hover:bg-black/60 text-white flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"
+                      className="h-14 w-14 shrink-0 flex flex-col gap-1 border-dashed"
                     >
                       <Camera className="h-4 w-4" />
-                    </button>
-                  </div>
-                ) : (
-                  <Button
-                    type="button"
-                    variant="outline"
-                    onClick={() => fileInputRef.current?.click()}
-                    className="h-14 w-14 shrink-0 flex flex-col gap-1 border-dashed"
-                  >
-                    <Camera className="h-4 w-4" />
-                    <span className="text-[9px]">Photo</span>
-                  </Button>
-                )}
-                <input
-                  ref={fileInputRef}
-                  type="file"
-                  accept="image/*"
-                  className="hidden"
-                  onChange={(e) => handleSwatchImageUpload(e.target.files?.[0] ?? null)}
-                />
-
-                <div className="flex-1">
-                  <label className="text-[10px] text-muted-foreground block font-medium">Stitching Note</label>
-                  <Input
-                    placeholder="Enter notes..."
-                    value={swatchNote}
-                    onChange={(e) => setSwatchNote(e.target.value)}
-                    className="h-8 text-xs w-full bg-card"
-                  />
-                </div>
-              </div>
-
-              <div className="flex items-center gap-4 px-0.5 pt-1">
-                <label className="flex items-center gap-1.5 text-xs text-muted-foreground cursor-pointer select-none">
+                      <span className="text-[9px]">Photo</span>
+                    </Button>
+                  )}
                   <input
-                    type="checkbox"
-                    checked={swatchHandwork}
-                    onChange={(e) => {
-                      if (!e.target.checked) {
-                        setSwatchHandwork(false);
-                        setSwatchHandworkPrice(null);
-                        setSwatchHandworkNotes("");
-                      } else {
-                        handleOpenHandworkDialog("swatch");
-                      }
-                    }}
-                    className="rounded border-input text-primary focus:ring-primary h-3.5 w-3.5"
+                    ref={fileInputRef}
+                    type="file"
+                    accept="image/*"
+                    className="hidden"
+                    onChange={(e) => handleSwatchImageUpload(e.target.files?.[0] ?? null)}
                   />
-                  Handwork
-                </label>
-                {swatchHandwork && (
-                  <span
-                    onClick={() => handleOpenHandworkDialog("swatch")}
-                    className="text-[10px] text-primary font-medium hover:underline cursor-pointer"
-                  >
-                    (Edit Details)
-                  </span>
-                )}
 
-                <div className="flex items-center gap-1.5">
+                  <div className="flex-1">
+                    <label className="text-[10px] text-muted-foreground block font-medium">Stitching Note</label>
+                    <Input
+                      placeholder="Enter notes..."
+                      value={swatchNote}
+                      onChange={(e) => setSwatchNote(e.target.value)}
+                      className="h-8 text-xs w-full bg-card"
+                    />
+                  </div>
+                </div>
+
+                <div className="flex items-center gap-4 px-0.5 pt-1">
                   <label className="flex items-center gap-1.5 text-xs text-muted-foreground cursor-pointer select-none">
                     <input
                       type="checkbox"
-                      checked={Object.keys(swatchCustomizations).length > 0}
+                      checked={swatchHandwork}
                       onChange={(e) => {
-                        if (!e.target.checked) setSwatchCustomizations({});
-                        else {
-                          setActiveCustomizationTarget("swatch");
-                          setCustomizationDialogOpen(true);
+                        if (!e.target.checked) {
+                          setSwatchHandwork(false);
+                          setSwatchHandworkPrice(null);
+                          setSwatchHandworkNotes("");
+                        } else {
+                          handleOpenHandworkDialog("swatch");
                         }
                       }}
                       className="rounded border-input text-primary focus:ring-primary h-3.5 w-3.5"
                     />
-                    Advanced Customization
+                    Handwork
                   </label>
-                  {Object.keys(swatchCustomizations).length > 0 && (
+                  {swatchHandwork && (
                     <span
-                      onClick={() => {
-                        setActiveCustomizationTarget("swatch");
-                        setCustomizationDialogOpen(true);
-                      }}
+                      onClick={() => handleOpenHandworkDialog("swatch")}
                       className="text-[10px] text-primary font-medium hover:underline cursor-pointer"
                     >
-                      ({Object.keys(swatchCustomizations).length} Selected)
+                      (Edit Details)
                     </span>
                   )}
+
+                  <div className="flex items-center gap-1.5">
+                    <label className="flex items-center gap-1.5 text-xs text-muted-foreground cursor-pointer select-none">
+                      <input
+                        type="checkbox"
+                        checked={Object.keys(swatchCustomizations).length > 0}
+                        onChange={(e) => {
+                          if (!e.target.checked) setSwatchCustomizations({});
+                          else {
+                            setActiveCustomizationTarget("swatch");
+                            setCustomizationDialogOpen(true);
+                          }
+                        }}
+                        className="rounded border-input text-primary focus:ring-primary h-3.5 w-3.5"
+                      />
+                      Advanced Customization
+                    </label>
+                    {Object.keys(swatchCustomizations).length > 0 && (
+                      <span
+                        onClick={() => {
+                          setActiveCustomizationTarget("swatch");
+                          setCustomizationDialogOpen(true);
+                        }}
+                        className="text-[10px] text-primary font-medium hover:underline cursor-pointer"
+                      >
+                        ({Object.keys(swatchCustomizations).length} Selected)
+                      </span>
+                    )}
+                  </div>
                 </div>
               </div>
 
               <Button
                 onClick={handleAddSwatchToStep3Staged}
-                disabled={!selectedGarmentName || stagedSwatches.length > 0}
+                disabled={!selectedGarmentName}
                 className="w-full bg-primary h-8 text-xs mt-2"
               >
                 <Plus className="h-3.5 w-3.5 mr-1" /> Add
