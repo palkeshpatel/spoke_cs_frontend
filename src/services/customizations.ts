@@ -64,7 +64,7 @@ export async function deleteCategory(id: number): Promise<void> {
 export async function createOption(data: {
   category_id: number;
   name: string;
-  price_modifier?: number;
+  price_modifier: number;
   sort_order?: number;
 }): Promise<CustomizationOptionDto> {
   const res = await apiRequest<{ data: CustomizationOptionDto }>("/api/customizations/options", {

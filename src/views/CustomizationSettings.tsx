@@ -86,6 +86,7 @@ export default function CustomizationSettings() {
 
   // Form state for option dialog
   const [optName, setOptName] = useState("");
+  const [optPrice, setOptPrice] = useState("");
   const [optSortOrder, setOptSortOrder] = useState("0");
 
   const openCategoryDialog = (state: CategoryDialogState) => {
@@ -105,9 +106,11 @@ export default function CustomizationSettings() {
     setOptionDialog(state);
     if (state.mode === "edit") {
       setOptName(state.option.name);
+      setOptPrice(state.option.price_modifier > 0 ? state.option.price_modifier.toString() : "");
       setOptSortOrder(state.option.sort_order?.toString() ?? "0");
     } else {
       setOptName("");
+      setOptPrice("");
       setOptSortOrder("0");
     }
   };
@@ -172,6 +175,7 @@ export default function CustomizationSettings() {
     if (!optName.trim()) return;
     const payload = {
       name: optName.trim(),
+      price_modifier: Number(optPrice) || 0,
       sort_order: Number(optSortOrder) || 0,
     };
     if (optionDialog?.mode === "edit") {
@@ -321,7 +325,13 @@ export default function CustomizationSettings() {
                               >
                                 <div className="flex flex-col min-w-0">
                                   <span className="text-xs font-semibold text-foreground">{opt.name}</span>
-                                  <span className="text-[10px] text-emerald-600 font-semibold">Paid</span>
+                                  {Number(opt.price_modifier) > 0 ? (
+                                    <span className="text-[10px] text-emerald-600 font-bold">
+                                      ₹{Number(opt.price_modifier).toLocaleString("en-IN")}
+                                    </span>
+                                  ) : (
+                                    <span className="text-[10px] text-muted-foreground">No charge</span>
+                                  )}
                                 </div>
                                 <div className="flex items-center gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity">
                                   <button
@@ -439,8 +449,24 @@ export default function CustomizationSettings() {
                 placeholder="e.g. Button Down, Mandarin…"
                 value={optName}
                 onChange={(e) => setOptName(e.target.value)}
-                onKeyDown={(e) => e.key === "Enter" && handleSaveOption()}
               />
+            </div>
+            <div className="space-y-1.5">
+              <Label htmlFor="opt-price">Charge Price (₹) <span className="text-muted-foreground font-normal text-[11px]">— amount charged when selected</span></Label>
+              <div className="relative">
+                <span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground text-sm select-none">₹</span>
+                <Input
+                  id="opt-price"
+                  type="number"
+                  min="0"
+                  step="1"
+                  className="pl-7"
+                  placeholder="e.g. 50, 200…"
+                  value={optPrice}
+                  onChange={(e) => setOptPrice(e.target.value)}
+                  onKeyDown={(e) => e.key === "Enter" && handleSaveOption()}
+                />
+              </div>
             </div>
             <div className="space-y-1.5">
               <Label>Sort Order</Label>
