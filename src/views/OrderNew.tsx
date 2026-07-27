@@ -1147,9 +1147,10 @@ export default function OrderNew() {
                         {Object.keys(swatchCustomizations).map((id) => {
                           const label = optionsMap.get(Number(id));
                           if (!label) return null;
+                          const price = swatchCustomizations[Number(id)]?.priceModifier;
                           return (
                             <span key={id} className="text-[9px] bg-blue-50 text-blue-700 px-1.5 py-0.5 border border-blue-200 rounded font-semibold hover:bg-blue-100 transition-colors">
-                              {label}
+                              {label}{price ? ` (₹${price})` : ""}
                             </span>
                           );
                         })}
@@ -1297,9 +1298,10 @@ export default function OrderNew() {
                               {Object.keys(sw.customizations).map((id) => {
                                 const label = optionsMap.get(Number(id));
                                 if (!label) return null;
+                                const price = sw.customizations[Number(id)]?.priceModifier;
                                 return (
                                   <span key={id} className="text-[9px] bg-blue-50 text-blue-700 px-1.5 py-0.5 border border-blue-200 rounded font-semibold hover:bg-blue-100 transition-colors">
-                                    {label}
+                                    {label}{price ? ` (₹${price})` : ""}
                                   </span>
                                 );
                               })}
@@ -1434,9 +1436,10 @@ export default function OrderNew() {
                       {Object.keys(fabricCustomizations).map((id) => {
                         const label = optionsMap.get(Number(id));
                         if (!label) return null;
+                        const price = fabricCustomizations[Number(id)]?.priceModifier;
                         return (
                           <span key={id} className="text-[9px] bg-blue-50 text-blue-700 px-1.5 py-0.5 border border-blue-200 rounded font-semibold hover:bg-blue-100 transition-colors">
-                            {label}
+                            {label}{price ? ` (₹${price})` : ""}
                           </span>
                         );
                       })}
@@ -1585,9 +1588,10 @@ export default function OrderNew() {
                           Object.keys(item.customizations).map((id) => {
                             const label = optionsMap.get(Number(id));
                             if (!label) return null;
+                            const price = item.customizations[Number(id)]?.priceModifier;
                             return (
                               <span key={id} className="inline-flex items-center px-1.5 py-0.5 rounded-full text-[9px] font-semibold bg-blue-50 text-blue-700 border border-blue-200">
-                                {label}
+                                {label}{price ? ` (₹${price})` : ""}
                               </span>
                             );
                           })
@@ -1660,9 +1664,10 @@ export default function OrderNew() {
                                 {Object.keys(sw.customizations).map((id) => {
                                   const label = optionsMap.get(Number(id));
                                   if (!label) return null;
+                                  const price = sw.customizations[Number(id)]?.priceModifier;
                                   return (
                                     <span key={id} className="text-[8px] bg-blue-50 text-blue-700 px-1 border border-blue-200 rounded font-semibold">
-                                      {label}
+                                      {label}{price ? ` (₹${price})` : ""}
                                     </span>
                                   );
                                 })}
