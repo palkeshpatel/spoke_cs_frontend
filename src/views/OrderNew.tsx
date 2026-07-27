@@ -1096,7 +1096,7 @@ export default function OrderNew() {
                     </span>
                   )}
 
-                  <div className="flex items-center gap-1.5">
+                  <div className="flex flex-col gap-1 items-start">
                     <label className="flex items-center gap-1.5 text-xs text-muted-foreground cursor-pointer select-none">
                       <input
                         type="checkbox"
@@ -1219,7 +1219,7 @@ export default function OrderNew() {
                           </button>
                         </div>
 
-                        <div className="flex items-center justify-between pt-1 border-t border-dashed">
+                        <div className="flex flex-col items-start gap-1 pt-1 border-t border-dashed">
                           <div className="flex items-center gap-3">
                             <label className="flex items-center gap-1 text-[10px] text-muted-foreground cursor-pointer select-none">
                               <input
@@ -1380,7 +1380,7 @@ export default function OrderNew() {
                   </span>
                 )}
 
-                <div className="flex items-center gap-1.5">
+                <div className="flex flex-col gap-1 items-start">
                   <label className="flex items-center gap-1.5 text-xs text-muted-foreground cursor-pointer select-none">
                     <input
                       type="checkbox"
