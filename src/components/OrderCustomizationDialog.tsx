@@ -119,8 +119,8 @@ export function OrderCustomizationDialog({ open, onOpenChange, selectedOptions, 
                                 {opt.name}
                               </span>
                               {priceNum > 0 && (
-                                <span className={`text-[9px] mt-0.5 ${isSelected ? 'text-primary-foreground/80' : 'text-muted-foreground'}`}>
-                                  +${priceNum.toFixed(2)}
+                                <span className={`text-[9px] mt-0.5 font-semibold ${isSelected ? 'text-primary-foreground/80' : 'text-emerald-600'}`}>
+                                  ₹{priceNum.toLocaleString("en-IN")}
                                 </span>
                               )}
                             </button>
