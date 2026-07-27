@@ -487,7 +487,7 @@ export default function OrderNew() {
             if (idx === existingIdx) {
               return {
                 ...item,
-                swatches: [...item.swatches, ...stagedSwatches],
+                swatches: [...item.swatches, ...stagedSwatches.map(sw => ({ ...sw, id: sw.id + "-" + Math.random().toString(36).substring(2, 9) }))],
               };
             }
             return item;
@@ -498,7 +498,7 @@ export default function OrderNew() {
             type: "swatch",
             garmentName: selectedGarmentName,
             garmentId: selectedGarmentId,
-            swatches: [...stagedSwatches],
+            swatches: stagedSwatches.map(sw => ({ ...sw, id: sw.id + "-" + Math.random().toString(36).substring(2, 9) })),
             note: "",
             handwork: false,
             customizations: {},
@@ -1549,8 +1549,9 @@ export default function OrderNew() {
                       {/* Badges footer */}
                       <div className="flex flex-wrap gap-1 mt-1">
                         {item.handwork && (
-                          <span className="inline-flex items-center px-1.5 py-0.5 rounded-full text-[9px] font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200" title={item.handworkNotes || undefined}>
+                          <span className="inline-flex items-center px-1.5 py-0.5 rounded-full text-[9px] font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200">
                             Handwork {item.handworkPrice ? `(₹${item.handworkPrice})` : ""}
+                            {item.handworkNotes ? ` - ${item.handworkNotes}` : ""}
                           </span>
                         )}
                         {Object.keys(item.customizations).length > 0 && (
@@ -1624,8 +1625,9 @@ export default function OrderNew() {
 
                               <div className="flex flex-wrap gap-1 mt-1">
                                 {sw.handwork && (
-                                  <span className="text-[8px] bg-emerald-50 text-emerald-700 px-1 border border-emerald-200 rounded font-semibold" title={sw.handworkNotes || undefined}>
+                                  <span className="text-[8px] bg-emerald-50 text-emerald-700 px-1 border border-emerald-200 rounded font-semibold">
                                     Handwork {sw.handworkPrice ? `(₹${sw.handworkPrice})` : ""}
+                                    {sw.handworkNotes ? ` - ${sw.handworkNotes}` : ""}
                                   </span>
                                 )}
                                 {Object.keys(sw.customizations).map((id) => {
