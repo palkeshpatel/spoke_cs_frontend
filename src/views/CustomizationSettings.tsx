@@ -5,6 +5,7 @@ import PageHeader from "@/components/PageHeader";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Checkbox } from "@/components/ui/checkbox";
 import {
   Dialog,
   DialogContent,
@@ -88,6 +89,7 @@ export default function CustomizationSettings() {
   const [optName, setOptName] = useState("");
   const [optPrice, setOptPrice] = useState("");
   const [optSortOrder, setOptSortOrder] = useState("0");
+  const [optRequiresNote, setOptRequiresNote] = useState(false);
 
   const openCategoryDialog = (state: CategoryDialogState) => {
     setCategoryDialog(state);
@@ -108,10 +110,12 @@ export default function CustomizationSettings() {
       setOptName(state.option.name);
       setOptPrice(state.option.price_modifier > 0 ? state.option.price_modifier.toString() : "");
       setOptSortOrder(state.option.sort_order?.toString() ?? "0");
+      setOptRequiresNote(!!state.option.requires_note);
     } else {
       setOptName("");
       setOptPrice("");
       setOptSortOrder("0");
+      setOptRequiresNote(false);
     }
   };
 
@@ -177,6 +181,7 @@ export default function CustomizationSettings() {
       name: optName.trim(),
       price_modifier: Number(optPrice) || 0,
       sort_order: Number(optSortOrder) || 0,
+      requires_note: optRequiresNote,
     };
     if (optionDialog?.mode === "edit") {
       updateOptMutation.mutate({ id: optionDialog.option.id, data: payload });
@@ -476,6 +481,16 @@ export default function CustomizationSettings() {
                 value={optSortOrder}
                 onChange={(e) => setOptSortOrder(e.target.value)}
               />
+            </div>
+            <div className="flex items-center space-x-2 pt-2">
+              <Checkbox 
+                id="opt-requires-note" 
+                checked={optRequiresNote} 
+                onCheckedChange={(c) => setOptRequiresNote(!!c)} 
+              />
+              <Label htmlFor="opt-requires-note" className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">
+                Requires Note
+              </Label>
             </div>
           </div>
           <DialogFooter>

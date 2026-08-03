@@ -9,6 +9,7 @@ export interface CustomizationOptionDto {
   image_path: string | null;
   price_modifier: number;
   sort_order: number;
+  requires_note?: boolean;
 }
 
 export interface CustomizationCategoryDto {
@@ -66,6 +67,7 @@ export async function createOption(data: {
   name: string;
   price_modifier: number;
   sort_order?: number;
+  requires_note?: boolean;
 }): Promise<CustomizationOptionDto> {
   const res = await apiRequest<{ data: CustomizationOptionDto }>("/api/customizations/options", {
     method: "POST",
@@ -76,7 +78,7 @@ export async function createOption(data: {
 
 export async function updateOption(
   id: number,
-  data: Partial<{ name: string; price_modifier: number; sort_order: number }>
+  data: Partial<{ name: string; price_modifier: number; sort_order: number; requires_note: boolean }>
 ): Promise<CustomizationOptionDto> {
   const res = await apiRequest<{ data: CustomizationOptionDto }>(
     `/api/customizations/options/${id}`,

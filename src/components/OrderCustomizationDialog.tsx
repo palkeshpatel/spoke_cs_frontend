@@ -2,6 +2,7 @@ import { useState, useMemo } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { useQuery } from "@tanstack/react-query";
 import { listCustomizations } from "@/services/customizations";
@@ -127,6 +128,32 @@ export function OrderCustomizationDialog({ open, onOpenChange, selectedOptions, 
                           );
                         })}
                       </div>
+                      {(() => {
+                        const selectedOptionId = (localSelections[category.id] as any)?.optionId;
+                        if (!selectedOptionId) return null;
+                        const selectedOption = category.options.find(o => o.id === selectedOptionId);
+                        if (selectedOption?.requires_note) {
+                          return (
+                            <div className="mt-3">
+                              <Input 
+                                placeholder={`Add note for ${selectedOption.name}...`}
+                                value={(localSelections[category.id] as any)?.note || ""}
+                                onChange={(e) => {
+                                  const newNote = e.target.value;
+                                  setLocalSelections(prev => ({
+                                    ...prev,
+                                    [category.id]: {
+                                      ...(prev[category.id] as any),
+                                      note: newNote
+                                    }
+                                  }));
+                                }}
+                              />
+                            </div>
+                          );
+                        }
+                        return null;
+                      })()}
                     </div>
                   ))}
                 </TabsContent>

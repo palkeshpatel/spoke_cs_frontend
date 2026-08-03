@@ -464,8 +464,10 @@ export default function OrderDetail() {
                            <div className="flex-1 min-w-0 flex flex-col justify-between">
                               <div>
                                 <h4 className="font-bold text-sm text-foreground">{item.garment_type || "Unknown Category"}</h4>
-                                {item.inventory_stock && (
+                                {item.inventory_stock ? (
                                   <p className="text-xs text-muted-foreground font-medium mt-0.5">{item.inventory_stock.fabric_code} | {item.inventory_stock.color}</p>
+                                ) : (
+                                  <p className="text-xs text-muted-foreground font-medium mt-0.5">Swatch Item</p>
                                 )}
                               </div>
                               <p className="text-xs text-muted-foreground mt-1.5">{item.note ? `"${item.note}"` : "No note added"}</p>
@@ -474,13 +476,20 @@ export default function OrderDetail() {
                                 {!!item.handwork && (
                                   <span className="inline-flex items-center px-1.5 py-0.5 rounded text-[9px] font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200">
                                     Handwork {item.handwork_price ? `(₹${item.handwork_price})` : ""}
+                                    {item.handwork_notes ? ` - ${item.handwork_notes}` : ""}
                                   </span>
                                 )}
-                                {flags.length > 0 && (
-                                  <span className="inline-flex items-center px-1.5 py-0.5 rounded text-[9px] font-semibold bg-blue-50 text-blue-700 border border-blue-200" title={flags.join(", ")}>
-                                    Advanced Customization ({flags.length})
-                                  </span>
-                                )}
+                                {item.customizations && Object.keys(item.customizations).map((id) => {
+                                  const label = optionsMap.get(Number(id));
+                                  if (!label) return null;
+                                  const price = item.customizations[Number(id)]?.priceModifier;
+                                  const note = item.customizations[Number(id)]?.note;
+                                  return (
+                                    <span key={id} className="inline-flex items-center px-1.5 py-0.5 rounded text-[9px] font-semibold bg-blue-50 text-blue-700 border border-blue-200">
+                                      {label}{price ? ` (₹${price})` : ""}{note ? ` - ${note}` : ""}
+                                    </span>
+                                  );
+                                })}
                               </div>
                            </div>
                            <div className="text-right flex flex-col items-end gap-1">
