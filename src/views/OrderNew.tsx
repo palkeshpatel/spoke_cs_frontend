@@ -1878,7 +1878,6 @@ export default function OrderNew() {
           if (!isOpen) {
             setCustomizationDialogOpen(false);
             setActiveCustomizationTarget(null);
-            setEditingItemIndex(null);
           }
         }}
         selectedOptions={
