@@ -17,7 +17,9 @@ export type OrderItemDto = {
   note: string | null;
   handwork?: boolean | number;
   handwork_price?: number | null;
+  handwork_notes?: string | null;
   customization_flags?: string | null;
+  customizations?: any;
   quantity: number;
   price: string | number;
   inventory_stock_id?: number | null;
