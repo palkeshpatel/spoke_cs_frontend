@@ -1754,9 +1754,9 @@ export default function OrderNew() {
       </div> {/* End desktop wrapper */}
 
       {/* MOBILE UI BLOCK */}
-      <div className="flex flex-col lg:hidden fixed top-[56px] bottom-[64px] left-0 right-0 z-30 bg-background overflow-hidden">
+      <div className="flex flex-col lg:hidden fixed top-[56px] bottom-[64px] left-0 right-0 z-30 bg-background overflow-hidden overscroll-none">
         {/* Mobile Header */}
-        <div className="shrink-0 sticky top-0 z-40 bg-[#4A2B15] text-white p-3 flex items-center gap-3 shadow-md">
+        <div className="shrink-0 relative z-40 bg-[#4A2B15] text-white p-3 flex items-center gap-3 shadow-md">
           <button
             type="button"
             onClick={() => mobileStep > 1 ? setMobileStep(m => m - 1) : navigate(-1)}
@@ -1801,11 +1801,11 @@ export default function OrderNew() {
                 </div>
                 <div>
                   <label className="text-xs text-muted-foreground mb-1 block">Trial Date</label>
-                  <DatePicker value={trialDate} onChange={setTrialDate} />
+                  <DatePicker value={trialDate} onChange={setTrialDate} usePopover={true} />
                 </div>
                 <div>
                   <label className="text-xs text-muted-foreground mb-1 block">Delivery Date</label>
-                  <DatePicker value={deliveryDate} onChange={setDeliveryDate} />
+                  <DatePicker value={deliveryDate} onChange={setDeliveryDate} usePopover={true} />
                 </div>
               </div>
               <Button 
