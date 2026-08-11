@@ -930,7 +930,7 @@ export default function OrderNew() {
                         setEditingItemIndex(null);
                       }
                     }}
-                    className={`flex flex-col items-center justify-center p-3 rounded-xl border transition-all ${isSelected
+                    className={`flex flex-col items-center justify-center p-1 rounded-xl border transition-all ${isSelected
                       ? "border-primary bg-primary/5 text-primary font-semibold ring-2 ring-primary/20"
                       : "border-border bg-card text-muted-foreground hover:bg-muted/30"
                       }`}
@@ -943,10 +943,10 @@ export default function OrderNew() {
                           className="max-h-full max-w-full object-contain"
                         />
                       ) : (
-                        <span className="text-2xl">👔</span>
+                        <span className="text-lg">👔</span>
                       )}
                     </div>
-                    <span className="text-[10px] text-center line-clamp-2 leading-tight">{g.name}</span>
+                    <span className="text-[9px] text-center line-clamp-2 leading-tight">{g.name}</span>
                   </button>
                 );
               })}
@@ -1054,11 +1054,11 @@ export default function OrderNew() {
                 <div className="pointer-events-none opacity-50">
                   <div className="flex gap-3">
                     {swatchUploading ? (
-                      <div className="h-14 w-14 shrink-0 rounded-md border border-dashed flex items-center justify-center bg-card">
+                      <div className="h-10 w-10 shrink-0 rounded-md border border-dashed flex items-center justify-center bg-card">
                         <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />
                       </div>
                     ) : swatchImage ? (
-                      <div className="relative h-14 w-14 shrink-0 rounded-md border bg-card overflow-hidden group">
+                      <div className="relative h-10 w-10 shrink-0 rounded-md border bg-card overflow-hidden group">
                         <img src={resolvePublicUrl(swatchImage) ?? ""} className="h-full w-full object-cover" />
                         <button
                           type="button"
@@ -1073,7 +1073,7 @@ export default function OrderNew() {
                         type="button"
                         variant="outline"
                         onClick={() => fileInputRef.current?.click()}
-                        className="h-14 w-14 shrink-0 flex flex-col gap-1 border-dashed"
+                        className="h-10 w-10 shrink-0 flex flex-col gap-1 border-dashed"
                       >
                         <Camera className="h-4 w-4" />
                         <span className="text-[9px]">Photo</span>
@@ -1197,11 +1197,11 @@ export default function OrderNew() {
                         <div key={sw.id} className="p-3 border rounded-xl bg-muted/20 space-y-2 relative">
                           <div className="flex gap-2">
                             {sw.isUploading ? (
-                              <div className="h-12 w-12 shrink-0 rounded bg-muted/10 border flex items-center justify-center">
+                              <div className="h-8 w-8 shrink-0 rounded bg-muted/10 border flex items-center justify-center">
                                 <Loader2 className="h-3.5 w-3.5 animate-spin" />
                               </div>
                             ) : preview ? (
-                              <div className="relative h-12 w-12 shrink-0 rounded overflow-hidden border bg-card group">
+                              <div className="relative h-8 w-8 shrink-0 rounded overflow-hidden border bg-card group">
                                 <img src={preview} className="h-full w-full object-cover" />
                                 <button
                                   type="button"
@@ -1221,7 +1221,7 @@ export default function OrderNew() {
                                   setEditingStagedSwatchIndex(index);
                                   stagedSwatchFileInputRef.current?.click();
                                 }}
-                                className="h-12 w-12 shrink-0 rounded border border-dashed flex flex-col items-center justify-center text-muted-foreground hover:bg-muted/10"
+                                className="h-8 w-8 shrink-0 rounded border border-dashed flex flex-col items-center justify-center text-muted-foreground hover:bg-muted/10"
                               >
                                 <Camera className="h-4 w-4" />
                               </button>
@@ -1529,13 +1529,13 @@ export default function OrderNew() {
                       <div key={item.id} className={`relative border bg-card p-4 rounded-xl space-y-2 shadow-xs group ${editingItemIndex === itemIdx ? "ring-2 ring-primary border-primary bg-primary/[0.01]" : "border-border"}`}>
                         <div className="flex gap-3">
                           {preview ? (
-                            <div className="relative h-16 w-16 shrink-0 rounded overflow-hidden border bg-muted/20">
+                            <div className="relative h-10 w-10 shrink-0 rounded overflow-hidden border bg-muted/20">
                               <ImagePreviewDialog src={preview} alt={item.garmentName}>
                                 <img src={preview} className="h-full w-full object-cover cursor-pointer" />
                               </ImagePreviewDialog>
                             </div>
                           ) : (
-                            <div className="h-16 w-16 shrink-0 rounded border border-dashed flex flex-col items-center justify-center text-muted-foreground bg-muted/10 font-bold text-[10px]">
+                            <div className="h-10 w-10 shrink-0 rounded border border-dashed flex flex-col items-center justify-center text-muted-foreground bg-muted/10 font-bold text-[10px]">
                               {item.fabricCode?.substring(0, 2)}
                             </div>
                           )}
@@ -1754,9 +1754,9 @@ export default function OrderNew() {
       </div> {/* End desktop wrapper */}
 
       {/* MOBILE UI BLOCK */}
-      <div className="block lg:hidden pb-0">
+      <div className="flex flex-col lg:hidden pb-0 h-[calc(100dvh-64px)] overflow-hidden bg-background">
         {/* Mobile Header */}
-        <div className="sticky top-0 z-40 bg-[#4A2B15] text-white p-4 flex items-center gap-3 shadow-md">
+        <div className="shrink-0 sticky top-0 z-40 bg-[#4A2B15] text-white p-3 flex items-center gap-3 shadow-md">
           <button
             type="button"
             onClick={() => mobileStep > 1 ? setMobileStep(m => m - 1) : navigate(-1)}
@@ -1776,10 +1776,10 @@ export default function OrderNew() {
           </button>
         </div>
 
-        <div className="p-4 space-y-4">
+        <div className="flex-1 overflow-hidden flex flex-col p-2 gap-2">
           {mobileStep === 1 && (
-            <div className="space-y-4">
-              <div className="bg-card p-4 rounded-xl border border-border shadow-sm space-y-4">
+            <div className="flex-1 flex flex-col overflow-hidden space-y-2">
+              <div className="bg-card p-3 rounded-xl border border-border shadow-sm space-y-3 flex-1 overflow-hidden">
                 <div>
                   <label className="text-xs text-muted-foreground mb-1 block">Customer *</label>
                   <CustomerSelectWithAdd 
@@ -1795,7 +1795,7 @@ export default function OrderNew() {
                 </div>
                 <div className="space-y-1">
                   <label className="text-xs text-muted-foreground block">Status</label>
-                  <div className="bg-muted/30 border border-border rounded-xl px-2 py-4 overflow-x-auto">
+                  <div className="bg-muted/30 border border-border rounded-xl px-1 py-2 overflow-x-auto scale-90 origin-left">
                     <OrderStatusStepper status={status} onChange={(s) => setStatus(s as any)} isEditing={true} />
                   </div>
                 </div>
@@ -1816,7 +1816,7 @@ export default function OrderNew() {
                     setMobileStep(2);
                   }
                 }} 
-                className="w-full bg-[#4A2B15] text-white h-12 rounded-xl text-base font-bold"
+                className="shrink-0 w-full bg-[#4A2B15] text-white h-10 rounded-xl text-base font-bold"
               >
                 Next
               </Button>
@@ -1824,8 +1824,8 @@ export default function OrderNew() {
           )}
 
           {mobileStep === 2 && (
-            <div className="space-y-4">
-              <div className="bg-card rounded-xl border border-border shadow-sm p-4 grid grid-cols-3 gap-3">
+            <div className="flex-1 flex flex-col overflow-hidden space-y-2">
+              <div className="bg-card rounded-xl border border-border shadow-sm p-2 grid grid-cols-4 gap-2 flex-1 overflow-hidden">
                 {garments?.map((g) => {
                   const isSelected = selectedGarmentName === g.name;
                   return (
@@ -1851,28 +1851,28 @@ export default function OrderNew() {
                           setEditingItemIndex(null);
                         }
                       }}
-                      className={`flex flex-col items-center justify-center p-3 rounded-xl border transition-all ${isSelected ? "border-[#4A2B15] bg-[#4A2B15]/5 text-[#4A2B15] font-semibold ring-2 ring-[#4A2B15]/20" : "border-border bg-card text-muted-foreground hover:bg-muted/30"
+                      className={`flex flex-col items-center justify-center p-1 rounded-xl border transition-all ${isSelected ? "border-[#4A2B15] bg-[#4A2B15]/5 text-[#4A2B15] font-semibold ring-2 ring-[#4A2B15]/20" : "border-border bg-card text-muted-foreground hover:bg-muted/30"
                         }`}
                     >
-                      <div className="h-10 w-10 mb-2 flex items-center justify-center">
+                      <div className="h-6 w-6 mb-1 flex items-center justify-center">
                         {g.image_path ? (
                           <img src={resolvePublicUrl(g.image_path)!} alt={g.name} className="max-h-full max-w-full object-contain" />
                         ) : (
-                          <span className="text-2xl">👔</span>
+                          <span className="text-lg">👔</span>
                         )}
                       </div>
-                      <span className="text-[10px] text-center line-clamp-2 leading-tight">{g.name}</span>
+                      <span className="text-[9px] text-center line-clamp-2 leading-tight">{g.name}</span>
                     </button>
                   );
                 })}
               </div>
-              <Button onClick={() => setMobileStep(3)} disabled={!selectedGarmentName} className="w-full bg-[#4A2B15] text-white h-12 rounded-xl text-base font-bold">Next</Button>
+              <Button onClick={() => setMobileStep(3)} disabled={!selectedGarmentName} className="shrink-0 w-full bg-[#4A2B15] text-white h-10 rounded-xl text-base font-bold">Next</Button>
             </div>
           )}
 
           {mobileStep === 3 && (
-            <div className="space-y-4">
-              <div className="bg-card p-4 rounded-xl border border-border shadow-sm space-y-4">
+            <div className="flex-1 flex flex-col overflow-hidden space-y-2">
+              <div className="bg-card p-3 rounded-xl border border-border shadow-sm space-y-3 flex-1 overflow-hidden">
                 <div className="flex border-b border-border w-full">
                   <button
                     type="button"
@@ -1895,24 +1895,24 @@ export default function OrderNew() {
                 {activeTab === "in_stock" ? (
                   <div className="space-y-3">
                     <Input
-                      placeholder="Search fabric by code or color..."
+                      placeholder="Search fabric..."
                       value={fabricSearch}
                       onChange={(e) => setFabricSearch(e.target.value)}
-                      className="h-10 text-sm bg-muted/20"
+                      className="h-8 text-xs bg-muted/20 shrink-0"
                     />
                     {isLoadingFabrics ? (
                       <div className="flex h-36 items-center justify-center"><Loader2 className="h-5 w-5 animate-spin text-muted-foreground" /></div>
                     ) : fabrics.length === 0 ? (
                       <p className="text-sm text-muted-foreground py-6 text-center">No fabric stock found.</p>
                     ) : (
-                      <div className="overflow-hidden border border-border rounded-xl max-h-[400px] overflow-y-auto">
-                        <table className="w-full text-left text-xs border-collapse">
+                      <div className="flex-1 overflow-hidden border border-border rounded-xl flex flex-col">
+                        <div className="flex-1 overflow-y-auto"><table className="w-full text-left text-[10px] border-collapse">
                           <thead>
                             <tr className="bg-muted/40 text-muted-foreground border-b font-medium">
-                              <th className="p-3">Code</th>
-                              <th className="p-3">Color</th>
-                              <th className="p-3 text-right">Price/M</th>
-                              <th className="p-3 text-right">Available</th>
+                              <th className="p-1">Code</th>
+                              <th className="p-1">Color</th>
+                              <th className="p-1 text-right">Price/M</th>
+                              <th className="p-1 text-right">Available</th>
                             </tr>
                           </thead>
                           <tbody className="divide-y divide-border">
@@ -1922,10 +1922,10 @@ export default function OrderNew() {
                                 className={`hover:bg-muted/20 cursor-pointer transition-all ${activeFabric?.id === item.id ? "bg-[#4A2B15]/10 shadow-[inset_4px_0_0_0_#4A2B15]" : "shadow-[inset_4px_0_0_0_transparent]"}`}
                                 onClick={() => setActiveFabric(item)}
                               >
-                                <td className="p-3 uppercase font-bold text-foreground">{item.fabric_code}</td>
-                                <td className="p-3 text-muted-foreground">{item.color ?? "—"}</td>
-                                <td className="p-3 text-right font-medium">₹{parseFloat(String(item.price_per_meter)).toLocaleString("en-IN")}</td>
-                                <td className="p-3 text-right">
+                                <td className="p-1 uppercase font-bold text-foreground">{item.fabric_code}</td>
+                                <td className="p-1 text-muted-foreground">{item.color ?? "—"}</td>
+                                <td className="p-1 text-right font-medium">₹{parseFloat(String(item.price_per_meter)).toLocaleString("en-IN")}</td>
+                                <td className="p-1 text-right">
                                   {(() => {
                                     const avail = Number(item.available_meter);
                                     let colorClass = "text-emerald-600";
@@ -1943,27 +1943,27 @@ export default function OrderNew() {
                               </tr>
                             ))}
                           </tbody>
-                        </table>
+                        </table></div>
                       </div>
                     )}
                   </div>
                 ) : (
-                  <div className="space-y-4 bg-muted/10 p-4 rounded-xl border border-border">
+                  <div className="space-y-2 bg-muted/10 p-2 rounded-xl border border-border flex-1 overflow-hidden flex flex-col">
                     <div className="pointer-events-none opacity-50">
                       <div className="flex gap-4">
                         {swatchUploading ? (
-                          <div className="h-16 w-16 shrink-0 rounded-lg border border-dashed flex items-center justify-center bg-card">
+                          <div className="h-10 w-10 shrink-0 rounded-lg border border-dashed flex items-center justify-center bg-card">
                             <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" />
                           </div>
                         ) : swatchImage ? (
-                          <div className="relative h-16 w-16 shrink-0 rounded-lg border bg-card overflow-hidden group">
+                          <div className="relative h-10 w-10 shrink-0 rounded-lg border bg-card overflow-hidden group">
                             <img src={resolvePublicUrl(swatchImage) ?? ""} className="h-full w-full object-cover" />
                             <button type="button" onClick={() => fileInputRef.current?.click()} className="absolute inset-0 bg-black/40 text-white flex items-center justify-center">
                               <Camera className="h-5 w-5" />
                             </button>
                           </div>
                         ) : (
-                          <Button type="button" variant="outline" onClick={() => fileInputRef.current?.click()} className="h-16 w-16 shrink-0 flex flex-col gap-1 border-dashed">
+                          <Button type="button" variant="outline" onClick={() => fileInputRef.current?.click()} className="h-10 w-10 shrink-0 flex flex-col gap-0 border-dashed p-0">
                             <Camera className="h-5 w-5" />
                             <span className="text-[10px]">Photo</span>
                           </Button>
@@ -1999,36 +1999,36 @@ export default function OrderNew() {
                   </div>
                 )}
               </div>
-              <Button onClick={() => setMobileStep(4)} disabled={activeTab === 'in_stock' ? !activeFabric : stagedSwatches.length === 0} className="w-full bg-[#4A2B15] text-white h-12 rounded-xl text-base font-bold">Next</Button>
+              <Button onClick={() => setMobileStep(4)} disabled={activeTab === 'in_stock' ? !activeFabric : stagedSwatches.length === 0} className="shrink-0 w-full bg-[#4A2B15] text-white h-10 rounded-xl text-base font-bold">Next</Button>
             </div>
           )}
 
           {mobileStep === 4 && (
-            <div className="space-y-4">
-              <div className="bg-card p-4 rounded-xl border border-border shadow-sm space-y-5">
+            <div className="flex-1 flex flex-col overflow-hidden space-y-2">
+              <div className="bg-card p-2 rounded-xl border border-border shadow-sm space-y-2 flex-1 overflow-hidden flex flex-col">
                 {activeTab === "swatch" ? (
-                  <div className="space-y-4">
+                  <div className="flex-1 flex flex-col overflow-hidden space-y-2">
                     {stagedSwatches.length === 0 ? (
                       <div className="flex flex-col items-center justify-center h-48 border border-dashed rounded-xl p-4 text-center text-sm text-muted-foreground">
                         <Info className="h-8 w-8 mb-3 text-muted-foreground/60" />
                         Please add swatches in Step 3.
                       </div>
                     ) : (
-                      <div className="space-y-4">
+                      <div className="flex-1 overflow-hidden flex flex-col space-y-2">
                         {stagedSwatches.map((sw, index) => {
                           const preview = sw.customImage ? resolvePublicUrl(sw.customImage) : null;
                           return (
-                            <div key={sw.id} className="p-4 border rounded-xl bg-muted/10 space-y-3 relative">
+                            <div key={sw.id} className="p-2 border rounded-xl bg-muted/10 space-y-1 relative">
                               <div className="flex gap-3">
                                 {preview ? (
-                                  <div className="relative h-14 w-14 shrink-0 rounded-lg overflow-hidden border bg-card">
+                                  <div className="relative h-10 w-10 shrink-0 rounded-lg overflow-hidden border bg-card">
                                     <img src={preview} className="h-full w-full object-cover" />
                                     <button type="button" onClick={() => { setEditingStagedSwatchIndex(index); stagedSwatchFileInputRef.current?.click(); }} className="absolute inset-0 bg-black/40 text-white flex items-center justify-center">
                                       <Camera className="h-4 w-4" />
                                     </button>
                                   </div>
                                 ) : (
-                                  <button type="button" onClick={() => { setEditingStagedSwatchIndex(index); stagedSwatchFileInputRef.current?.click(); }} className="h-14 w-14 shrink-0 rounded-lg border border-dashed flex items-center justify-center bg-card text-muted-foreground">
+                                  <button type="button" onClick={() => { setEditingStagedSwatchIndex(index); stagedSwatchFileInputRef.current?.click(); }} className="h-10 w-10 shrink-0 rounded-lg border border-dashed flex items-center justify-center bg-card text-muted-foreground">
                                     <Camera className="h-5 w-5" />
                                   </button>
                                 )}
@@ -2122,9 +2122,9 @@ export default function OrderNew() {
                     )}
                   </div>
                 ) : activeFabric ? (
-                  <div className="space-y-5">
-                    <div className="flex gap-4">
-                      <div className="h-20 w-24 rounded-lg bg-muted border overflow-hidden shrink-0">
+                  <div className="flex-1 overflow-hidden flex flex-col space-y-2">
+                    <div className="flex gap-2">
+                      <div className="h-12 w-16 rounded-lg bg-muted border overflow-hidden shrink-0">
                         {activeFabric.image ? (
                           <img src={`${apiBaseUrl()}/storage/${activeFabric.image}`} className="h-full w-full object-cover" />
                         ) : (
@@ -2139,7 +2139,7 @@ export default function OrderNew() {
                         <p className="text-sm text-muted-foreground mt-1">{activeFabric.color}</p>
                       </div>
                     </div>
-                    <div className="grid grid-cols-2 gap-y-3 text-sm border-y py-4">
+                    <div className="grid grid-cols-2 gap-y-1 text-xs border-y py-2">
                       <span className="text-muted-foreground">Price / Meter</span>
                       <span className="text-right font-bold text-foreground">₹{parseFloat(String(activeFabric.price_per_meter)).toLocaleString("en-IN")}</span>
                       <span className="text-muted-foreground">Available</span>
@@ -2176,7 +2176,7 @@ export default function OrderNew() {
                         </Button>
                       </div>
                     </div>
-                    <div className="pt-3 flex justify-between items-center text-sm font-bold border-t border-dashed">
+                    <div className="mt-auto pt-2 flex justify-between items-center text-sm font-bold border-t border-dashed">
                       <span className="text-muted-foreground">Total Amount</span>
                       <span className="text-xl text-foreground">
                         ₹{Math.round((parseFloat(String(activeFabric.price_per_meter)) * fabricMeter) + (fabricHandworkPrice || 0)).toLocaleString("en-IN")}
@@ -2193,15 +2193,15 @@ export default function OrderNew() {
               <Button onClick={() => {
                 if (activeTab === "in_stock") handleAddInStockItem(); else handleAddStagedSwatchesToOrder();
                 setMobileStep(5);
-              }} className="w-full bg-[#4A2B15] text-white h-12 rounded-xl text-base font-bold">
+              }} className="shrink-0 w-full bg-[#4A2B15] text-white h-10 rounded-xl text-base font-bold">
                 {editingItemIndex !== null ? "Update to Order" : "Add to Order"}
               </Button>
             </div>
           )}
 
           {mobileStep === 5 && (
-            <div className="space-y-4">
-              <div className="bg-card p-4 rounded-xl border border-border shadow-sm space-y-4">
+            <div className="flex-1 flex flex-col overflow-hidden space-y-2">
+              <div className="bg-card p-3 rounded-xl border border-border shadow-sm space-y-3 flex-1 overflow-hidden">
                 <div className="flex justify-between items-center pb-2 border-b">
                   <h3 className="font-extrabold text-base text-foreground">Order Item ({orderItems.length})</h3>
                   {orderItems.length > 0 && <Button variant="ghost" size="sm" onClick={() => { setOrderItems([]); setEditingItemIndex(null); }} className="text-xs text-destructive">Clear All</Button>}
@@ -2209,19 +2209,19 @@ export default function OrderNew() {
                 {orderItems.length === 0 ? (
                   <div className="py-8 text-center text-sm text-muted-foreground">No items added yet.</div>
                 ) : (
-                  <div className="space-y-4">
+                  <div className="flex-1 overflow-hidden flex flex-col space-y-2">
                     {orderItems.map((item, itemIdx) => {
                       if (item.type === "in_stock") {
                         const preview = item.icon_path ? resolvePublicUrl(item.icon_path) : null;
                         return (
-                          <div key={item.id} className="relative border bg-card p-4 rounded-xl space-y-3">
+                          <div key={item.id} className="relative border bg-card p-2 rounded-xl space-y-1">
                             <div className="flex gap-3">
                               {preview ? (
-                                <div className="h-16 w-16 shrink-0 rounded-lg overflow-hidden border bg-muted/20">
+                                <div className="h-10 w-10 shrink-0 rounded-lg overflow-hidden border bg-muted/20">
                                   <img src={preview} className="h-full w-full object-cover" />
                                 </div>
                               ) : (
-                                <div className="h-16 w-16 shrink-0 rounded-lg border border-dashed flex items-center justify-center bg-muted/10 font-bold text-xs">
+                                <div className="h-10 w-10 shrink-0 rounded-lg border border-dashed flex items-center justify-center bg-muted/10 font-bold text-xs">
                                   {item.fabricCode?.substring(0, 2)}
                                 </div>
                               )}
@@ -2269,7 +2269,7 @@ export default function OrderNew() {
                         );
                       } else {
                         return (
-                          <div key={item.id} className="relative border bg-card p-4 rounded-xl space-y-3">
+                          <div key={item.id} className="relative border bg-card p-2 rounded-xl space-y-1">
                             <div className="flex justify-between items-center pb-2 border-b">
                               <span className="font-extrabold text-sm text-foreground block">{item.garmentName}</span>
                               <div className="flex gap-2">
@@ -2285,13 +2285,13 @@ export default function OrderNew() {
                                     <span className="text-xs font-bold text-muted-foreground block">Swatch #{swIdx + 1}</span>
                                     <div className="flex gap-3 items-start">
                                       {preview ? (
-                                        <div className="relative h-12 w-12 shrink-0 rounded-lg overflow-hidden border bg-muted/20">
+                                        <div className="relative h-8 w-8 shrink-0 rounded-lg overflow-hidden border bg-muted/20">
                                           <ImagePreviewDialog src={preview} alt={item.garmentName}>
                                             <img src={preview} className="h-full w-full object-cover cursor-pointer" />
                                           </ImagePreviewDialog>
                                         </div>
                                       ) : (
-                                        <div className="h-12 w-12 shrink-0 rounded-lg border border-dashed flex items-center justify-center bg-muted/10 text-muted-foreground">
+                                        <div className="h-8 w-8 shrink-0 rounded-lg border border-dashed flex items-center justify-center bg-muted/10 text-muted-foreground">
                                           <Camera className="h-5 w-5" />
                                         </div>
                                       )}
@@ -2342,8 +2342,8 @@ export default function OrderNew() {
           )}
 
           {mobileStep === 6 && (
-            <div className="space-y-4">
-              <div className="bg-card rounded-xl border border-border shadow-sm p-4 space-y-4">
+            <div className="flex-1 flex flex-col overflow-hidden space-y-2">
+              <div className="bg-card rounded-xl border border-border shadow-sm p-3 space-y-2">
                 <h3 className="font-extrabold text-base text-foreground pb-2 border-b">Summary</h3>
                 <div className="space-y-3">
                   {orderItems.map((item, idx) => {
@@ -2372,9 +2372,9 @@ export default function OrderNew() {
                   <div className="flex justify-between text-lg font-extrabold border-t pt-3 mt-3"><span>Grand Total</span><span>₹{Math.round(grandTotal).toLocaleString("en-IN")}</span></div>
                 </div>
               </div>
-              <div className="bg-card rounded-xl border border-border shadow-sm p-4">
+              <div className="bg-card rounded-xl border border-border shadow-sm p-3">
                 <label className="text-sm font-extrabold text-foreground mb-2 block">Notes</label>
-                <Textarea placeholder="Add order notes..." value={notes} onChange={(e) => setNotes(e.target.value)} className="min-h-[100px] text-sm bg-muted/10 border-border" />
+                <Textarea placeholder="Add order notes..." value={notes} onChange={(e) => setNotes(e.target.value)} className="min-h-[60px] text-sm bg-muted/10 border-border" />
               </div>
               <div className="grid grid-cols-2 gap-3 pt-2">
                 <Button variant="outline" onClick={() => navigate("/orders")} className="h-12 rounded-xl text-sm font-bold border-muted-foreground">Cancel</Button>
