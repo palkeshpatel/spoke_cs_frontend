@@ -1919,7 +1919,8 @@ export default function OrderNew() {
                             {fabrics.map((item) => (
                               <tr
                                 key={item.id}
-                                className={`hover:bg-muted/20 cursor-pointer transition-all ${activeFabric?.id === item.id ? "bg-[#4A2B151A] shadow-[inset_4px_0_0_0_#4A2B15]" : "shadow-[inset_4px_0_0_0_transparent]"}`}
+                                className={`hover:bg-muted/20 cursor-pointer transition-all ${activeFabric?.id === item.id ? "shadow-[inset_4px_0_0_0_#4A2B15]" : "shadow-[inset_4px_0_0_0_transparent]"}`}
+                                style={{ backgroundColor: activeFabric?.id === item.id ? "#4A2B151A" : undefined }}
                                 onClick={() => setActiveFabric(item)}
                               >
                                 <td className="p-2 uppercase font-bold text-foreground">{item.fabric_code}</td>
