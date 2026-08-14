@@ -122,7 +122,7 @@ export default function OrderNew() {
   const [fabricHandworkPrice, setFabricHandworkPrice] = useState<number | null>(null);
   const [fabricHandworkNotes, setFabricHandworkNotes] = useState<string>("");
   const [fabricCustomizations, setFabricCustomizations] = useState<Record<number, { priceModifier: number, note: string }>>({});
-  const [fabricMeter, setFabricMeter] = useState<number>(3.25);
+  const [fabricMeter, setFabricMeter] = useState<number>(1);
 
   // Handwork Details Dialog state
   const [handworkDialogOpen, setHandworkDialogOpen] = useState<boolean>(false);
@@ -430,7 +430,7 @@ export default function OrderNew() {
 
     // Clear selection
     setActiveFabric(null);
-    setFabricMeter(3.25);
+    setFabricMeter(1);
     setFabricHandwork(false);
     setFabricHandworkPrice(null);
     setFabricHandworkNotes("");
@@ -560,7 +560,7 @@ export default function OrderNew() {
           image: item.icon_path,
         });
       }
-      setFabricMeter(item.meterRequired ?? 3.25);
+      setFabricMeter(item.meterRequired ?? 1);
       setFabricHandwork(item.handwork);
       setFabricHandworkPrice(item.handworkPrice ?? null);
       setFabricHandworkNotes(item.handworkNotes ?? "");
@@ -916,7 +916,7 @@ export default function OrderNew() {
                         setSelectedGarmentId(g.id);
                         setActiveFabric(null);
                         setStagedSwatches([]);
-                        setFabricMeter(3.25);
+                        setFabricMeter(1);
                         setFabricHandwork(false);
                         setFabricHandworkPrice(null);
                         setFabricHandworkNotes("");
@@ -1837,7 +1837,7 @@ export default function OrderNew() {
                           setSelectedGarmentId(g.id);
                           setActiveFabric(null);
                           setStagedSwatches([]);
-                          setFabricMeter(3.25);
+                          setFabricMeter(1);
                           setFabricHandwork(false);
                           setFabricHandworkPrice(null);
                           setFabricHandworkNotes("");
