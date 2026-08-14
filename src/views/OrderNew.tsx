@@ -1054,7 +1054,7 @@ export default function OrderNew() {
             ) : (
               /* Swatch / On Demand Custom Form */
               <div className="space-y-3 bg-muted/20 p-3 rounded-lg border border-border">
-                <div className="pointer-events-none opacity-50">
+                <div className="pointer-events-none opacity-30">
                   <div className="flex gap-3">
                     {swatchUploading ? (
                       <div className="h-10 w-10 shrink-0 rounded-md border border-dashed flex items-center justify-center bg-card">
@@ -1964,7 +1964,7 @@ export default function OrderNew() {
                   </div>
                 ) : (
                   <div className="space-y-2 bg-muted/10 p-2 rounded-xl border border-border flex-1 overflow-hidden flex flex-col">
-                    <div className="pointer-events-none opacity-50">
+                    <div className="pointer-events-none opacity-30">
                       <div className="flex gap-4">
                         {swatchUploading ? (
                           <div className="h-10 w-10 shrink-0 rounded-lg border border-dashed flex items-center justify-center bg-card">
