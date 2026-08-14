@@ -1906,13 +1906,13 @@ export default function OrderNew() {
                       <p className="text-sm text-muted-foreground py-6 text-center">No fabric stock found.</p>
                     ) : (
                       <div className="flex-1 overflow-hidden border border-border rounded-xl flex flex-col">
-                        <div className="flex-1 overflow-y-auto"><table className="w-full text-left text-[10px] border-collapse">
+                        <div className="flex-1 overflow-y-auto"><table className="w-full text-left text-sm border-collapse">
                           <thead>
                             <tr className="bg-muted/40 text-muted-foreground border-b font-medium">
-                              <th className="p-1">Code</th>
-                              <th className="p-1">Color</th>
-                              <th className="p-1 text-right">Price/M</th>
-                              <th className="p-1 text-right">Available</th>
+                              <th className="p-2">Code</th>
+                              <th className="p-2">Color</th>
+                              <th className="p-2 text-right">Price/M</th>
+                              <th className="p-2 text-right">Available</th>
                             </tr>
                           </thead>
                           <tbody className="divide-y divide-border">
@@ -1922,10 +1922,10 @@ export default function OrderNew() {
                                 className={`hover:bg-muted/20 cursor-pointer transition-all ${activeFabric?.id === item.id ? "bg-[#4A2B15]/10 shadow-[inset_4px_0_0_0_#4A2B15]" : "shadow-[inset_4px_0_0_0_transparent]"}`}
                                 onClick={() => setActiveFabric(item)}
                               >
-                                <td className="p-1 uppercase font-bold text-foreground">{item.fabric_code}</td>
-                                <td className="p-1 text-muted-foreground">{item.color ?? "—"}</td>
-                                <td className="p-1 text-right font-medium">₹{parseFloat(String(item.price_per_meter)).toLocaleString("en-IN")}</td>
-                                <td className="p-1 text-right">
+                                <td className="p-2 uppercase font-bold text-foreground">{item.fabric_code}</td>
+                                <td className="p-2 text-muted-foreground">{item.color ?? "—"}</td>
+                                <td className="p-2 text-right font-medium">₹{parseFloat(String(item.price_per_meter)).toLocaleString("en-IN")}</td>
+                                <td className="p-2 text-right">
                                   {(() => {
                                     const avail = Number(item.available_meter);
                                     let colorClass = "text-emerald-600";
@@ -1935,7 +1935,7 @@ export default function OrderNew() {
                                     return (
                                       <>
                                         <span className={`font-bold block ${colorClass}`}>{avail.toFixed(2)} m</span>
-                                        <span className="text-[10px] text-muted-foreground">{label}</span>
+                                        <span className="text-xs text-muted-foreground">{label}</span>
                                       </>
                                     );
                                   })()}
