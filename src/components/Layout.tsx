@@ -127,7 +127,7 @@ export default function Layout() {
   }, [location.pathname]);
 
   return (
-    <div className="flex h-[100dvh] overflow-hidden">
+    <div className="flex min-h-[100dvh] lg:h-[100dvh] lg:overflow-hidden">
       {/* Mobile overlay */}
       {mobileOpen && (
         <div
@@ -293,7 +293,7 @@ export default function Layout() {
       </aside>
 
       {/* Main content */}
-      <div className="flex-1 flex flex-col overflow-hidden">
+      <div className="flex-1 flex flex-col min-w-0 lg:overflow-hidden">
         {/* Mobile top bar */}
         <div className="lg:hidden flex items-center justify-between h-14 px-4 border-b border-border bg-card shrink-0 print:hidden relative">
           <div className="flex-1 flex justify-start">
@@ -321,7 +321,7 @@ export default function Layout() {
           </div>
         </div>
 
-        <main className="flex-1 overflow-y-auto pb-16 lg:pb-0">
+        <main className="flex-1 lg:overflow-y-auto pb-16 lg:pb-0">
           <div className="p-4 sm:p-6 max-w-7xl mx-auto">
             {isUserLoading ? (
               <div className="flex min-h-[40vh] items-center justify-center text-sm text-muted-foreground animate-pulse">
