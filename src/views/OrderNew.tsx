@@ -1825,7 +1825,7 @@ export default function OrderNew() {
 
           {mobileStep === 2 && (
             <div className="flex-1 flex flex-col overflow-hidden space-y-2">
-              <div className="bg-card rounded-xl border border-border shadow-sm p-2 grid grid-cols-4 gap-2 flex-1 overflow-hidden">
+              <div className="bg-card rounded-xl border border-border shadow-sm p-3 grid grid-cols-3 gap-3 flex-1 overflow-y-auto content-start">
                 {garments?.map((g) => {
                   const isSelected = selectedGarmentName === g.name;
                   return (
@@ -1851,10 +1851,10 @@ export default function OrderNew() {
                           setEditingItemIndex(null);
                         }
                       }}
-                      className={`flex flex-col items-center justify-center p-1 rounded-xl border transition-all ${isSelected ? "border-[#4A2B15] bg-[#4A2B15]/5 text-[#4A2B15] font-semibold ring-2 ring-[#4A2B15]/20" : "border-border bg-card text-muted-foreground hover:bg-muted/30"
+                      className={`aspect-square flex flex-col items-center justify-center p-2 rounded-xl border transition-all ${isSelected ? "border-[#4A2B15] bg-[#4A2B15]/5 text-[#4A2B15] font-semibold ring-2 ring-[#4A2B15]/20" : "border-border bg-card text-muted-foreground hover:bg-muted/30"
                         }`}
                     >
-                      <div className="h-6 w-6 mb-1 flex items-center justify-center">
+                      <div className="h-10 w-10 mb-2 flex items-center justify-center shrink-0">
                         {g.image_path ? (
                           <img src={resolvePublicUrl(g.image_path)!} alt={g.name} className="max-h-full max-w-full object-contain" />
                         ) : (
