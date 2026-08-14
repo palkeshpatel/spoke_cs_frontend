@@ -1635,7 +1635,12 @@ export default function OrderNew() {
                     return (
                       <div key={item.id} className={`relative border bg-card p-4 rounded-xl space-y-3 shadow-xs group ${editingItemIndex === itemIdx ? "ring-2 ring-primary border-primary bg-primary/[0.01]" : "border-border"}`}>
                         <div className="flex justify-between items-center pb-2 border-b">
-                          <span className="font-extrabold text-sm text-foreground block">{item.garmentName}</span>
+                          <div>
+                            <span className="font-extrabold text-sm text-foreground block">{item.garmentName}</span>
+                            <span className="text-xs font-bold text-foreground block mt-1">
+                              ₹{Math.round((item.swatchBasePrice || 0) + item.swatches.reduce((sum, sw) => sum + (sw.handworkPrice || 0) + Object.values(sw.customizations).reduce((s, c) => s + (c.priceModifier || 0), 0), 0)).toLocaleString("en-IN")}
+                            </span>
+                          </div>
                           <div className="flex gap-1 items-center">
                             <span className="text-[10px] text-muted-foreground font-semibold mr-1">Swatch Item ({item.swatches.length})</span>
                             <button
@@ -2331,7 +2336,12 @@ export default function OrderNew() {
                         return (
                           <div key={item.id} className="relative border bg-card p-2 rounded-xl space-y-1">
                             <div className="flex justify-between items-center pb-2 border-b">
-                              <span className="font-extrabold text-sm text-foreground block">{item.garmentName}</span>
+                              <div>
+                                <span className="font-extrabold text-sm text-foreground block">{item.garmentName}</span>
+                                <span className="text-xs font-bold text-foreground block mt-0.5">
+                                  ₹{Math.round((item.swatchBasePrice || 0) + item.swatches.reduce((sum, sw) => sum + (sw.handworkPrice || 0) + Object.values(sw.customizations).reduce((s, c) => s + (c.priceModifier || 0), 0), 0)).toLocaleString("en-IN")}
+                                </span>
+                              </div>
                               <div className="flex gap-2">
                                 <button type="button" onClick={() => { handleStartEditItem(itemIdx); setMobileStep(4); }} className="text-muted-foreground p-1 border rounded"><Edit2 className="h-4 w-4" /></button>
                                 <button type="button" onClick={() => handleRemoveItem(itemIdx)} className="text-muted-foreground hover:text-destructive p-1 border rounded"><Trash2 className="h-4 w-4" /></button>
