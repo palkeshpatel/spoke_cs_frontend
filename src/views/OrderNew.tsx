@@ -394,6 +394,7 @@ export default function OrderNew() {
               color: activeFabric.color ?? "",
               pricePerMeter: parseFloat(String(activeFabric.price_per_meter)),
               meterRequired: fabricMeter,
+              note: fabricNote,
               handwork: fabricHandwork,
               handworkPrice: fabricHandworkPrice,
               handworkNotes: fabricHandworkNotes,
@@ -483,6 +484,7 @@ export default function OrderNew() {
           if (idx === editingItemIndex) {
             return {
               ...item,
+              swatchBasePrice: swatchGroupBasePrice,
               swatches: [...stagedSwatches],
             };
           }
@@ -568,6 +570,7 @@ export default function OrderNew() {
         });
       }
       setFabricMeter(item.meterRequired ?? 1);
+      setFabricNote(item.note ?? "");
       setFabricHandwork(item.handwork);
       setFabricHandworkPrice(item.handworkPrice ?? null);
       setFabricHandworkNotes(item.handworkNotes ?? "");
@@ -575,6 +578,7 @@ export default function OrderNew() {
     } else {
       setActiveTab("swatch");
       setActiveFabric(null);
+      setSwatchGroupBasePrice(item.swatchBasePrice ?? 0);
       setStagedSwatches([...item.swatches]);
     }
 
