@@ -61,6 +61,7 @@ type OrderItemEntry = {
   handworkPrice?: number | null;
   handworkNotes?: string | null;
   customizations: Record<number, { priceModifier: number, note: string }>;
+  swatchBasePrice?: number;
 };
 
 const categoryImages: Record<string, string> = {
@@ -118,6 +119,7 @@ export default function OrderNew() {
 
   // Step 3: Fabric Details options / Staged Swatches Details options
   const [stagedSwatches, setStagedSwatches] = useState<SwatchDetail[]>([]);
+  const [swatchGroupBasePrice, setSwatchGroupBasePrice] = useState<number>(0);
   const [fabricHandwork, setFabricHandwork] = useState<boolean>(false);
   const [fabricHandworkPrice, setFabricHandworkPrice] = useState<number | null>(null);
   const [fabricHandworkNotes, setFabricHandworkNotes] = useState<string>("");
@@ -268,6 +270,7 @@ export default function OrderNew() {
           id: "swatch-group-" + garmentName.replace(/\s+/g, '-').toLowerCase(),
           type: "swatch",
           garmentName,
+          swatchBasePrice: 0,
           note: "",
           handwork: false,
           customizations: {},
@@ -437,6 +440,7 @@ export default function OrderNew() {
     setFabricHandworkPrice(null);
     setFabricHandworkNotes("");
     setFabricCustomizations({});
+    setSwatchGroupBasePrice(0);
   };
 
   // Step 2: Clicking "+ Add" appends swatch to Staging List in Step 3
@@ -507,6 +511,7 @@ export default function OrderNew() {
             type: "swatch",
             garmentName: selectedGarmentName,
             garmentId: selectedGarmentId,
+            swatchBasePrice: swatchGroupBasePrice,
             swatches: stagedSwatches.map(sw => ({ ...sw, id: sw.id + "-" + Math.random().toString(36).substring(2, 9) })),
             note: "",
             handwork: false,
@@ -742,7 +747,7 @@ export default function OrderNew() {
           customization_flags: Object.keys(item.customizations).length > 0 ? JSON.stringify(item.customizations) : null,
         });
       } else {
-        item.swatches.forEach((sw) => {
+        item.swatches.forEach((sw, idx) => {
           // Sum up all customization price modifiers
           const customizationPriceSum = Object.values(sw.customizations).reduce(
             (sum, c) => sum + (c.priceModifier || 0), 0
@@ -750,7 +755,7 @@ export default function OrderNew() {
           itemsPayload.push({
             garment_type: item.garmentName,
             quantity: 1,
-            price: (sw.handworkPrice || 0) + customizationPriceSum,
+            price: (idx === 0 ? (item.swatchBasePrice || 0) : 0) + (sw.handworkPrice || 0) + customizationPriceSum,
             icon_path: sw.customImage || null,
             note: sw.note || null,
             handwork: sw.handwork,
@@ -930,6 +935,7 @@ export default function OrderNew() {
                         setSwatchHandworkNotes("");
                         setSwatchCustomizations({});
                         setSwatchImage(null);
+                        setSwatchGroupBasePrice(0);
                         setEditingItemIndex(null);
                       }
                     }}
@@ -1327,12 +1333,25 @@ export default function OrderNew() {
                 {stagedSwatches.length > 0 && (
                   <div className="space-y-3 pt-2">
                     <div className="pt-2 flex justify-between items-center text-xs font-bold border-t border-dashed">
-                      <span className="text-muted-foreground">Price Estimate ({stagedSwatches.length} Swatches)</span>
+                      <span className="text-muted-foreground">Base Price</span>
+                      <div className="flex items-center gap-1">
+                        <span className="text-muted-foreground">₹</span>
+                        <Input 
+                          type="number" 
+                          className="h-7 w-20 text-right bg-card text-xs" 
+                          value={swatchGroupBasePrice || ""} 
+                          onChange={(e) => setSwatchGroupBasePrice(Math.max(0, parseInt(e.target.value) || 0))} 
+                          placeholder="0"
+                        />
+                      </div>
+                    </div>
+                    <div className="pt-2 flex justify-between items-center text-xs font-bold border-t border-dashed">
+                      <span className="text-muted-foreground">Total Estimate ({stagedSwatches.length} Swatches)</span>
                       <span className="text-base text-foreground">
                         ₹{stagedSwatches.reduce((sum, sw) => {
                           const custSum = Object.values(sw.customizations).reduce((s, c) => s + (c.priceModifier || 0), 0);
                           return sum + (sw.handworkPrice || 0) + custSum;
-                        }, 0).toLocaleString("en-IN")}
+                        }, swatchGroupBasePrice).toLocaleString("en-IN")}
                       </span>
                     </div>
 
@@ -1734,7 +1753,10 @@ export default function OrderNew() {
                             {item.garmentName} (Swatch × {item.swatches.length})
                           </span>
                           <span className="font-medium">
-                            ₹{item.swatches.reduce((sum, sw) => sum + (sw.handworkPrice || 0), 0).toLocaleString("en-IN")}
+                            ₹{Math.round((item.swatchBasePrice || 0) + item.swatches.reduce((sum, sw) => {
+                              const custSum = Object.values(sw.customizations).reduce((s, c) => s + (c.priceModifier || 0), 0);
+                              return sum + (sw.handworkPrice || 0) + custSum;
+                            }, 0)).toLocaleString("en-IN")}
                           </span>
                         </div>
                       );
@@ -1862,6 +1884,7 @@ export default function OrderNew() {
                           setSwatchHandworkNotes("");
                           setSwatchCustomizations({});
                           setSwatchImage(null);
+                          setSwatchGroupBasePrice(0);
                           setEditingItemIndex(null);
                         }
                       }}
@@ -2125,12 +2148,25 @@ export default function OrderNew() {
                           );
                         })}
                         <div className="pt-2 flex justify-between items-center text-sm font-bold border-t border-dashed">
-                          <span className="text-muted-foreground">Price Estimate</span>
+                          <span className="text-muted-foreground">Base Price</span>
+                          <div className="flex items-center gap-2">
+                            <span className="text-muted-foreground">₹</span>
+                            <Input 
+                              type="number" 
+                              className="h-8 w-24 text-right bg-card" 
+                              value={swatchGroupBasePrice || ""} 
+                              onChange={(e) => setSwatchGroupBasePrice(Math.max(0, parseInt(e.target.value) || 0))} 
+                              placeholder="0"
+                            />
+                          </div>
+                        </div>
+                        <div className="pt-2 flex justify-between items-center text-sm font-bold border-t border-dashed">
+                          <span className="text-muted-foreground">Total Estimate</span>
                           <span className="text-lg text-foreground">
                             ₹{stagedSwatches.reduce((sum, sw) => {
                               const custSum = Object.values(sw.customizations).reduce((s, c) => s + (c.priceModifier || 0), 0);
                               return sum + (sw.handworkPrice || 0) + custSum;
-                            }, 0).toLocaleString("en-IN")}
+                            }, swatchGroupBasePrice).toLocaleString("en-IN")}
                           </span>
                         </div>
                       </div>
@@ -2383,7 +2419,10 @@ export default function OrderNew() {
                       return (
                         <div key={idx} className="flex justify-between text-sm">
                           <span className="text-muted-foreground truncate">{item.garmentName} ({item.swatches.length} Swatches)</span>
-                          <span className="font-bold">₹{item.swatches.reduce((s, sw) => s + (sw.handworkPrice || 0), 0).toLocaleString("en-IN")}</span>
+                          <span className="font-bold">₹{Math.round((item.swatchBasePrice || 0) + item.swatches.reduce((sum, sw) => {
+                              const custSum = Object.values(sw.customizations).reduce((s, c) => s + (c.priceModifier || 0), 0);
+                              return sum + (sw.handworkPrice || 0) + custSum;
+                            }, 0)).toLocaleString("en-IN")}</span>
                         </div>
                       );
                     }
