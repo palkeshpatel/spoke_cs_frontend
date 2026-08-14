@@ -1,5 +1,5 @@
 import { useMemo, useState, useEffect } from "react";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Link } from "react-router-dom";
 import { LayoutGrid, List, Plus, Search, ChevronLeft, ChevronRight, FileText, Ruler, Scissors, PenTool, User, UserCheck, Truck, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -8,9 +8,10 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { DateRangePicker } from "@/components/DateRangePicker";
 import PageHeader from "@/components/PageHeader";
 import { StatusBadge } from "@/components/StatusBadge";
-import { OrderStatusStepper } from "@/components/OrderStatusStepper";
+import { OrderStatusStepper, ORDER_STATUS_STEPS } from "@/components/OrderStatusStepper";
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
-import { listOrders } from "@/services/orders";
+import { listOrders, updateOrder } from "@/services/orders";
+import { toast } from "sonner";
 
 function useDebounce<T>(value: T, delay: number): T {
   const [debouncedValue, setDebouncedValue] = useState<T>(value);
@@ -22,6 +23,17 @@ function useDebounce<T>(value: T, delay: number): T {
 }
 
 export default function OrderList() {
+  const queryClient = useQueryClient();
+  const updateStatusM = useMutation({
+    mutationFn: ({ id, status }: { id: number; status: string }) => updateOrder(id, { status }),
+    onSuccess: (_, variables) => {
+      queryClient.invalidateQueries({ queryKey: ["orders"] });
+      const stepLabel = ORDER_STATUS_STEPS.find((s) => s.id === variables.status)?.label || variables.status;
+      toast.success(`This order status changed to ${stepLabel}`);
+    },
+    onError: () => toast.error("Failed to update order status"),
+  });
+
   const [search, setSearch] = useState("");
   const debouncedSearch = useDebounce(search, 300);
   const [view, setView] = useState<"list" | "grid">("list");
@@ -201,9 +213,14 @@ export default function OrderList() {
                     <p className="text-xs text-muted-foreground truncate">Fabric: {o.fabric ?? "—"}</p>
                   </div>
                   
-                  <div className="flex-1 w-full xl:w-auto px-2 xl:px-6 xl:flex xl:justify-center">
+                  <div className="flex-1 w-full xl:w-auto px-2 xl:px-6 xl:flex xl:justify-center" onClick={(e) => { e.preventDefault(); e.stopPropagation(); }}>
                     <div className="w-full xl:max-w-[450px]">
-                      <OrderStatusStepper status={o.status} isEditing={false} size="sm" />
+                      <OrderStatusStepper 
+                        status={o.status} 
+                        isEditing={true} 
+                        size="sm" 
+                        onChange={(newStatus) => updateStatusM.mutate({ id: o.id, status: newStatus })}
+                      />
                     </div>
                   </div>
 
@@ -232,8 +249,13 @@ export default function OrderList() {
                       <p className="text-xs text-muted-foreground line-clamp-1">Fabric: {o.fabric ?? "—"}</p>
                       <p className="text-sm font-semibold">${total.toFixed(2)}</p>
                     </div>
-                    <div className="mt-4 pt-4 border-t border-border/50">
-                      <OrderStatusStepper status={o.status} isEditing={false} size="sm" />
+                    <div className="mt-4 pt-4 border-t border-border/50" onClick={(e) => { e.preventDefault(); e.stopPropagation(); }}>
+                      <OrderStatusStepper 
+                        status={o.status} 
+                        isEditing={true} 
+                        size="sm" 
+                        onChange={(newStatus) => updateStatusM.mutate({ id: o.id, status: newStatus })}
+                      />
                     </div>
                   </Link>
                 );
