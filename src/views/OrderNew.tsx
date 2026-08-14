@@ -2260,6 +2260,7 @@ export default function OrderNew() {
                                   <span className="block font-medium">{item.fabricCode} | {item.color}</span>
                                   <span className="block font-medium">{item.meterRequired} m</span>
                                   <span className="block font-bold text-foreground">₹{Math.round((item.pricePerMeter! * item.meterRequired!) + (item.handworkPrice || 0)).toLocaleString("en-IN")}</span>
+                                  {item.note && <span className="block italic break-words pt-0.5">"{item.note}"</span>}
                                 </div>
                               </div>
                             </div>
