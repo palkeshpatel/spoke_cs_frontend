@@ -123,6 +123,7 @@ export default function OrderNew() {
   const [fabricHandworkNotes, setFabricHandworkNotes] = useState<string>("");
   const [fabricCustomizations, setFabricCustomizations] = useState<Record<number, { priceModifier: number, note: string }>>({});
   const [fabricMeter, setFabricMeter] = useState<number>(1);
+  const [fabricNote, setFabricNote] = useState<string>("");
 
   // Handwork Details Dialog state
   const [handworkDialogOpen, setHandworkDialogOpen] = useState<boolean>(false);
@@ -416,7 +417,7 @@ export default function OrderNew() {
         color: activeFabric.color ?? "",
         pricePerMeter: parseFloat(String(activeFabric.price_per_meter)),
         meterRequired: fabricMeter,
-        note: "",
+        note: fabricNote,
         handwork: fabricHandwork,
         handworkPrice: fabricHandworkPrice,
         handworkNotes: fabricHandworkNotes,
@@ -431,6 +432,7 @@ export default function OrderNew() {
     // Clear selection
     setActiveFabric(null);
     setFabricMeter(1);
+    setFabricNote("");
     setFabricHandwork(false);
     setFabricHandworkPrice(null);
     setFabricHandworkNotes("");
@@ -917,6 +919,7 @@ export default function OrderNew() {
                         setActiveFabric(null);
                         setStagedSwatches([]);
                         setFabricMeter(1);
+                        setFabricNote("");
                         setFabricHandwork(false);
                         setFabricHandworkPrice(null);
                         setFabricHandworkNotes("");
@@ -1446,6 +1449,16 @@ export default function OrderNew() {
                   )}
                 </div>
 
+                {/* Stitching Note */}
+                <div className="space-y-1.5 pt-2">
+                  <Input 
+                    placeholder="Stitching Note" 
+                    value={fabricNote} 
+                    onChange={(e) => setFabricNote(e.target.value)} 
+                    className="h-9 text-sm bg-card" 
+                  />
+                </div>
+
                 {/* Meter Required */}
                 <div className="space-y-1.5">
                   <label className="text-xs text-muted-foreground block font-medium">Meter Required</label>
@@ -1838,6 +1851,7 @@ export default function OrderNew() {
                           setActiveFabric(null);
                           setStagedSwatches([]);
                           setFabricMeter(1);
+                          setFabricNote("");
                           setFabricHandwork(false);
                           setFabricHandworkPrice(null);
                           setFabricHandworkNotes("");
@@ -2164,6 +2178,14 @@ export default function OrderNew() {
                           Advanced Customization
                         </label>
                       )}
+                    </div>
+                    <div className="space-y-2">
+                      <Input 
+                        placeholder="Stitching Note" 
+                        value={fabricNote} 
+                        onChange={(e) => setFabricNote(e.target.value)} 
+                        className="h-10 text-sm bg-card" 
+                      />
                     </div>
                     <div className="space-y-2">
                       <label className="text-sm text-muted-foreground block font-medium">Meter Required</label>
