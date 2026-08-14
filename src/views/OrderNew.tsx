@@ -78,7 +78,7 @@ const categoryImages: Record<string, string> = {
   "Co-ord Set": "co-ord-set.webp",
 };
 
-export default function OrderNew() {
+export default function OrderNew({ readOnly = false }: { readOnly?: boolean }) {
   const navigate = useNavigate();
   const location = useLocation();
   const queryClient = useQueryClient();
@@ -255,7 +255,7 @@ export default function OrderNew() {
           
           if (group.swatches.length === 0) {
             const custSum = Object.values(parsedCustomizations).reduce((s: number, c: any) => s + (c.priceModifier || 0), 0);
-            group.basePrice = Math.max(0, Number(it.price || 0) - Number(it.handwork_price || 0) - custSum);
+            group.basePrice = Math.max(0, Number(it.price || 0) - Number(it.handwork_price || 0) - Number(custSum));
           }
 
           group.swatches.push({
@@ -859,12 +859,19 @@ export default function OrderNew() {
     <>
       <div className="hidden lg:block space-y-6">
         <PageHeader
-          title={isEdit ? (orderQuery.data?.order_number || "Edit Order") : "New Order"}
-          subtitle={isEdit ? "Update order details" : "Create a new order"}
-          backTo={isEdit ? `/orders/${orderId}` : "/orders"}
+          title={readOnly ? (orderQuery.data?.order_number || "Order Details") : (isEdit ? (orderQuery.data?.order_number || "Edit Order") : "New Order")}
+          subtitle={readOnly ? "View order details" : (isEdit ? "Update order details" : "Create a new order")}
+          backTo={readOnly ? "/orders" : (isEdit ? `/orders/${orderId}` : "/orders")}
+          actions={
+            readOnly && (
+              <Button onClick={() => navigate(`/orders/edit/${orderId}`)} className="bg-[#4A2B15] text-white h-9">
+                <Edit2 className="w-4 h-4 mr-2" /> Edit Order
+              </Button>
+            )
+          }
         />
 
-        <div className="grid md:grid-cols-2 gap-4 sm:gap-6">
+        <div className={`grid md:grid-cols-2 gap-4 sm:gap-6 ${readOnly ? "pointer-events-none opacity-95" : ""}`}>
           {/* Customer Select & Order Level Config */}
           <SectionCard title="Order Details">
             <div className="space-y-4">
@@ -2460,12 +2467,14 @@ export default function OrderNew() {
                 <label className="text-sm font-extrabold text-foreground mb-2 block">Notes</label>
                 <Textarea placeholder="Add order notes..." value={notes} onChange={(e) => setNotes(e.target.value)} className="min-h-[60px] text-sm bg-muted/10 border-border" />
               </div>
-              <div className="grid grid-cols-2 gap-3 pt-2">
-                <Button variant="outline" onClick={() => navigate("/orders")} className="h-12 rounded-xl text-sm font-bold border-muted-foreground">Cancel</Button>
-                <Button onClick={submit} disabled={createMutation.isPending || updateMutation.isPending} className="h-12 rounded-xl text-sm font-bold bg-[#4A2B15] text-white">
-                  {isEdit ? (updateMutation.isPending ? "Updating..." : "Update Order") : (createMutation.isPending ? "Creating..." : "Create Order")}
-                </Button>
-              </div>
+              {!readOnly && (
+                <div className="grid grid-cols-2 gap-3 pt-2">
+                  <Button variant="outline" onClick={() => navigate("/orders")} className="h-12 rounded-xl text-sm font-bold border-muted-foreground">Cancel</Button>
+                  <Button onClick={submit} disabled={createMutation.isPending || updateMutation.isPending} className="h-12 rounded-xl text-sm font-bold bg-[#4A2B15] text-white">
+                    {isEdit ? (updateMutation.isPending ? "Updating..." : "Update Order") : (createMutation.isPending ? "Creating..." : "Create Order")}
+                  </Button>
+                </div>
+              )}
             </div>
           )}
         </div>

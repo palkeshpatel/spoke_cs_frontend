@@ -110,7 +110,7 @@ const App = () => (
               <Route path="/orders" element={<OrderList />} />
               <Route path="/orders/new" element={<OrderNew />} />
               <Route path="/orders/edit/:id" element={<OrderNew />} />
-              <Route path="/orders/:id" element={<OrderDetail />} />
+              <Route path="/orders/:id" element={<OrderNew readOnly={true} />} />
               <Route path="/calendar" element={<CalendarView />} />
               <Route path="/wishes" element={<Wishes />} />
               <Route path="/billing" element={<BillingList />} />
