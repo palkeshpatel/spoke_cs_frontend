@@ -218,7 +218,7 @@ export default function OrderNew() {
       setDeliveryDate(order.delivery_date || "");
 
       const items: OrderItemEntry[] = [];
-      const swatchesByGarment = new Map<string, any[]>();
+      const swatchesByGarment = new Map<string, { swatches: any[], basePrice: number }>();
 
       order.items?.forEach((it: any) => {
         const parsedCustomizations = typeof it.customization_flags === "string" && it.customization_flags.length > 0
@@ -249,9 +249,16 @@ export default function OrderNew() {
           // Swatch
           const garment = it.garment_type || "Unknown";
           if (!swatchesByGarment.has(garment)) {
-            swatchesByGarment.set(garment, []);
+            swatchesByGarment.set(garment, { swatches: [], basePrice: 0 });
           }
-          swatchesByGarment.get(garment)!.push({
+          const group = swatchesByGarment.get(garment)!;
+          
+          if (group.swatches.length === 0) {
+            const custSum = Object.values(parsedCustomizations).reduce((s: number, c: any) => s + (c.priceModifier || 0), 0);
+            group.basePrice = Math.max(0, Number(it.price || 0) - Number(it.handwork_price || 0) - custSum);
+          }
+
+          group.swatches.push({
             id: "db-swatch-" + it.id,   // stable: never changes for same DB row
             dbId: it.id,
             note: it.note || "",
@@ -265,16 +272,16 @@ export default function OrderNew() {
       });
 
       // Group swatches
-      swatchesByGarment.forEach((swatches, garmentName) => {
+      swatchesByGarment.forEach((group, garmentName) => {
         items.push({
           id: "swatch-group-" + garmentName.replace(/\s+/g, '-').toLowerCase(),
           type: "swatch",
           garmentName,
-          swatchBasePrice: 0,
+          swatchBasePrice: group.basePrice,
           note: "",
           handwork: false,
           customizations: {},
-          swatches,
+          swatches: group.swatches,
         });
       });
 
