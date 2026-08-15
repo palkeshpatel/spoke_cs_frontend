@@ -49,7 +49,7 @@ export default function CustomerNew() {
       return;
     }
     if (!isValidPhone10(form.phone)) {
-      toast({ title: "Invalid phone", description: "Phone must be exactly 10 digits (XXX-XXX-XXXX).", variant: "destructive" });
+      toast({ title: "Invalid phone", description: "Phone must be exactly 10 digits.", variant: "destructive" });
       return;
     }
 

@@ -136,7 +136,7 @@ export default function CustomerSelectWithAdd({
       return;
     }
     if (!isValidPhone10(newPhone)) {
-      toast({ title: "Invalid phone", description: "Phone must be exactly 10 digits (XXX-XXX-XXXX).", variant: "destructive" });
+      toast({ title: "Invalid phone", description: "Phone must be exactly 10 digits.", variant: "destructive" });
       return;
     }
     if (newEmail && existingByEmail) {

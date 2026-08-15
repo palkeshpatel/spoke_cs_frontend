@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from "react";
 import type { Location } from "react-router-dom";
 import { useLocation, useNavigate } from "react-router-dom";
 import { Eye, EyeOff, Scissors } from "lucide-react";
+import { useQuery } from "@tanstack/react-query";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -49,7 +50,11 @@ export default function Login() {
   const [otp, setOtp] = useState("");
   const [otpCooldown, setOtpCooldown] = useState(0);
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [branches, setBranches] = useState<Branch[]>([]);
+  const { data: branches = [] } = useQuery({
+    queryKey: ["branches"],
+    queryFn: () => apiRequest<Branch[]>("/api/branches", { auth: false }),
+    retry: true, // React query will retry a few times by default if the backend is starting up
+  });
   const [selectedBranchId, setSelectedBranchId] = useState<number | null>(null);
 
   const isEmailValid = useMemo(
@@ -62,24 +67,10 @@ export default function Login() {
       : "";
 
   useEffect(() => {
-    let cancelled = false;
-    (async () => {
-      try {
-        const list = await apiRequest<Branch[]>("/api/branches", { auth: false });
-        if (cancelled) return;
-        setBranches(list);
-        if (list.length > 0) {
-          setSelectedBranchId((prev) => prev ?? list[0].id);
-        }
-      } catch {
-        if (cancelled) return;
-        setBranches([]);
-      }
-    })();
-    return () => {
-      cancelled = true;
-    };
-  }, []);
+    if (branches.length > 0 && !selectedBranchId) {
+      setSelectedBranchId(branches[0].id);
+    }
+  }, [branches, selectedBranchId]);
 
   useEffect(() => {
     if (sessionBootstrap !== "checking") return;

@@ -185,7 +185,7 @@ export default function CustomerDetail() {
         throw new Error("Please enter a phone number.");
       }
       if (!isValidPhone10(form.phone)) {
-        throw new Error("Phone must be exactly 10 digits (XXX-XXX-XXXX).");
+        throw new Error("Phone must be exactly 10 digits.");
       }
       return updateCustomer(customerId, {
         name: form.name,

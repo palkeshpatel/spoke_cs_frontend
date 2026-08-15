@@ -25,7 +25,7 @@ function useDebounce<T>(value: T, delay: number): T {
 export default function OrderList() {
   const queryClient = useQueryClient();
   const updateStatusM = useMutation({
-    mutationFn: ({ id, status }: { id: number; status: string }) => updateOrder(id, { status }),
+    mutationFn: ({ id, status }: { id: number; status: string }) => updateOrder(id, { status: status as any }),
     onSuccess: (_, variables) => {
       queryClient.invalidateQueries({ queryKey: ["orders"] });
       const stepLabel = ORDER_STATUS_STEPS.find((s) => s.id === variables.status)?.label || variables.status;

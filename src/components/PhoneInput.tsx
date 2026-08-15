@@ -8,7 +8,7 @@ type PhoneInputProps = Omit<ComponentProps<typeof Input>, "value" | "onChange" |
   onChange: (value: string) => void;
 };
 
-export function PhoneInput({ value, onChange, className, placeholder = "XXX-XXX-XXXX", ...props }: PhoneInputProps) {
+export function PhoneInput({ value, onChange, className, placeholder = "9999999999", ...props }: PhoneInputProps) {
   return (
     <Input
       {...props}
@@ -16,7 +16,7 @@ export function PhoneInput({ value, onChange, className, placeholder = "XXX-XXX-
       inputMode="numeric"
       autoComplete="tel-national"
       placeholder={placeholder}
-      maxLength={12}
+      maxLength={10}
       value={value}
       className={cn(className)}
       onChange={(e) => onChange(formatPhoneMask(e.target.value))}

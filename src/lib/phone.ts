@@ -5,10 +5,7 @@ export function digitsOnlyPhone(value: string): string {
 }
 
 export function formatPhoneMask(value: string): string {
-  const digits = digitsOnlyPhone(value);
-  if (digits.length <= 3) return digits;
-  if (digits.length <= 6) return `${digits.slice(0, 3)}-${digits.slice(3)}`;
-  return `${digits.slice(0, 3)}-${digits.slice(3, 6)}-${digits.slice(6)}`;
+  return digitsOnlyPhone(value);
 }
 
 export function phoneFromStorage(value: string | null | undefined): string {

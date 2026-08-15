@@ -121,7 +121,7 @@ export default function StaffNew() {
       return;
     }
     if (formData.phone.trim() && !isValidPhone10(formData.phone)) {
-      toast.error("Phone number must be exactly 10 digits (XXX-XXX-XXXX).");
+      toast.error("Phone number must be exactly 10 digits.");
       return;
     }
     
