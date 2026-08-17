@@ -44,7 +44,7 @@ export default function Layout() {
     staff: true,
     inventory: true,
   });
-  
+
   const location = useLocation();
   const navigate = useNavigate();
 
@@ -59,7 +59,7 @@ export default function Layout() {
     { path: '/calendar', label: 'Calendar', icon: Calendar, permission: 'manage_appointments' },
     { path: '/measurements', label: 'Measurements', icon: Ruler, permission: '' },
     { path: '/orders', label: 'Orders', icon: Package, permission: 'manage_orders' },
-    { path: '/billing', label: 'Billing', icon: Receipt, permission: 'manage_billing' }, 
+    { path: '/billing', label: 'Billing', icon: Receipt, permission: 'manage_billing' },
   ].filter((item) => item.path === '/measurements' ? canViewMeasurements(user) : canViewItem(item));
 
   const settingsNavItem = { path: '/settings', label: 'Settings', icon: Settings };
@@ -193,11 +193,10 @@ export default function Layout() {
               <Link
                 key={item.path}
                 to={item.path}
-                className={`flex items-center gap-2.5 px-2.5 py-1.5 rounded-lg text-sm font-medium transition-colors ${
-                  isActive
-                    ? 'bg-sidebar-hover text-sidebar-fg'
-                    : 'text-sidebar-muted hover:bg-sidebar-hover hover:text-sidebar-fg'
-                }`}
+                className={`flex items-center gap-2.5 px-2.5 py-1.5 rounded-lg text-sm font-medium transition-colors ${isActive
+                  ? 'bg-sidebar-hover text-sidebar-fg'
+                  : 'text-sidebar-muted hover:bg-sidebar-hover hover:text-sidebar-fg'
+                  }`}
               >
                 <item.icon className="h-4.5 w-4.5 shrink-0" />
                 {!collapsed && <span>{item.label}</span>}
@@ -220,11 +219,10 @@ export default function Layout() {
                   onClick={() => toggleSection(section.key)}
                   aria-expanded={sectionIsOpen}
                   title={collapsed ? section.title : undefined}
-                  className={`flex w-full items-center gap-2.5 px-2.5 py-1.5 rounded-lg text-sm font-semibold transition-colors ${
-                    sectionIsActive
-                      ? 'bg-sidebar-hover text-sidebar-fg'
-                      : 'text-sidebar-muted hover:bg-sidebar-hover hover:text-sidebar-fg'
-                  }`}
+                  className={`flex w-full items-center gap-2.5 px-2.5 py-1.5 rounded-lg text-sm font-semibold transition-colors ${sectionIsActive
+                    ? 'bg-sidebar-hover text-sidebar-fg'
+                    : 'text-sidebar-muted hover:bg-sidebar-hover hover:text-sidebar-fg'
+                    }`}
                 >
                   <section.icon className="h-4.5 w-4.5 shrink-0" />
                   {!collapsed && (
@@ -244,11 +242,10 @@ export default function Layout() {
                           key={item.path}
                           to={item.path}
                           title={collapsed ? item.label : undefined}
-                          className={`flex items-center gap-2.5 rounded-lg px-2.5 py-1.5 text-sm font-medium transition-colors ${
-                            isActive
-                              ? 'bg-sidebar-hover text-sidebar-fg'
-                              : 'text-sidebar-muted hover:bg-sidebar-hover hover:text-sidebar-fg'
-                          }`}
+                          className={`flex items-center gap-2.5 rounded-lg px-2.5 py-1.5 text-sm font-medium transition-colors ${isActive
+                            ? 'bg-sidebar-hover text-sidebar-fg'
+                            : 'text-sidebar-muted hover:bg-sidebar-hover hover:text-sidebar-fg'
+                            }`}
                         >
                           <item.icon className="h-4.5 w-4.5 shrink-0" />
                           {!collapsed && <span>{item.label}</span>}
@@ -262,11 +259,10 @@ export default function Layout() {
           })}
           <Link
             to={settingsNavItem.path}
-            className={`flex items-center gap-2.5 px-2.5 py-1.5 rounded-lg text-sm font-medium transition-colors ${
-              location.pathname === settingsNavItem.path
-                ? 'bg-sidebar-hover text-sidebar-fg'
-                : 'text-sidebar-muted hover:bg-sidebar-hover hover:text-sidebar-fg'
-            }`}
+            className={`flex items-center gap-2.5 px-2.5 py-1.5 rounded-lg text-sm font-medium transition-colors ${location.pathname === settingsNavItem.path
+              ? 'bg-sidebar-hover text-sidebar-fg'
+              : 'text-sidebar-muted hover:bg-sidebar-hover hover:text-sidebar-fg'
+              }`}
           >
             <settingsNavItem.icon className="h-4.5 w-4.5 shrink-0" />
             {!collapsed && <span>{settingsNavItem.label}</span>}
@@ -322,7 +318,7 @@ export default function Layout() {
         </div>
 
         <main className="flex-1 lg:overflow-y-auto pb-16 lg:pb-0">
-          <div className="p-4 sm:p-6 max-w-7xl mx-auto">
+          <div className={`max-w-7xl mx-auto max-md:h-[calc(100dvh-120px)] ${location.pathname === '/orders/new' ? 'max-md:p-0 p-4 sm:p-6' : 'p-4 sm:p-6'}`}>
             {isUserLoading ? (
               <div className="flex min-h-[40vh] items-center justify-center text-sm text-muted-foreground animate-pulse">
                 Loading…

@@ -152,7 +152,7 @@ export default function OrderNew({ readOnly = false }: { readOnly?: boolean }) {
   >(null);
 
   // Mobile Step State
-  const [mobileStep, setMobileStep] = useState<number>(1);
+  const [mobileStep, setMobileStep] = useState<number>(isEdit || readOnly ? 5 : 1);
   const [showCustomerError, setShowCustomerError] = useState<boolean>(false);
 
   const fileInputRef = useRef<HTMLInputElement | null>(null);
@@ -253,7 +253,7 @@ export default function OrderNew({ readOnly = false }: { readOnly?: boolean }) {
             swatchesByGarment.set(garment, { swatches: [], basePrice: 0 });
           }
           const group = swatchesByGarment.get(garment)!;
-          
+
           if (group.swatches.length === 0) {
             const custSum = Object.values(parsedCustomizations).reduce((s: number, c: any) => s + (c.priceModifier || 0), 0);
             group.basePrice = Math.max(0, Number(it.price || 0) - Number(it.handwork_price || 0) - Number(custSum));
@@ -1040,39 +1040,43 @@ export default function OrderNew({ readOnly = false }: { readOnly?: boolean }) {
                         </tr>
                       </thead>
                       <tbody className="divide-y divide-border">
-                        {fabrics.map((item) => (
-                          <tr
-                            key={item.id}
-                            className={`hover:bg-muted/20 cursor-pointer ${activeFabric?.id === item.id ? "bg-muted/50" : ""}`}
-                            onClick={() => {
-                              setActiveFabric(item);
-                            }}
-                          >
-                            <td className="p-2 uppercase font-semibold text-muted-foreground">{item.fabric_code}</td>
-                            <td className="p-2 text-muted-foreground">{item.color ?? "—"}</td>
-                            <td className="p-2 text-right">₹{parseFloat(String(item.price_per_meter)).toLocaleString("en-IN")}</td>
-                            <td className="p-2 text-right">
-                              {(() => {
-                                const avail = Number(item.available_meter);
-                                let colorClass = "text-emerald-600";
-                                let label = "In Stock";
-                                if (avail <= 0) {
-                                  colorClass = "text-destructive";
-                                  label = "Out of Stock";
-                                } else if (avail < 4) {
-                                  colorClass = "text-orange-500";
-                                  label = "Low Stock";
-                                }
-                                return (
-                                  <>
-                                    <span className={`font-semibold block ${colorClass}`}>{avail.toFixed(2)} m</span>
-                                    <span className="text-[9px] text-muted-foreground">{label}</span>
-                                  </>
-                                );
-                              })()}
-                            </td>
-                          </tr>
-                        ))}
+                        {fabrics.map((item) => {
+                          const isActive = activeFabric?.id === item.id;
+                          return (
+                            <tr
+                              key={item.id}
+                              className={`cursor-pointer transition-colors ${isActive ? "" : "hover:bg-muted/20"}`}
+                              style={{ backgroundColor: isActive ? "#4A2B15" : undefined }}
+                              onClick={() => {
+                                setActiveFabric(item);
+                              }}
+                            >
+                              <td className={`p-2 uppercase font-semibold ${isActive ? "text-white" : "text-muted-foreground"}`}>{item.fabric_code}</td>
+                              <td className={`p-2 ${isActive ? "text-white/80" : "text-muted-foreground"}`}>{item.color ?? "—"}</td>
+                              <td className={`p-2 text-right ${isActive ? "text-white" : ""}`}>₹{parseFloat(String(item.price_per_meter)).toLocaleString("en-IN")}</td>
+                              <td className="p-2 text-right">
+                                {(() => {
+                                  const avail = Number(item.available_meter);
+                                  let colorClass = isActive ? "text-white" : "text-emerald-600";
+                                  let label = "In Stock";
+                                  if (avail <= 0) {
+                                    colorClass = isActive ? "text-white" : "text-destructive";
+                                    label = "Out of Stock";
+                                  } else if (avail < 4) {
+                                    colorClass = isActive ? "text-white" : "text-orange-500";
+                                    label = "Low Stock";
+                                  }
+                                  return (
+                                    <>
+                                      <span className={`font-semibold block ${colorClass}`}>{avail.toFixed(2)} m</span>
+                                      <span className={`text-[9px] ${isActive ? "text-white/80" : "text-muted-foreground"}`}>{label}</span>
+                                    </>
+                                  );
+                                })()}
+                              </td>
+                            </tr>
+                          )
+                        })}
                       </tbody>
                     </table>
                   </div>
@@ -1392,11 +1396,11 @@ export default function OrderNew({ readOnly = false }: { readOnly?: boolean }) {
                       <span className="text-muted-foreground">Base Price</span>
                       <div className="flex items-center gap-1">
                         <span className="text-muted-foreground">₹</span>
-                        <Input 
-                          type="number" 
-                          className="h-7 w-20 text-right bg-card text-xs" 
-                          value={swatchGroupBasePrice || ""} 
-                          onChange={(e) => setSwatchGroupBasePrice(Math.max(0, parseInt(e.target.value) || 0))} 
+                        <Input
+                          type="number"
+                          className="h-7 w-20 text-right bg-card text-xs"
+                          value={swatchGroupBasePrice || ""}
+                          onChange={(e) => setSwatchGroupBasePrice(Math.max(0, parseInt(e.target.value) || 0))}
                           placeholder="0"
                         />
                       </div>
@@ -1526,11 +1530,11 @@ export default function OrderNew({ readOnly = false }: { readOnly?: boolean }) {
 
                 {/* Stitching Note */}
                 <div className="space-y-1.5 pt-2">
-                  <Input 
-                    placeholder="Stitching Note" 
-                    value={fabricNote} 
-                    onChange={(e) => setFabricNote(e.target.value)} 
-                    className="h-9 text-sm bg-card" 
+                  <Input
+                    placeholder="Stitching Note"
+                    value={fabricNote}
+                    onChange={(e) => setFabricNote(e.target.value)}
+                    className="h-9 text-sm bg-card"
                   />
                 </div>
 
@@ -1850,16 +1854,17 @@ export default function OrderNew({ readOnly = false }: { readOnly?: boolean }) {
       </div> {/* End desktop wrapper */}
 
       {/* MOBILE UI BLOCK */}
-      <div className={`flex flex-col lg:hidden fixed top-[56px] bottom-[64px] left-0 right-0 z-30 bg-background overflow-hidden overscroll-none ${readOnly ? "pointer-events-none" : ""}`}>
+      <div className={`flex flex-col lg:hidden fixed top-[56px] bottom-[64px] left-0 right-0 max-md:relative max-md:h-full max-md:top-0 z-30 bg-background overflow-hidden overscroll-none`}>
         {/* Mobile Header */}
         <div className="shrink-0 relative z-40 bg-[#4A2B15] text-white p-3 flex items-center gap-3 shadow-md">
           <button
             type="button"
-            onClick={() => mobileStep > 1 ? setMobileStep(m => m - 1) : navigate(-1)}
+            onClick={() => mobileStep > 1 && !readOnly ? setMobileStep(m => m - 1) : navigate(-1)}
+            className="pointer-events-auto"
           >
             <ArrowLeft className="h-5 w-5" />
           </button>
-          <div className="flex-1 font-semibold text-base">
+          <div className="flex-1 font-semibold text-base pointer-events-auto">
             {mobileStep === 1 && "New Order"}
             {mobileStep === 2 && "Select Category"}
             {mobileStep === 3 && "Select Fabric"}
@@ -1867,9 +1872,19 @@ export default function OrderNew({ readOnly = false }: { readOnly?: boolean }) {
             {mobileStep === 5 && "Order Item"}
             {mobileStep === 6 && "Summary"}
           </div>
-          <button type="button">
-            <Sliders className="h-5 w-5 opacity-0" />
-          </button>
+          {readOnly ? (
+            <button
+              type="button"
+              onClick={() => navigate(`/orders/edit/${orderId}`)}
+              className="pointer-events-auto flex items-center justify-center p-1.5 rounded-md bg-white/20 hover:bg-white/30 transition-colors"
+            >
+              <Edit2 className="h-4 w-4" />
+            </button>
+          ) : (
+            <button type="button">
+              <Sliders className="h-5 w-5 opacity-0" />
+            </button>
+          )}
         </div>
 
         <div className="flex-1 overflow-hidden flex flex-col p-2 gap-2">
@@ -1878,12 +1893,12 @@ export default function OrderNew({ readOnly = false }: { readOnly?: boolean }) {
               <div className="bg-card p-3 rounded-xl border border-border shadow-sm space-y-3 flex-1 overflow-hidden">
                 <div>
                   <label className="text-xs text-muted-foreground mb-1 block">Customer *</label>
-                  <CustomerSelectWithAdd 
-                    value={customerId} 
+                  <CustomerSelectWithAdd
+                    value={customerId}
                     onChange={(val) => {
                       setCustomerId(val);
                       if (val) setShowCustomerError(false);
-                    }} 
+                    }}
                   />
                   {showCustomerError && (
                     <p className="text-xs text-destructive mt-1.5 font-medium">Please select a customer to continue.</p>
@@ -1904,14 +1919,14 @@ export default function OrderNew({ readOnly = false }: { readOnly?: boolean }) {
                   <DatePicker value={deliveryDate} onChange={setDeliveryDate} usePopover={true} />
                 </div>
               </div>
-              <Button 
+              <Button
                 onClick={() => {
                   if (!customerId) {
                     setShowCustomerError(true);
                   } else {
                     setMobileStep(2);
                   }
-                }} 
+                }}
                 className="shrink-0 w-full bg-[#4A2B15] text-white h-10 rounded-xl text-base font-bold"
               >
                 Next
@@ -2014,33 +2029,36 @@ export default function OrderNew({ readOnly = false }: { readOnly?: boolean }) {
                             </tr>
                           </thead>
                           <tbody className="divide-y divide-border">
-                            {fabrics.map((item) => (
-                              <tr
-                                key={item.id}
-                                className={`hover:bg-muted/20 cursor-pointer transition-all ${activeFabric?.id === item.id ? "shadow-[inset_4px_0_0_0_#4A2B15]" : "shadow-[inset_4px_0_0_0_transparent]"}`}
-                                style={{ backgroundColor: activeFabric?.id === item.id ? "#4A2B151A" : undefined }}
-                                onClick={() => setActiveFabric(item)}
-                              >
-                                <td className="p-2 uppercase font-bold text-foreground">{item.fabric_code}</td>
-                                <td className="p-2 text-muted-foreground">{item.color ?? "—"}</td>
-                                <td className="p-2 text-right font-medium">₹{parseFloat(String(item.price_per_meter)).toLocaleString("en-IN")}</td>
-                                <td className="p-2 text-right">
-                                  {(() => {
-                                    const avail = Number(item.available_meter);
-                                    let colorClass = "text-emerald-600";
-                                    let label = "In Stock";
-                                    if (avail <= 0) { colorClass = "text-destructive"; label = "Out of Stock"; }
-                                    else if (avail < 4) { colorClass = "text-orange-500"; label = "Low Stock"; }
-                                    return (
-                                      <>
-                                        <span className={`font-bold block ${colorClass}`}>{avail.toFixed(2)} m</span>
-                                        <span className="text-xs text-muted-foreground">{label}</span>
-                                      </>
-                                    );
-                                  })()}
-                                </td>
-                              </tr>
-                            ))}
+                            {fabrics.map((item) => {
+                              const isActive = activeFabric?.id === item.id;
+                              return (
+                                <tr
+                                  key={item.id}
+                                  className={`cursor-pointer transition-all ${isActive ? "" : "hover:bg-muted/20"}`}
+                                  style={{ backgroundColor: isActive ? "#4A2B15" : undefined }}
+                                  onClick={() => setActiveFabric(item)}
+                                >
+                                  <td className={`p-2 uppercase font-bold ${isActive ? "text-white" : "text-foreground"}`}>{item.fabric_code}</td>
+                                  <td className={`p-2 ${isActive ? "text-white/80" : "text-muted-foreground"}`}>{item.color ?? "—"}</td>
+                                  <td className={`p-2 text-right font-medium ${isActive ? "text-white" : ""}`}>₹{parseFloat(String(item.price_per_meter)).toLocaleString("en-IN")}</td>
+                                  <td className="p-2 text-right">
+                                    {(() => {
+                                      const avail = Number(item.available_meter);
+                                      let colorClass = isActive ? "text-white" : "text-emerald-600";
+                                      let label = "In Stock";
+                                      if (avail <= 0) { colorClass = isActive ? "text-white" : "text-destructive"; label = "Out of Stock"; }
+                                      else if (avail < 4) { colorClass = isActive ? "text-white" : "text-orange-500"; label = "Low Stock"; }
+                                      return (
+                                        <>
+                                          <span className={`font-bold block ${colorClass}`}>{avail.toFixed(2)} m</span>
+                                          <span className={`text-xs ${isActive ? "text-white/80" : "text-muted-foreground"}`}>{label}</span>
+                                        </>
+                                      );
+                                    })()}
+                                  </td>
+                                </tr>
+                              )
+                            })}
                           </tbody>
                         </table></div>
                       </div>
@@ -2113,7 +2131,7 @@ export default function OrderNew({ readOnly = false }: { readOnly?: boolean }) {
                         Please add swatches in Step 3.
                       </div>
                     ) : (
-                      <div className="flex-1 overflow-hidden flex flex-col space-y-2">
+                      <div className="flex-1 overflow-y-auto flex flex-col space-y-2">
                         {stagedSwatches.map((sw, index) => {
                           const preview = sw.customImage ? resolvePublicUrl(sw.customImage) : null;
                           return (
@@ -2132,16 +2150,16 @@ export default function OrderNew({ readOnly = false }: { readOnly?: boolean }) {
                                   </button>
                                 )}
                                 <div className="flex-1 min-w-0 pr-8">
-                                  <span className="text-xs font-bold text-muted-foreground block mb-1">Swatch #{index + 1}</span>
-                                  <Input placeholder="Stitching Note" value={sw.note} onChange={(e) => handleUpdateStagedSwatchField(index, { note: e.target.value })} className="h-8 text-xs bg-card" />
+                                  <span className="text-sm font-bold text-foreground block">Swatch #{index + 1}</span>
+                                  <p className="text-xs text-muted-foreground mt-0.5">On Demand Fabric</p>
                                 </div>
                                 <button type="button" onClick={() => handleRemoveStagedSwatch(index)} className="absolute top-3 right-3 text-muted-foreground hover:text-destructive">
                                   <Trash2 className="h-4 w-4" />
                                 </button>
                               </div>
                               <div className="flex flex-col items-start gap-2 pt-2 border-t border-dashed mt-2">
-                                <div className="flex items-center gap-4">
-                                  <label className="flex items-center gap-1.5 text-xs text-muted-foreground cursor-pointer select-none font-medium">
+                                <div className="flex flex-col gap-3 w-full">
+                                  <label className="flex items-center gap-2 text-sm text-foreground font-medium cursor-pointer">
                                     <input
                                       type="checkbox"
                                       checked={sw.handwork}
@@ -2155,17 +2173,17 @@ export default function OrderNew({ readOnly = false }: { readOnly?: boolean }) {
                                       className="rounded border-input text-primary focus:ring-primary h-4 w-4"
                                     />
                                     Handwork
+                                    {sw.handwork && (
+                                      <span
+                                        onClick={() => handleOpenHandworkDialog({ type: "staged_swatch", index: index })}
+                                        className="text-xs text-primary underline ml-2"
+                                      >
+                                        (Edit)
+                                      </span>
+                                    )}
                                   </label>
-                                  {sw.handwork && (
-                                    <span
-                                      onClick={() => handleOpenHandworkDialog({ type: "staged_swatch", index: index })}
-                                      className="text-[10px] text-primary font-medium hover:underline cursor-pointer"
-                                    >
-                                      (Edit)
-                                    </span>
-                                  )}
                                   {showAdvancedCustomization && (
-                                    <label className="flex items-center gap-1.5 text-xs text-muted-foreground cursor-pointer select-none font-medium">
+                                    <label className="flex items-center gap-2 text-sm text-foreground font-medium cursor-pointer">
                                       <input
                                         type="checkbox"
                                         checked={Object.keys(sw.customizations).length > 0}
@@ -2205,6 +2223,31 @@ export default function OrderNew({ readOnly = false }: { readOnly?: boolean }) {
                                   </div>
                                 )}
                               </div>
+
+                              {/* Stitching Note */}
+                              <div className="mt-3">
+                                <Input
+                                  placeholder="Stitching Note"
+                                  value={sw.note}
+                                  onChange={(e) => handleUpdateStagedSwatchField(index, { note: e.target.value })}
+                                  className="h-10 text-sm bg-card"
+                                />
+                              </div>
+
+                              {/* Meter Required */}
+                              <div className="space-y-2 mt-3">
+                                <label className="text-sm text-muted-foreground block font-medium">Meter Required</label>
+                                <div className="flex items-center border rounded-xl overflow-hidden bg-card w-full h-12">
+                                  <Button type="button" variant="ghost" onClick={() => handleUpdateStagedSwatchField(index, { meterRequired: Math.max(0.1, (sw.meterRequired || 1) - 0.25) })} className="h-12 w-14 rounded-none border-r shrink-0">
+                                    <Minus className="h-5 w-5" />
+                                  </Button>
+                                  <Input type="number" step="0.01" value={sw.meterRequired || 1} onChange={(e) => handleUpdateStagedSwatchField(index, { meterRequired: Math.max(0.1, parseFloat(e.target.value) || 0) })} className="flex-1 h-12 border-none text-center font-bold text-lg focus-visible:ring-0" />
+                                  <Button type="button" variant="ghost" onClick={() => handleUpdateStagedSwatchField(index, { meterRequired: (sw.meterRequired || 1) + 0.25 })} className="h-12 w-14 rounded-none border-l shrink-0">
+                                    <Plus className="h-5 w-5" />
+                                  </Button>
+                                </div>
+                              </div>
+
                             </div>
                           );
                         })}
@@ -2212,11 +2255,11 @@ export default function OrderNew({ readOnly = false }: { readOnly?: boolean }) {
                           <span className="text-muted-foreground">Base Price</span>
                           <div className="flex items-center gap-2">
                             <span className="text-muted-foreground">₹</span>
-                            <Input 
-                              type="number" 
-                              className="h-8 w-24 text-right bg-card" 
-                              value={swatchGroupBasePrice || ""} 
-                              onChange={(e) => setSwatchGroupBasePrice(Math.max(0, parseInt(e.target.value) || 0))} 
+                            <Input
+                              type="number"
+                              className="h-8 w-24 text-right bg-card"
+                              value={swatchGroupBasePrice || ""}
+                              onChange={(e) => setSwatchGroupBasePrice(Math.max(0, parseInt(e.target.value) || 0))}
                               placeholder="0"
                             />
                           </div>
@@ -2234,7 +2277,7 @@ export default function OrderNew({ readOnly = false }: { readOnly?: boolean }) {
                     )}
                   </div>
                 ) : activeFabric ? (
-                  <div className="flex-1 overflow-hidden flex flex-col space-y-2">
+                  <div className="flex-1 overflow-y-auto flex flex-col space-y-2">
                     <div className="flex gap-2">
                       <div className="h-12 w-16 rounded-lg bg-muted border overflow-hidden shrink-0">
                         {activeFabric.image ? (
@@ -2277,11 +2320,11 @@ export default function OrderNew({ readOnly = false }: { readOnly?: boolean }) {
                       )}
                     </div>
                     <div className="space-y-2">
-                      <Input 
-                        placeholder="Stitching Note" 
-                        value={fabricNote} 
-                        onChange={(e) => setFabricNote(e.target.value)} 
-                        className="h-10 text-sm bg-card" 
+                      <Input
+                        placeholder="Stitching Note"
+                        value={fabricNote}
+                        onChange={(e) => setFabricNote(e.target.value)}
+                        className="h-10 text-sm bg-card"
                       />
                     </div>
                     <div className="space-y-2">
@@ -2321,149 +2364,155 @@ export default function OrderNew({ readOnly = false }: { readOnly?: boolean }) {
 
           {mobileStep === 5 && (
             <div className="flex-1 flex flex-col overflow-hidden space-y-2">
-              <div className="bg-card p-3 rounded-xl border border-border shadow-sm space-y-3 flex-1 overflow-hidden">
+              <div className="bg-card p-3 rounded-xl border border-border shadow-sm space-y-3 flex-1 overflow-hidden flex flex-col">
                 <div className="flex justify-between items-center pb-2 border-b">
                   <h3 className="font-extrabold text-base text-foreground">Order Item ({orderItems.length})</h3>
-                  {orderItems.length > 0 && <Button variant="ghost" size="sm" onClick={() => { setOrderItems([]); setEditingItemIndex(null); }} className="text-xs text-destructive">Clear All</Button>}
+                  {!readOnly && orderItems.length > 0 && <Button variant="ghost" size="sm" onClick={() => { setOrderItems([]); setEditingItemIndex(null); }} className="text-xs text-destructive">Clear All</Button>}
                 </div>
                 {orderItems.length === 0 ? (
                   <div className="py-8 text-center text-sm text-muted-foreground">No items added yet.</div>
                 ) : (
-                  <div className="flex-1 overflow-hidden flex flex-col space-y-2">
-                    {orderItems.map((item, itemIdx) => {
-                      if (item.type === "in_stock") {
-                        const preview = item.icon_path ? resolvePublicUrl(item.icon_path) : null;
-                        return (
-                          <div key={item.id} className="relative border bg-card p-2 rounded-xl space-y-1">
-                            <div className="flex gap-3">
-                              {preview ? (
-                                <div className="h-10 w-10 shrink-0 rounded-lg overflow-hidden border bg-muted/20">
-                                  <img src={preview} className="h-full w-full object-cover" />
+                  <div className="flex-1 overflow-y-auto flex flex-col space-y-2">
+                    <div className={`flex flex-col space-y-2 ${readOnly ? "pointer-events-none opacity-95" : ""}`}>
+                      {orderItems.map((item, itemIdx) => {
+                        if (item.type === "in_stock") {
+                          const preview = item.icon_path ? resolvePublicUrl(item.icon_path) : null;
+                          return (
+                            <div key={item.id} className="relative border bg-card p-2 rounded-xl space-y-1">
+                              <div className="flex gap-3">
+                                {preview ? (
+                                  <div className="h-10 w-10 shrink-0 rounded-lg overflow-hidden border bg-muted/20">
+                                    <img src={preview} className="h-full w-full object-cover" />
+                                  </div>
+                                ) : (
+                                  <div className="h-10 w-10 shrink-0 rounded-lg border border-dashed flex items-center justify-center bg-muted/10 font-bold text-xs">
+                                    {item.fabricCode?.substring(0, 2)}
+                                  </div>
+                                )}
+                                <div className="min-w-0 flex-1">
+                                  <div className="flex justify-between items-start gap-2">
+                                    <span className="font-extrabold text-sm text-foreground block truncate">{item.garmentName}</span>
+                                    <div className="flex gap-2">
+                                      <button type="button" onClick={() => { handleStartEditItem(itemIdx); setMobileStep(4); }} className="text-muted-foreground p-1 border rounded"><Edit2 className="h-4 w-4" /></button>
+                                      <button type="button" onClick={() => handleRemoveItem(itemIdx)} className="text-muted-foreground hover:text-destructive p-1 border rounded"><Trash2 className="h-4 w-4" /></button>
+                                    </div>
+                                  </div>
+                                  <div className="text-xs text-muted-foreground space-y-1 mt-1">
+                                    <span className="block font-medium">{item.fabricCode} | {item.color}</span>
+                                    <span className="block font-medium">{item.meterRequired} m</span>
+                                    <span className="block font-bold text-foreground">₹{Math.round((item.pricePerMeter! * item.meterRequired!) + (item.handworkPrice || 0)).toLocaleString("en-IN")}</span>
+                                    {item.note && <span className="block italic break-words pt-0.5">"{item.note}"</span>}
+                                  </div>
                                 </div>
-                              ) : (
-                                <div className="h-10 w-10 shrink-0 rounded-lg border border-dashed flex items-center justify-center bg-muted/10 font-bold text-xs">
-                                  {item.fabricCode?.substring(0, 2)}
+                              </div>
+
+                              {/* Badges footer */}
+                              {(item.handwork || Object.keys(item.customizations).length > 0) && (
+                                <div className="flex flex-wrap gap-1.5 mt-2 pt-2 border-t border-dashed">
+                                  {item.handwork && (
+                                    <span className="inline-flex items-center px-2 py-1 rounded-full text-[10px] font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200">
+                                      Handwork {item.handworkPrice ? `(₹${item.handworkPrice})` : ""}
+                                      {item.handworkNotes ? ` - ${item.handworkNotes}` : ""}
+                                    </span>
+                                  )}
+                                  {Object.keys(item.customizations).length > 0 && (
+                                    Object.keys(item.customizations).map((id) => {
+                                      const label = optionsMap.get(Number(id));
+                                      if (!label) return null;
+                                      const price = item.customizations[Number(id)]?.priceModifier;
+                                      const note = item.customizations[Number(id)]?.note;
+                                      return (
+                                        <span key={id} className="inline-flex items-center px-2 py-1 rounded-full text-[10px] font-semibold bg-blue-50 text-blue-700 border border-blue-200">
+                                          {label}{price ? ` (₹${price})` : ""}{note ? ` - ${note}` : ""}
+                                        </span>
+                                      );
+                                    })
+                                  )}
                                 </div>
                               )}
-                              <div className="min-w-0 flex-1">
-                                <div className="flex justify-between items-start gap-2">
-                                  <span className="font-extrabold text-sm text-foreground block truncate">{item.garmentName}</span>
-                                  <div className="flex gap-2">
-                                    <button type="button" onClick={() => { handleStartEditItem(itemIdx); setMobileStep(4); }} className="text-muted-foreground p-1 border rounded"><Edit2 className="h-4 w-4" /></button>
-                                    <button type="button" onClick={() => handleRemoveItem(itemIdx)} className="text-muted-foreground hover:text-destructive p-1 border rounded"><Trash2 className="h-4 w-4" /></button>
-                                  </div>
-                                </div>
-                                <div className="text-xs text-muted-foreground space-y-1 mt-1">
-                                  <span className="block font-medium">{item.fabricCode} | {item.color}</span>
-                                  <span className="block font-medium">{item.meterRequired} m</span>
-                                  <span className="block font-bold text-foreground">₹{Math.round((item.pricePerMeter! * item.meterRequired!) + (item.handworkPrice || 0)).toLocaleString("en-IN")}</span>
-                                  {item.note && <span className="block italic break-words pt-0.5">"{item.note}"</span>}
-                                </div>
-                              </div>
                             </div>
-                            
-                            {/* Badges footer */}
-                            {(item.handwork || Object.keys(item.customizations).length > 0) && (
-                              <div className="flex flex-wrap gap-1.5 mt-2 pt-2 border-t border-dashed">
-                                {item.handwork && (
-                                  <span className="inline-flex items-center px-2 py-1 rounded-full text-[10px] font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200">
-                                    Handwork {item.handworkPrice ? `(₹${item.handworkPrice})` : ""}
-                                    {item.handworkNotes ? ` - ${item.handworkNotes}` : ""}
+                          );
+                        } else {
+                          return (
+                            <div key={item.id} className="relative border bg-card p-2 rounded-xl space-y-1">
+                              <div className="flex justify-between items-center pb-2 border-b">
+                                <div>
+                                  <span className="font-extrabold text-sm text-foreground block">{item.garmentName}</span>
+                                  <span className="text-xs font-bold text-foreground block mt-0.5">
+                                    ₹{Math.round((item.swatchBasePrice || 0) + item.swatches.reduce((sum, sw) => sum + (sw.handworkPrice || 0) + Object.values(sw.customizations).reduce((s, c) => s + (c.priceModifier || 0), 0), 0)).toLocaleString("en-IN")}
                                   </span>
-                                )}
-                                {Object.keys(item.customizations).length > 0 && (
-                                  Object.keys(item.customizations).map((id) => {
-                                    const label = optionsMap.get(Number(id));
-                                    if (!label) return null;
-                                    const price = item.customizations[Number(id)]?.priceModifier;
-                                    const note = item.customizations[Number(id)]?.note;
-                                    return (
-                                      <span key={id} className="inline-flex items-center px-2 py-1 rounded-full text-[10px] font-semibold bg-blue-50 text-blue-700 border border-blue-200">
-                                        {label}{price ? ` (₹${price})` : ""}{note ? ` - ${note}` : ""}
-                                      </span>
-                                    );
-                                  })
-                                )}
+                                </div>
+                                <div className="flex gap-2">
+                                  <button type="button" onClick={() => { handleStartEditItem(itemIdx); setMobileStep(4); }} className="text-muted-foreground p-1 border rounded"><Edit2 className="h-4 w-4" /></button>
+                                  <button type="button" onClick={() => handleRemoveItem(itemIdx)} className="text-muted-foreground hover:text-destructive p-1 border rounded"><Trash2 className="h-4 w-4" /></button>
+                                </div>
                               </div>
-                            )}
-                          </div>
-                        );
-                      } else {
-                        return (
-                          <div key={item.id} className="relative border bg-card p-2 rounded-xl space-y-1">
-                            <div className="flex justify-between items-center pb-2 border-b">
-                              <div>
-                                <span className="font-extrabold text-sm text-foreground block">{item.garmentName}</span>
-                                <span className="text-xs font-bold text-foreground block mt-0.5">
-                                  ₹{Math.round((item.swatchBasePrice || 0) + item.swatches.reduce((sum, sw) => sum + (sw.handworkPrice || 0) + Object.values(sw.customizations).reduce((s, c) => s + (c.priceModifier || 0), 0), 0)).toLocaleString("en-IN")}
-                                </span>
-                              </div>
-                              <div className="flex gap-2">
-                                <button type="button" onClick={() => { handleStartEditItem(itemIdx); setMobileStep(4); }} className="text-muted-foreground p-1 border rounded"><Edit2 className="h-4 w-4" /></button>
-                                <button type="button" onClick={() => handleRemoveItem(itemIdx)} className="text-muted-foreground hover:text-destructive p-1 border rounded"><Trash2 className="h-4 w-4" /></button>
-                              </div>
-                            </div>
-                            <div className="space-y-3 mt-3">
-                              {item.swatches.map((sw, swIdx) => {
-                                const preview = sw.customImage ? resolvePublicUrl(sw.customImage) : null;
-                                return (
-                                  <div key={sw.id} className="pt-3 border-t border-dashed first:border-0 first:pt-0 space-y-2 text-sm">
-                                    <span className="text-xs font-bold text-muted-foreground block">Swatch #{swIdx + 1}</span>
-                                    <div className="flex gap-3 items-start">
-                                      {preview ? (
-                                        <div className="relative h-8 w-8 shrink-0 rounded-lg overflow-hidden border bg-muted/20">
-                                          <ImagePreviewDialog src={preview} alt={item.garmentName}>
-                                            <img src={preview} className="h-full w-full object-cover cursor-pointer" />
-                                          </ImagePreviewDialog>
-                                        </div>
-                                      ) : (
-                                        <div className="h-8 w-8 shrink-0 rounded-lg border border-dashed flex items-center justify-center bg-muted/10 text-muted-foreground">
-                                          <Camera className="h-5 w-5" />
-                                        </div>
-                                      )}
-                                      <div className="flex-1 min-w-0 pt-0.5">
-                                        {sw.note ? (
-                                          <p className="text-sm text-foreground">"{sw.note}"</p>
+                              <div className="space-y-3 mt-3">
+                                {item.swatches.map((sw, swIdx) => {
+                                  const preview = sw.customImage ? resolvePublicUrl(sw.customImage) : null;
+                                  return (
+                                    <div key={sw.id} className="pt-3 border-t border-dashed first:border-0 first:pt-0 space-y-2 text-sm">
+                                      <span className="text-xs font-bold text-muted-foreground block">Swatch #{swIdx + 1}</span>
+                                      <div className="flex gap-3 items-start">
+                                        {preview ? (
+                                          <div className="relative h-8 w-8 shrink-0 rounded-lg overflow-hidden border bg-muted/20">
+                                            <ImagePreviewDialog src={preview} alt={item.garmentName}>
+                                              <img src={preview} className="h-full w-full object-cover cursor-pointer" />
+                                            </ImagePreviewDialog>
+                                          </div>
                                         ) : (
-                                          <p className="text-sm text-muted-foreground italic">No note</p>
+                                          <div className="h-8 w-8 shrink-0 rounded-lg border border-dashed flex items-center justify-center bg-muted/10 text-muted-foreground">
+                                            <Camera className="h-5 w-5" />
+                                          </div>
                                         )}
+                                        <div className="flex-1 min-w-0 pt-0.5">
+                                          {sw.note ? (
+                                            <p className="text-sm text-foreground">"{sw.note}"</p>
+                                          ) : (
+                                            <p className="text-sm text-muted-foreground italic">No note</p>
+                                          )}
+                                        </div>
+                                      </div>
+
+                                      <div className="flex flex-wrap gap-1 mt-1">
+                                        {sw.handwork && (
+                                          <span className="text-[10px] bg-emerald-50 text-emerald-700 px-1.5 py-0.5 border border-emerald-200 rounded font-semibold">
+                                            Handwork {sw.handworkPrice ? `(₹${sw.handworkPrice})` : ""}
+                                            {sw.handworkNotes ? ` - ${sw.handworkNotes}` : ""}
+                                          </span>
+                                        )}
+                                        {Object.keys(sw.customizations).map((id) => {
+                                          const label = optionsMap.get(Number(id));
+                                          if (!label) return null;
+                                          const price = sw.customizations[Number(id)]?.priceModifier;
+                                          const note = sw.customizations[Number(id)]?.note;
+                                          return (
+                                            <span key={id} className="text-[10px] bg-blue-50 text-blue-700 px-1.5 py-0.5 border border-blue-200 rounded font-semibold">
+                                              {label}{price ? ` (₹${price})` : ""}{note ? ` - ${note}` : ""}
+                                            </span>
+                                          );
+                                        })}
                                       </div>
                                     </div>
-                                    
-                                    <div className="flex flex-wrap gap-1 mt-1">
-                                      {sw.handwork && (
-                                        <span className="text-[10px] bg-emerald-50 text-emerald-700 px-1.5 py-0.5 border border-emerald-200 rounded font-semibold">
-                                          Handwork {sw.handworkPrice ? `(₹${sw.handworkPrice})` : ""}
-                                          {sw.handworkNotes ? ` - ${sw.handworkNotes}` : ""}
-                                        </span>
-                                      )}
-                                      {Object.keys(sw.customizations).map((id) => {
-                                        const label = optionsMap.get(Number(id));
-                                        if (!label) return null;
-                                        const price = sw.customizations[Number(id)]?.priceModifier;
-                                        const note = sw.customizations[Number(id)]?.note;
-                                        return (
-                                          <span key={id} className="text-[10px] bg-blue-50 text-blue-700 px-1.5 py-0.5 border border-blue-200 rounded font-semibold">
-                                            {label}{price ? ` (₹${price})` : ""}{note ? ` - ${note}` : ""}
-                                          </span>
-                                        );
-                                      })}
-                                    </div>
-                                  </div>
-                                );
-                              })}
+                                  );
+                                })}
+                              </div>
                             </div>
-                          </div>
-                        );
-                      }
-                    })}
+                          );
+                        }
+                      })}
+                    </div>
                   </div>
                 )}
               </div>
-              <div className="grid grid-cols-2 gap-3">
-                <Button variant="outline" onClick={() => setMobileStep(2)} className="h-12 rounded-xl text-sm font-bold border-[#4A2B15] text-[#4A2B15]">Add Another</Button>
-                <Button onClick={() => setMobileStep(6)} disabled={orderItems.length === 0} className="h-12 rounded-xl text-sm font-bold bg-[#4A2B15] text-white">Summary</Button>
-              </div>
+              {readOnly ? (
+                <Button onClick={() => setMobileStep(6)} disabled={orderItems.length === 0} className="w-full h-12 rounded-xl text-sm font-bold bg-[#4A2B15] text-white">Summary</Button>
+              ) : (
+                <div className="grid grid-cols-2 gap-3">
+                  <Button variant="outline" onClick={() => setMobileStep(2)} className="h-12 rounded-xl text-sm font-bold border-[#4A2B15] text-[#4A2B15]">Add Another</Button>
+                  <Button onClick={() => setMobileStep(6)} disabled={orderItems.length === 0} className="h-12 rounded-xl text-sm font-bold bg-[#4A2B15] text-white">Summary</Button>
+                </div>
+              )}
             </div>
           )}
 
@@ -2486,9 +2535,9 @@ export default function OrderNew({ readOnly = false }: { readOnly?: boolean }) {
                         <div key={idx} className="flex justify-between text-sm">
                           <span className="text-muted-foreground truncate">{item.garmentName} ({item.swatches.length} Swatches)</span>
                           <span className="font-bold">₹{Math.round((item.swatchBasePrice || 0) + item.swatches.reduce((sum, sw) => {
-                              const custSum = Object.values(sw.customizations).reduce((s, c) => s + (c.priceModifier || 0), 0);
-                              return sum + (sw.handworkPrice || 0) + custSum;
-                            }, 0)).toLocaleString("en-IN")}</span>
+                            const custSum = Object.values(sw.customizations).reduce((s, c) => s + (c.priceModifier || 0), 0);
+                            return sum + (sw.handworkPrice || 0) + custSum;
+                          }, 0)).toLocaleString("en-IN")}</span>
                         </div>
                       );
                     }
@@ -2501,22 +2550,22 @@ export default function OrderNew({ readOnly = false }: { readOnly?: boolean }) {
                   <div className="flex justify-between text-lg font-extrabold border-t pt-3 mt-3"><span>Grand Total</span><span>₹{Math.round(grandTotal).toLocaleString("en-IN")}</span></div>
                 </div>
               </div>
-              <div className="bg-card rounded-xl border border-border shadow-sm p-3">
+              <div className={`bg-card rounded-xl border border-border shadow-sm p-3 ${readOnly ? "pointer-events-none opacity-95" : ""}`}>
                 <label className="text-sm font-extrabold text-foreground mb-2 block">Notes</label>
                 <Textarea placeholder="Add order notes..." value={notes} onChange={(e) => setNotes(e.target.value)} className="min-h-[60px] text-sm bg-muted/10 border-border" />
               </div>
               {readOnly ? (
-                  <div className="pt-2">
-                    <Button variant="outline" onClick={() => navigate("/orders")} className="w-full h-12 rounded-xl text-sm font-bold border-muted-foreground">Back</Button>
-                  </div>
-                ) : (
-                  <div className="grid grid-cols-2 gap-3 pt-2">
-                    <Button variant="outline" onClick={() => navigate("/orders")} className="h-12 rounded-xl text-sm font-bold border-muted-foreground">Cancel</Button>
-                    <Button onClick={submit} disabled={createMutation.isPending || updateMutation.isPending} className="h-12 rounded-xl text-sm font-bold bg-[#4A2B15] text-white">
-                      {isEdit ? (updateMutation.isPending ? "Updating..." : "Update Order") : (createMutation.isPending ? "Creating..." : "Create Order")}
-                    </Button>
-                  </div>
-                )}
+                <div className="pt-2">
+                  <Button variant="outline" onClick={() => navigate("/orders")} className="w-full h-12 rounded-xl text-sm font-bold border-muted-foreground">Back</Button>
+                </div>
+              ) : (
+                <div className="grid grid-cols-2 gap-3 pt-2">
+                  <Button variant="outline" onClick={() => navigate("/orders")} className="h-12 rounded-xl text-sm font-bold border-muted-foreground">Cancel</Button>
+                  <Button onClick={submit} disabled={createMutation.isPending || updateMutation.isPending} className="h-12 rounded-xl text-sm font-bold bg-[#4A2B15] text-white">
+                    {isEdit ? (updateMutation.isPending ? "Updating..." : "Update Order") : (createMutation.isPending ? "Creating..." : "Create Order")}
+                  </Button>
+                </div>
+              )}
             </div>
           )}
         </div>
@@ -2546,7 +2595,7 @@ export default function OrderNew({ readOnly = false }: { readOnly?: boolean }) {
       }}>
         <DialogContent className="max-w-md w-[95vw] sm:w-full bg-card border border-border rounded-2xl lg:rounded-xl p-0 overflow-hidden max-h-[90vh] flex flex-col">
           <DialogTitle className="sr-only">Handwork</DialogTitle>
-          
+
           {/* Desktop View */}
           <div className="hidden lg:block p-6">
             <DialogHeader className="pb-0">
