@@ -2,6 +2,8 @@ import { useState, useRef, useEffect } from "react";
 import { CalendarDays } from "lucide-react";
 import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Dialog, DialogContent, DialogTrigger, DialogTitle } from "@/components/ui/dialog";
+import { useIsMobile } from "@/hooks/use-mobile";
 import { cn } from "@/lib/utils";
 import { format, parse, isValid } from "date-fns";
 
@@ -26,6 +28,7 @@ export default function DatePicker({
 }: DatePickerProps) {
   const [open, setOpen] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
+  const isMobile = useIsMobile();
 
   const selectedDate = value
     ? parse(value, "yyyy-MM-dd", new Date())
@@ -77,7 +80,27 @@ export default function DatePicker({
     className: "!p-2 text-xs [&_.rdp-day]:h-7 [&_.rdp-day]:w-7 [&_.rdp-day_button]:h-7 [&_.rdp-day_button]:w-7 [&_.rdp-day_button]:text-xs [&_.rdp-weekday]:w-7 [&_.rdp-weekday]:text-xs [&_.rdp-caption_label]:text-xs [&_.rdp-nav_button]:h-6 [&_.rdp-nav_button]:w-6 bg-card"
   };
 
-  if (usePopover) {
+  if (usePopover || isMobile) {
+    if (isMobile) {
+      return (
+        <div className={cn("w-full", className)}>
+          <Dialog open={open} onOpenChange={setOpen}>
+            <DialogTrigger asChild>
+              <button type="button" disabled={disabled} className={buttonClassName}>
+                {buttonContent}
+              </button>
+            </DialogTrigger>
+            <DialogContent className="w-auto p-0 border-none bg-transparent shadow-none [&>button]:hidden">
+              <DialogTitle className="sr-only">Select Date</DialogTitle>
+              <div className="bg-card rounded-2xl shadow-2xl p-2 border overflow-hidden mx-auto">
+                <Calendar {...calendarProps} />
+              </div>
+            </DialogContent>
+          </Dialog>
+        </div>
+      );
+    }
+
     return (
       <div className={cn("w-full", className)}>
         <Popover open={open} onOpenChange={setOpen}>

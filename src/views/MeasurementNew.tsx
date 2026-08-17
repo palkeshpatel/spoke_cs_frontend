@@ -963,6 +963,7 @@ table { width: 100%; border-collapse: collapse; }
                     value={trialDate}
                     onChange={setTrialDate}
                     disabled={!canEdit}
+                    usePopover={true}
                   />
                 </div>
                 <div>
@@ -973,6 +974,7 @@ table { width: 100%; border-collapse: collapse; }
                     value={deliveryDate}
                     onChange={setDeliveryDate}
                     disabled={!canEdit}
+                    usePopover={true}
                   />
                 </div>
               </div>
