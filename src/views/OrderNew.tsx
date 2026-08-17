@@ -921,7 +921,7 @@ export default function OrderNew({ readOnly = false }: { readOnly?: boolean }) {
         </div>
 
         {/* 3-Step Selection Flow Layout */}
-        <div className="grid lg:grid-cols-12 gap-6 bg-card border border-border rounded-xl p-4 sm:p-6 shadow-sm">
+        <div className={`grid lg:grid-cols-12 gap-6 bg-card border border-border rounded-xl p-4 sm:p-6 shadow-sm ${readOnly ? "pointer-events-none" : ""}`}>
 
           {/* Step 1: Select Category */}
           <div className="lg:col-span-4 space-y-4 border-r border-border pr-0 lg:pr-6">
@@ -1553,7 +1553,7 @@ export default function OrderNew({ readOnly = false }: { readOnly?: boolean }) {
         </div>
 
         {/* Bottom Layout: Order Items list & Summary */}
-        <div className="grid lg:grid-cols-12 gap-6 items-start">
+        <div className={`grid lg:grid-cols-12 gap-6 items-start ${readOnly ? "pointer-events-none" : ""}`}>
 
           {/* Left: Order Items List */}
           <div className="lg:col-span-8 space-y-4">
@@ -1812,7 +1812,7 @@ export default function OrderNew({ readOnly = false }: { readOnly?: boolean }) {
       </div> {/* End desktop wrapper */}
 
       {/* MOBILE UI BLOCK */}
-      <div className="flex flex-col lg:hidden fixed top-[56px] bottom-[64px] left-0 right-0 z-30 bg-background overflow-hidden overscroll-none">
+      <div className={`flex flex-col lg:hidden fixed top-[56px] bottom-[64px] left-0 right-0 z-30 bg-background overflow-hidden overscroll-none ${readOnly ? "pointer-events-none" : ""}`}>
         {/* Mobile Header */}
         <div className="shrink-0 relative z-40 bg-[#4A2B15] text-white p-3 flex items-center gap-3 shadow-md">
           <button
@@ -2467,14 +2467,18 @@ export default function OrderNew({ readOnly = false }: { readOnly?: boolean }) {
                 <label className="text-sm font-extrabold text-foreground mb-2 block">Notes</label>
                 <Textarea placeholder="Add order notes..." value={notes} onChange={(e) => setNotes(e.target.value)} className="min-h-[60px] text-sm bg-muted/10 border-border" />
               </div>
-              {!readOnly && (
-                <div className="grid grid-cols-2 gap-3 pt-2">
-                  <Button variant="outline" onClick={() => navigate("/orders")} className="h-12 rounded-xl text-sm font-bold border-muted-foreground">Cancel</Button>
-                  <Button onClick={submit} disabled={createMutation.isPending || updateMutation.isPending} className="h-12 rounded-xl text-sm font-bold bg-[#4A2B15] text-white">
-                    {isEdit ? (updateMutation.isPending ? "Updating..." : "Update Order") : (createMutation.isPending ? "Creating..." : "Create Order")}
-                  </Button>
-                </div>
-              )}
+              {readOnly ? (
+                  <div className="pt-2">
+                    <Button variant="outline" onClick={() => navigate("/orders")} className="w-full h-12 rounded-xl text-sm font-bold border-muted-foreground">Back</Button>
+                  </div>
+                ) : (
+                  <div className="grid grid-cols-2 gap-3 pt-2">
+                    <Button variant="outline" onClick={() => navigate("/orders")} className="h-12 rounded-xl text-sm font-bold border-muted-foreground">Cancel</Button>
+                    <Button onClick={submit} disabled={createMutation.isPending || updateMutation.isPending} className="h-12 rounded-xl text-sm font-bold bg-[#4A2B15] text-white">
+                      {isEdit ? (updateMutation.isPending ? "Updating..." : "Update Order") : (createMutation.isPending ? "Creating..." : "Create Order")}
+                    </Button>
+                  </div>
+                )}
             </div>
           )}
         </div>
@@ -2641,13 +2645,15 @@ export default function OrderNew({ readOnly = false }: { readOnly?: boolean }) {
 
       <div className="hidden lg:flex justify-end gap-4 pt-6 mt-4">
         <Button variant="outline" className="w-32" onClick={() => navigate("/orders")}>
-          Cancel
+          {readOnly ? "Back" : "Cancel"}
         </Button>
-        <Button onClick={submit} disabled={createMutation.isPending || updateMutation.isPending} className="w-48 bg-primary text-white">
-          {isEdit
-            ? (updateMutation.isPending ? "Updating..." : "Update Order")
-            : (createMutation.isPending ? "Creating..." : "Create Order")}
-        </Button>
+        {!readOnly && (
+          <Button onClick={submit} disabled={createMutation.isPending || updateMutation.isPending} className="w-48 bg-primary text-white">
+            {isEdit
+              ? (updateMutation.isPending ? "Updating..." : "Update Order")
+              : (createMutation.isPending ? "Creating..." : "Create Order")}
+          </Button>
+        )}
       </div>
 
       {/* Customization Dialog */}
