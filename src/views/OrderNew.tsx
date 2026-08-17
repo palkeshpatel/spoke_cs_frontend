@@ -37,6 +37,7 @@ type SwatchDetail = {
   handworkNotes?: string | null;
   customizations: Record<number, { priceModifier: number, note: string }>;
   customImage: string | null;
+  meterRequired?: number;
   isUploading?: boolean;
 };
 
@@ -265,6 +266,7 @@ export default function OrderNew({ readOnly = false }: { readOnly?: boolean }) {
             handwork: !!it.handwork,
             handworkPrice: it.handwork_price,
             handworkNotes: it.handwork_notes,
+            meterRequired: it.meter_required ? Number(it.meter_required) : 1,
             customizations: parsedCustomizations,
             customImage: it.icon_path,
           });
@@ -464,6 +466,7 @@ export default function OrderNew({ readOnly = false }: { readOnly?: boolean }) {
       handwork: swatchHandwork,
       handworkPrice: swatchHandworkPrice,
       handworkNotes: swatchHandworkNotes,
+      meterRequired: 1,
       customizations: { ...swatchCustomizations },
       customImage: swatchImage,
     };
@@ -773,7 +776,7 @@ export default function OrderNew({ readOnly = false }: { readOnly?: boolean }) {
             handwork_price: sw.handworkPrice || null,
             handwork_notes: sw.handworkNotes || null,
             inventory_stock_id: null,
-            meter_required: null,
+            meter_required: sw.meterRequired || null,
             customization_flags: Object.keys(sw.customizations).length > 0 ? JSON.stringify(sw.customizations) : null,
             // Pass dbId so backend can UPDATE existing row instead of INSERTing a new one
             ...(sw.dbId ? { id: sw.dbId } : {}),
@@ -1222,13 +1225,13 @@ export default function OrderNew({ readOnly = false }: { readOnly?: boolean }) {
                       const preview = sw.customImage ? resolvePublicUrl(sw.customImage) : null;
                       return (
                         <div key={sw.id} className="p-3 border rounded-xl bg-muted/20 space-y-2 relative">
-                          <div className="flex gap-2">
+                          <div className="flex gap-3">
                             {sw.isUploading ? (
-                              <div className="h-8 w-8 shrink-0 rounded bg-muted/10 border flex items-center justify-center">
-                                <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                              <div className="h-14 w-14 shrink-0 rounded bg-muted/10 border flex items-center justify-center">
+                                <Loader2 className="h-4 w-4 animate-spin" />
                               </div>
                             ) : preview ? (
-                              <div className="relative h-8 w-8 shrink-0 rounded overflow-hidden border bg-card group">
+                              <div className="relative h-14 w-14 shrink-0 rounded overflow-hidden border bg-card group">
                                 <img src={preview} className="h-full w-full object-cover" />
                                 <button
                                   type="button"
@@ -1238,7 +1241,7 @@ export default function OrderNew({ readOnly = false }: { readOnly?: boolean }) {
                                   }}
                                   className="absolute inset-0 bg-black/40 hover:bg-black/60 text-white flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"
                                 >
-                                  <Camera className="h-3 w-3" />
+                                  <Camera className="h-4 w-4" />
                                 </button>
                               </div>
                             ) : (
@@ -1248,99 +1251,134 @@ export default function OrderNew({ readOnly = false }: { readOnly?: boolean }) {
                                   setEditingStagedSwatchIndex(index);
                                   stagedSwatchFileInputRef.current?.click();
                                 }}
-                                className="h-8 w-8 shrink-0 rounded border border-dashed flex flex-col items-center justify-center text-muted-foreground hover:bg-muted/10"
+                                className="h-14 w-14 shrink-0 rounded border border-dashed flex flex-col items-center justify-center text-muted-foreground hover:bg-muted/10"
                               >
-                                <Camera className="h-4 w-4" />
+                                <Camera className="h-5 w-5" />
                               </button>
                             )}
 
                             <div className="flex-1 min-w-0 pr-6">
-                              <span className="text-[10px] font-bold text-muted-foreground block">Swatch #{index + 1}</span>
-                              <Input
-                                placeholder="Stitching Note"
-                                value={sw.note}
-                                onChange={(e) => handleUpdateStagedSwatchField(index, { note: e.target.value })}
-                                className="h-7 text-xs bg-card mt-1"
-                              />
+                              <span className="text-sm font-bold text-foreground block">Swatch #{index + 1}</span>
+                              <p className="text-xs text-muted-foreground">On Demand Fabric</p>
                             </div>
 
                             <button
                               type="button"
                               onClick={() => handleRemoveStagedSwatch(index)}
-                              className="absolute top-2 right-2 text-muted-foreground hover:text-destructive p-0.5"
+                              className="absolute top-2 right-2 text-muted-foreground hover:text-destructive p-1"
                             >
-                              <Trash2 className="h-3 w-3" />
+                              <Trash2 className="h-4 w-4" />
                             </button>
                           </div>
 
-                          <div className="flex flex-col items-start gap-1 pt-1 border-t border-dashed">
-                            <div className="flex items-center gap-3">
-                              <label className="flex items-center gap-1 text-[10px] text-muted-foreground cursor-pointer select-none">
-                                <input
-                                  type="checkbox"
-                                  checked={sw.handwork}
-                                  onChange={(e) => {
-                                    if (!e.target.checked) {
-                                      setStagedSwatches(prev => prev.map((item, i) => i === index ? { ...item, handwork: false, handworkPrice: null, handworkNotes: "" } : item));
-                                    } else {
-                                      handleOpenHandworkDialog({ type: "staged_swatch", index: index });
-                                    }
-                                  }}
-                                  className="rounded border-input text-primary focus:ring-primary h-3.5 w-3.5"
-                                />
-                                Handwork
-                              </label>
-                              {sw.handwork && (
-                                <span
-                                  onClick={() => handleOpenHandworkDialog({ type: "staged_swatch", index: index })}
-                                  className="text-[9px] text-primary font-medium hover:underline cursor-pointer"
-                                >
-                                  (Edit)
-                                </span>
-                              )}
-
-                              {showAdvancedCustomization && (
-                                <>
-                                  <label className="flex items-center gap-1 text-[10px] text-muted-foreground cursor-pointer select-none">
-                                    <input
-                                      type="checkbox"
-                                      checked={Object.keys(sw.customizations).length > 0}
-                                      onChange={(e) => {
-                                        if (!e.target.checked) {
-                                          handleUpdateStagedSwatchField(index, { customizations: {} });
-                                        } else {
-                                          setActiveCustomizationTarget({ type: "staged_swatch", index: index });
-                                          setCustomizationDialogOpen(true);
-                                        }
-                                      }}
-                                      className="rounded border-input text-primary focus:ring-primary h-3.5 w-3.5"
-                                    />
-                                    Customization
-                                  </label>
-                                </>
-                              )}
-                            </div>
-                            {showAdvancedCustomization && Object.keys(sw.customizations).length > 0 && (
-                              <div
-                                onClick={() => {
-                                  setActiveCustomizationTarget({ type: "staged_swatch", index: index });
-                                  setCustomizationDialogOpen(true);
+                          <div className="flex items-center gap-4 px-0.5 pt-2 border-t border-dashed">
+                            <label className="flex items-center gap-1.5 text-xs text-muted-foreground cursor-pointer select-none">
+                              <input
+                                type="checkbox"
+                                checked={sw.handwork}
+                                onChange={(e) => {
+                                  if (!e.target.checked) {
+                                    setStagedSwatches(prev => prev.map((item, i) => i === index ? { ...item, handwork: false, handworkPrice: null, handworkNotes: "" } : item));
+                                  } else {
+                                    handleOpenHandworkDialog({ type: "staged_swatch", index: index });
+                                  }
                                 }}
-                                className="flex flex-wrap gap-1 mt-1.5 cursor-pointer"
+                                className="rounded border-input text-primary focus:ring-primary h-3.5 w-3.5"
+                              />
+                              Handwork
+                            </label>
+                            {sw.handwork && (
+                              <span
+                                onClick={() => handleOpenHandworkDialog({ type: "staged_swatch", index: index })}
+                                className="text-[10px] text-primary font-medium hover:underline cursor-pointer"
                               >
-                                {Object.keys(sw.customizations).map((id) => {
-                                  const label = optionsMap.get(Number(id));
-                                  if (!label) return null;
-                                  const price = sw.customizations[Number(id)]?.priceModifier;
-                                  const note = sw.customizations[Number(id)]?.note;
-                                  return (
-                                    <span key={id} className="text-[10px] bg-blue-50 text-blue-700 px-1 border border-blue-200 rounded font-semibold">
-                                      {label}{price ? ` (₹${price})` : ""}{note ? ` - ${note}` : ""}
-                                    </span>
-                                  );
-                                })}
+                                (Edit)
+                              </span>
+                            )}
+
+                            {showAdvancedCustomization && (
+                              <div className="flex flex-col gap-1 items-start">
+                                <label className="flex items-center gap-1.5 text-xs text-muted-foreground cursor-pointer select-none">
+                                  <input
+                                    type="checkbox"
+                                    checked={Object.keys(sw.customizations).length > 0}
+                                    onChange={(e) => {
+                                      if (!e.target.checked) {
+                                        handleUpdateStagedSwatchField(index, { customizations: {} });
+                                      } else {
+                                        setActiveCustomizationTarget({ type: "staged_swatch", index: index });
+                                        setCustomizationDialogOpen(true);
+                                      }
+                                    }}
+                                    className="rounded border-input text-primary focus:ring-primary h-3.5 w-3.5"
+                                  />
+                                  Advanced Customization
+                                </label>
+                                {Object.keys(sw.customizations).length > 0 && (
+                                  <div
+                                    onClick={() => {
+                                      setActiveCustomizationTarget({ type: "staged_swatch", index: index });
+                                      setCustomizationDialogOpen(true);
+                                    }}
+                                    className="flex flex-wrap gap-1 mt-1.5 cursor-pointer"
+                                  >
+                                    {Object.keys(sw.customizations).map((id) => {
+                                      const label = optionsMap.get(Number(id));
+                                      if (!label) return null;
+                                      const price = sw.customizations[Number(id)]?.priceModifier;
+                                      const note = sw.customizations[Number(id)]?.note;
+                                      return (
+                                        <span key={id} className="text-[10px] bg-blue-50 text-blue-700 px-1 border border-blue-200 rounded font-semibold">
+                                          {label}{price ? ` (₹${price})` : ""}{note ? ` - ${note}` : ""}
+                                        </span>
+                                      );
+                                    })}
+                                  </div>
+                                )}
                               </div>
                             )}
+                          </div>
+
+                          {/* Stitching Note */}
+                          <div className="space-y-1.5 pt-2">
+                            <Input
+                              placeholder="Stitching Note"
+                              value={sw.note}
+                              onChange={(e) => handleUpdateStagedSwatchField(index, { note: e.target.value })}
+                              className="h-9 text-sm bg-card"
+                            />
+                          </div>
+
+                          {/* Meter Required */}
+                          <div className="space-y-1.5 pt-1">
+                            <label className="text-xs text-muted-foreground block font-medium">Meter Required</label>
+                            <div className="flex items-center border rounded-lg overflow-hidden bg-card w-full">
+                              <Button
+                                type="button"
+                                variant="ghost"
+                                size="icon"
+                                onClick={() => handleUpdateStagedSwatchField(index, { meterRequired: Math.max(0.1, (sw.meterRequired || 1) - 0.25) })}
+                                className="h-8 w-8 rounded-none border-r shrink-0"
+                              >
+                                <Minus className="h-3.5 w-3.5" />
+                              </Button>
+                              <Input
+                                type="number"
+                                step="0.01"
+                                value={sw.meterRequired || 1}
+                                onChange={(e) => handleUpdateStagedSwatchField(index, { meterRequired: Math.max(0.1, parseFloat(e.target.value) || 0) })}
+                                className="flex-1 h-8 border-none text-center font-bold focus-visible:ring-0 text-sm [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+                              />
+                              <Button
+                                type="button"
+                                variant="ghost"
+                                size="icon"
+                                onClick={() => handleUpdateStagedSwatchField(index, { meterRequired: (sw.meterRequired || 1) + 0.25 })}
+                                className="h-8 w-8 rounded-none border-l shrink-0"
+                              >
+                                <Plus className="h-3.5 w-3.5" />
+                              </Button>
+                            </div>
                           </div>
                         </div>
                       );
@@ -1697,9 +1735,9 @@ export default function OrderNew({ readOnly = false }: { readOnly?: boolean }) {
                                       <Camera className="h-4 w-4" />
                                     </div>
                                   )}
-
                                   <div className="flex-1 min-w-0">
                                     <span className="text-[10px] font-bold text-muted-foreground block">Swatch #{swIdx + 1}</span>
+                                    <span className="block text-xs font-semibold text-foreground mt-0.5">{sw.meterRequired || 1} m</span>
                                     {sw.note ? (
                                       <p className="text-xs text-foreground italic mt-0.5">"{sw.note}"</p>
                                     ) : (

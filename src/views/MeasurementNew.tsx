@@ -318,8 +318,8 @@ export default function MeasurementNew() {
   };
 
   const handleMeasurementChange = (fieldId: number, value: string, syncAcrossGarments: boolean = false, fieldName?: string) => {
-    // Only allow max 2 digits before decimal, and max 2 digits after decimal.
-    if (value !== "" && !/^\d{0,2}(\.\d{0,2})?$/.test(value)) {
+    // Only allow max 3 digits before decimal, and max 2 digits after decimal.
+    if (value !== "" && !/^\d{0,3}(\.\d{0,2})?$/.test(value)) {
       return;
     }
 
