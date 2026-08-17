@@ -143,3 +143,12 @@ export async function listInventoryTransactions(params: {
   }
   return apiRequest<Paginated<InventoryTransaction>>(`/api/inventory/transactions?${q.toString()}`);
 }
+
+export async function importInventoryCsv(file: File) {
+  const formData = new FormData();
+  formData.append("csv_file", file);
+  return apiRequest<{ message: string }>("/api/inventory/stocks/import", {
+    method: "POST",
+    body: formData,
+  });
+}

@@ -11,6 +11,7 @@ import {
   Loader2,
   Trash,
   Upload,
+  Download,
   Sparkles,
   Info
 } from "lucide-react";
@@ -49,6 +50,7 @@ import {
   createGarment,
   saveInventoryStock,
   adjustInventoryStock,
+  importInventoryCsv,
   InventoryStock,
   Garment
 } from "@/services/inventory";
@@ -65,6 +67,7 @@ export default function InventoryList() {
   const [selectedColor, setSelectedColor] = useState("all");
   const [selectedStatus, setSelectedStatus] = useState("all");
   const [page, setPage] = useState(1);
+  const [isImporting, setIsImporting] = useState(false);
 
   // Modals / Drawers state
   const [addRemoveOpen, setAddRemoveOpen] = useState(false);
@@ -228,6 +231,23 @@ export default function InventoryList() {
     });
   };
 
+  const handleImportCsv = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    try {
+      setIsImporting(true);
+      await importInventoryCsv(file);
+      queryClient.invalidateQueries({ queryKey: ["inventory_stocks"] });
+      toast.success("CSV Imported successfully");
+    } catch (err: any) {
+      toast.error(err.message || "Failed to import CSV");
+    } finally {
+      setIsImporting(false);
+      e.target.value = ""; // Reset file input
+    }
+  };
+
   // Preview logic for Side Drawer
   const previewStock = () => {
     if (!activeFabric) return null;
@@ -262,9 +282,23 @@ export default function InventoryList() {
           <p className="text-sm text-muted-foreground">Manage your fabric stock and trace movements</p>
         </div>
         <div className="flex flex-wrap gap-2">
-          <Button variant="outline" onClick={() => navigate("/inventory/history")} className="gap-2">
-            <History className="h-4 w-4" /> Stock History
-          </Button>
+          <a href="/inventory_import_template.csv" download>
+            <Button variant="outline" className="gap-2">
+              <Download className="h-4 w-4" /> Download Template CSV
+            </Button>
+          </a>
+          <div className="relative">
+            <input
+              type="file"
+              accept=".csv"
+              className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
+              onChange={handleImportCsv}
+              disabled={isImporting}
+            />
+            <Button variant="outline" className="gap-2 pointer-events-none">
+              {isImporting ? <Loader2 className="h-4 w-4 animate-spin" /> : <Upload className="h-4 w-4" />} Import CSV
+            </Button>
+          </div>
           <Button onClick={() => { setEditingFabric(null); setFabricFormOpen(true); }} className="gap-2 bg-primary">
             <Plus className="h-4 w-4" /> Add Fabric
           </Button>
