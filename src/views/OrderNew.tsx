@@ -818,7 +818,7 @@ export default function OrderNew({ readOnly = false }: { readOnly?: boolean }) {
           );
           return sum + (sw.handworkPrice || 0) + customizationPriceSum;
         }, 0);
-        return acc + swatchesPriceSum;
+        return acc + (curr.swatchBasePrice || 0) + swatchesPriceSum;
       }
     }, 0);
   }, [orderItems]);

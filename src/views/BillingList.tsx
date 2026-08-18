@@ -64,7 +64,7 @@ export default function BillingList() {
           </div>
           <div>
             <p className="text-xs text-muted-foreground">Total Revenue</p>
-            <p className="text-2xl font-bold">${totalRevenue.toFixed(2)}</p>
+            <p className="text-2xl font-bold">₹{totalRevenue.toFixed(2)}</p>
           </div>
         </div>
         <div className="bg-card rounded-xl card-shadow p-5 flex items-center gap-4">
@@ -73,7 +73,7 @@ export default function BillingList() {
           </div>
           <div>
             <p className="text-xs text-muted-foreground">Pending Amount</p>
-            <p className="text-2xl font-bold">${pendingAmount.toFixed(2)}</p>
+            <p className="text-2xl font-bold">₹{pendingAmount.toFixed(2)}</p>
           </div>
         </div>
         <div className="bg-card rounded-xl card-shadow p-5 flex items-center gap-4">
@@ -125,7 +125,7 @@ export default function BillingList() {
                   </div>
                 </div>
                 <div className="text-right shrink-0 pl-2">
-                  <p className="text-lg font-bold">${inv.amount.toFixed(2)}</p>
+                  <p className="text-lg font-bold">₹{inv.amount.toFixed(2)}</p>
                   <p className="text-xs text-muted-foreground">{inv.date}</p>
                 </div>
               </Link>
@@ -149,7 +149,7 @@ export default function BillingList() {
                   <p className="text-sm font-semibold">{inv.invoiceNumber}</p>
                   <p className="text-sm text-muted-foreground truncate">{inv.customerName}</p>
                   <p className="text-xs text-muted-foreground truncate mt-1">{inv.service}</p>
-                  <p className="text-lg font-bold mt-3">${inv.amount.toFixed(2)}</p>
+                  <p className="text-lg font-bold mt-3">₹{inv.amount.toFixed(2)}</p>
                   <p className="text-xs text-muted-foreground">{inv.date}</p>
                 </Link>
               ))}

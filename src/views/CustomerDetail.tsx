@@ -398,7 +398,7 @@ export default function CustomerDetail() {
               </div>
               <div className="flex justify-between items-center">
                 <span className="text-sm text-muted-foreground">Total Spent</span>
-                <span className="font-bold">${Number(customer.loyalty?.total_spent ?? 0).toFixed(2)}</span>
+                <span className="font-bold">₹{Number(customer.loyalty?.total_spent ?? 0).toFixed(2)}</span>
               </div>
               <div className="flex justify-between items-center">
                 <span className="text-sm text-muted-foreground">Last Visit</span>
@@ -456,7 +456,7 @@ export default function CustomerDetail() {
                               </div>
                             </div>
                             <div className="text-right">
-                              <p className="text-sm font-bold">${lineTotal.toFixed(2)}</p>
+                              <p className="text-sm font-bold">₹{lineTotal.toFixed(2)}</p>
                               <p className="text-xs text-muted-foreground">
                                 {o.created_at ? format(new Date(o.created_at), "dd MMM yyyy") : "—"}
                               </p>
@@ -589,7 +589,7 @@ export default function CustomerDetail() {
                               {inv.order?.order_number ? ` · ${inv.order.order_number}` : ""}
                             </p>
                           </div>
-                          <p className="text-sm font-bold shrink-0">${Number.isFinite(total) ? total.toFixed(2) : "0.00"}</p>
+                          <p className="text-sm font-bold shrink-0">₹{Number.isFinite(total) ? total.toFixed(2) : "0.00"}</p>
                         </Link>
                       );
                     })}

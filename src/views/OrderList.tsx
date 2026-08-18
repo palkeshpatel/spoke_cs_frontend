@@ -222,7 +222,7 @@ export default function OrderList() {
 
                   <div className="flex shrink-0 items-center justify-between xl:justify-end gap-4 xl:w-[200px] pt-2 xl:pt-0 border-t border-border xl:border-t-0">
                     <StatusBadge status={o.status} />
-                    <p className="text-sm font-semibold whitespace-nowrap">${total.toFixed(2)}</p>
+                    <p className="text-sm font-semibold whitespace-nowrap">₹{total.toFixed(2)}</p>
                   </div>
                 </Link>
               );
@@ -243,7 +243,7 @@ export default function OrderList() {
                     <p className="text-sm text-muted-foreground truncate">{o.customer?.name ?? "—"}</p>
                     <div className="mt-1 flex items-center justify-between">
                       <p className="text-xs text-muted-foreground line-clamp-1">Fabric: {o.fabric ?? "—"}</p>
-                      <p className="text-sm font-semibold">${total.toFixed(2)}</p>
+                      <p className="text-sm font-semibold">₹{total.toFixed(2)}</p>
                     </div>
                     <div className="mt-4 pt-4 border-t border-border/50" onClick={(e) => { e.preventDefault(); e.stopPropagation(); }}>
                       <OrderStatusStepper 

@@ -67,19 +67,19 @@ export default function BillingDetail() {
             </div>
             <div className="flex justify-between gap-2">
               <span className="text-muted-foreground">Subtotal</span>
-              <span className="font-medium">${num(inv.total_amount).toFixed(2)}</span>
+              <span className="font-medium">₹{num(inv.total_amount).toFixed(2)}</span>
             </div>
             <div className="flex justify-between gap-2">
               <span className="text-muted-foreground">Discount</span>
-              <span className="font-medium">${num(inv.discount).toFixed(2)}</span>
+              <span className="font-medium">₹{num(inv.discount).toFixed(2)}</span>
             </div>
             <div className="flex justify-between gap-2">
               <span className="text-muted-foreground">Tax</span>
-              <span className="font-medium">${num(inv.tax).toFixed(2)}</span>
+              <span className="font-medium">₹{num(inv.tax).toFixed(2)}</span>
             </div>
             <div className="flex justify-between gap-2 border-t border-border pt-3">
               <span className="text-muted-foreground">Grand total</span>
-              <span className="text-lg font-bold">${num(inv.grand_total).toFixed(2)}</span>
+              <span className="text-lg font-bold">₹{num(inv.grand_total).toFixed(2)}</span>
             </div>
           </div>
         </SectionCard>
@@ -92,7 +92,7 @@ export default function BillingDetail() {
               {payments.map((p) => (
                 <li key={p.id} className="flex justify-between gap-2 border-b border-border pb-3 last:border-0 last:pb-0">
                   <div>
-                    <p className="font-medium">${num(p.amount).toFixed(2)}</p>
+                    <p className="font-medium">₹{num(p.amount).toFixed(2)}</p>
                     <p className="text-xs text-muted-foreground">{p.payment_method ?? "Payment"}</p>
                   </div>
                   <p className="text-xs text-muted-foreground shrink-0">
@@ -127,8 +127,8 @@ export default function BillingDetail() {
                     <tr key={item.id} className="border-b border-border last:border-0">
                       <td className="text-sm py-2">{item.description}</td>
                       <td className="text-sm py-2">{item.quantity}</td>
-                      <td className="text-sm py-2 text-right">${price.toFixed(2)}</td>
-                      <td className="text-sm py-2 text-right">${line.toFixed(2)}</td>
+                      <td className="text-sm py-2 text-right">₹{price.toFixed(2)}</td>
+                      <td className="text-sm py-2 text-right">₹{line.toFixed(2)}</td>
                     </tr>
                   );
                 })}
