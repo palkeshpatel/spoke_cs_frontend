@@ -79,6 +79,44 @@ const categoryImages: Record<string, string> = {
   "Co-ord Set": "co-ord-set.webp",
 };
 
+function MeterInput({ value, onChange, className }: { value: number; onChange: (val: number) => void; className?: string }) {
+  const [strValue, setStrValue] = useState(String(value));
+
+  useEffect(() => {
+    if (parseFloat(strValue) !== value && strValue !== "") {
+      setStrValue(String(value));
+    }
+  }, [value]);
+
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const val = e.target.value;
+    if (/^\d*\.?\d*$/.test(val)) {
+      setStrValue(val);
+      const parsed = parseFloat(val);
+      if (!isNaN(parsed)) {
+        onChange(parsed);
+      }
+    }
+  };
+
+  const handleBlur = () => {
+    const parsed = Math.max(0.1, parseFloat(strValue) || 1);
+    setStrValue(String(parsed));
+    onChange(parsed);
+  };
+
+  return (
+    <Input
+      type="text"
+      inputMode="decimal"
+      value={strValue}
+      onChange={handleChange}
+      onBlur={handleBlur}
+      className={className}
+    />
+  );
+}
+
 export default function OrderNew({ readOnly = false }: { readOnly?: boolean }) {
   const navigate = useNavigate();
   const location = useLocation();
@@ -1366,12 +1404,10 @@ export default function OrderNew({ readOnly = false }: { readOnly?: boolean }) {
                               >
                                 <Minus className="h-3.5 w-3.5" />
                               </Button>
-                              <Input
-                                type="number"
-                                step="0.01"
+                              <MeterInput
                                 value={sw.meterRequired || 1}
-                                onChange={(e) => handleUpdateStagedSwatchField(index, { meterRequired: Math.max(0.1, parseFloat(e.target.value) || 0) })}
-                                className="flex-1 h-8 border-none text-center font-bold focus-visible:ring-0 text-sm [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+                                onChange={(val) => handleUpdateStagedSwatchField(index, { meterRequired: Math.max(0.1, val) })}
+                                className="flex-1 h-8 border-none text-center font-bold focus-visible:ring-0 text-sm"
                               />
                               <Button
                                 type="button"
@@ -1551,12 +1587,10 @@ export default function OrderNew({ readOnly = false }: { readOnly?: boolean }) {
                     >
                       <Minus className="h-3.5 w-3.5" />
                     </Button>
-                    <Input
-                      type="number"
-                      step="0.01"
+                    <MeterInput
                       value={fabricMeter}
-                      onChange={(e) => setFabricMeter(Math.max(0.1, parseFloat(e.target.value) || 0))}
-                      className="flex-1 h-8 border-none text-center font-bold focus-visible:ring-0 text-sm [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+                      onChange={(val) => setFabricMeter(Math.max(0.1, val))}
+                      className="flex-1 h-8 border-none text-center font-bold focus-visible:ring-0 text-sm"
                     />
                     <Button
                       type="button"
@@ -2241,7 +2275,7 @@ export default function OrderNew({ readOnly = false }: { readOnly?: boolean }) {
                                   <Button type="button" variant="ghost" onClick={() => handleUpdateStagedSwatchField(index, { meterRequired: Math.max(0.1, (sw.meterRequired || 1) - 0.25) })} className="h-12 w-14 rounded-none border-r shrink-0">
                                     <Minus className="h-5 w-5" />
                                   </Button>
-                                  <Input type="number" step="0.01" value={sw.meterRequired || 1} onChange={(e) => handleUpdateStagedSwatchField(index, { meterRequired: Math.max(0.1, parseFloat(e.target.value) || 0) })} className="flex-1 h-12 border-none text-center font-bold text-lg focus-visible:ring-0" />
+                                  <MeterInput value={sw.meterRequired || 1} onChange={(val) => handleUpdateStagedSwatchField(index, { meterRequired: Math.max(0.1, val) })} className="flex-1 h-12 border-none text-center font-bold text-lg focus-visible:ring-0" />
                                   <Button type="button" variant="ghost" onClick={() => handleUpdateStagedSwatchField(index, { meterRequired: (sw.meterRequired || 1) + 0.25 })} className="h-12 w-14 rounded-none border-l shrink-0">
                                     <Plus className="h-5 w-5" />
                                   </Button>
@@ -2333,7 +2367,7 @@ export default function OrderNew({ readOnly = false }: { readOnly?: boolean }) {
                         <Button type="button" variant="ghost" onClick={() => setFabricMeter(m => Math.max(0.1, m - 0.25))} className="h-12 w-14 rounded-none border-r shrink-0">
                           <Minus className="h-5 w-5" />
                         </Button>
-                        <Input type="number" step="0.01" value={fabricMeter} onChange={(e) => setFabricMeter(Math.max(0.1, parseFloat(e.target.value) || 0))} className="flex-1 h-12 border-none text-center font-bold text-lg focus-visible:ring-0" />
+                        <MeterInput value={fabricMeter} onChange={(val) => setFabricMeter(Math.max(0.1, val))} className="flex-1 h-12 border-none text-center font-bold text-lg focus-visible:ring-0" />
                         <Button type="button" variant="ghost" onClick={() => setFabricMeter(m => m + 0.25)} className="h-12 w-14 rounded-none border-l shrink-0">
                           <Plus className="h-5 w-5" />
                         </Button>
