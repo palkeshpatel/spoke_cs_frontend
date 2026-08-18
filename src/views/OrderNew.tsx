@@ -83,9 +83,10 @@ function MeterInput({ value, onChange, className }: { value: number; onChange: (
   const [strValue, setStrValue] = useState(String(value));
 
   useEffect(() => {
-    if (parseFloat(strValue) !== value && strValue !== "") {
-      setStrValue(String(value));
-    }
+    const parsed = parseFloat(strValue);
+    if (strValue === "" && value === 0) return;
+    if (parsed === value) return;
+    setStrValue(String(value));
   }, [value]);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -93,9 +94,7 @@ function MeterInput({ value, onChange, className }: { value: number; onChange: (
     if (/^\d*\.?\d*$/.test(val)) {
       setStrValue(val);
       const parsed = parseFloat(val);
-      if (!isNaN(parsed)) {
-        onChange(parsed);
-      }
+      onChange(isNaN(parsed) ? 0 : parsed);
     }
   };
 
@@ -1399,21 +1398,21 @@ export default function OrderNew({ readOnly = false }: { readOnly?: boolean }) {
                                 type="button"
                                 variant="ghost"
                                 size="icon"
-                                onClick={() => handleUpdateStagedSwatchField(index, { meterRequired: Math.max(0.1, (sw.meterRequired || 1) - 0.25) })}
+                                onClick={() => handleUpdateStagedSwatchField(index, { meterRequired: Math.max(0.1, (sw.meterRequired ?? 1) - 0.25) })}
                                 className="h-8 w-8 rounded-none border-r shrink-0"
                               >
                                 <Minus className="h-3.5 w-3.5" />
                               </Button>
                               <MeterInput
-                                value={sw.meterRequired || 1}
-                                onChange={(val) => handleUpdateStagedSwatchField(index, { meterRequired: Math.max(0.1, val) })}
+                                value={sw.meterRequired ?? 1}
+                                onChange={(val) => handleUpdateStagedSwatchField(index, { meterRequired: val })}
                                 className="flex-1 h-8 border-none text-center font-bold focus-visible:ring-0 text-sm"
                               />
                               <Button
                                 type="button"
                                 variant="ghost"
                                 size="icon"
-                                onClick={() => handleUpdateStagedSwatchField(index, { meterRequired: (sw.meterRequired || 1) + 0.25 })}
+                                onClick={() => handleUpdateStagedSwatchField(index, { meterRequired: (sw.meterRequired ?? 1) + 0.25 })}
                                 className="h-8 w-8 rounded-none border-l shrink-0"
                               >
                                 <Plus className="h-3.5 w-3.5" />
@@ -1589,7 +1588,7 @@ export default function OrderNew({ readOnly = false }: { readOnly?: boolean }) {
                     </Button>
                     <MeterInput
                       value={fabricMeter}
-                      onChange={(val) => setFabricMeter(Math.max(0.1, val))}
+                      onChange={(val) => setFabricMeter(val)}
                       className="flex-1 h-8 border-none text-center font-bold focus-visible:ring-0 text-sm"
                     />
                     <Button
@@ -2040,12 +2039,12 @@ export default function OrderNew({ readOnly = false }: { readOnly?: boolean }) {
                 </div>
 
                 {activeTab === "in_stock" ? (
-                  <div className="space-y-3">
+                  <div className="flex-1 flex flex-col overflow-hidden space-y-3">
                     <Input
                       placeholder="Search fabric..."
                       value={fabricSearch}
                       onChange={(e) => setFabricSearch(e.target.value)}
-                      className="h-8 text-xs bg-muted/20 shrink-0"
+                      className="h-10 text-base md:text-sm bg-muted/20 shrink-0"
                     />
                     {isLoadingFabrics ? (
                       <div className="flex h-36 items-center justify-center"><Loader2 className="h-5 w-5 animate-spin text-muted-foreground" /></div>
@@ -2121,7 +2120,7 @@ export default function OrderNew({ readOnly = false }: { readOnly?: boolean }) {
                         )}
                         <div className="flex-1">
                           <label className="text-xs text-muted-foreground block font-medium mb-1">Stitching Note</label>
-                          <Input placeholder="Enter notes..." value={swatchNote} onChange={(e) => setSwatchNote(e.target.value)} className="h-10 text-sm w-full bg-card" />
+                          <Input placeholder="Enter notes..." value={swatchNote} onChange={(e) => setSwatchNote(e.target.value)} className="h-10 text-base md:text-sm w-full bg-card" />
                         </div>
                       </div>
                       <div className="flex flex-col gap-3 pt-2">
@@ -2272,11 +2271,11 @@ export default function OrderNew({ readOnly = false }: { readOnly?: boolean }) {
                               <div className="space-y-2 mt-3">
                                 <label className="text-sm text-muted-foreground block font-medium">Meter Required</label>
                                 <div className="flex items-center border rounded-xl overflow-hidden bg-card w-full h-12">
-                                  <Button type="button" variant="ghost" onClick={() => handleUpdateStagedSwatchField(index, { meterRequired: Math.max(0.1, (sw.meterRequired || 1) - 0.25) })} className="h-12 w-14 rounded-none border-r shrink-0">
+                                  <Button type="button" variant="ghost" onClick={() => handleUpdateStagedSwatchField(index, { meterRequired: Math.max(0.1, (sw.meterRequired ?? 1) - 0.25) })} className="h-12 w-14 rounded-none border-r shrink-0">
                                     <Minus className="h-5 w-5" />
                                   </Button>
-                                  <MeterInput value={sw.meterRequired || 1} onChange={(val) => handleUpdateStagedSwatchField(index, { meterRequired: Math.max(0.1, val) })} className="flex-1 h-12 border-none text-center font-bold text-lg focus-visible:ring-0" />
-                                  <Button type="button" variant="ghost" onClick={() => handleUpdateStagedSwatchField(index, { meterRequired: (sw.meterRequired || 1) + 0.25 })} className="h-12 w-14 rounded-none border-l shrink-0">
+                                  <MeterInput value={sw.meterRequired ?? 1} onChange={(val) => handleUpdateStagedSwatchField(index, { meterRequired: val })} className="flex-1 h-12 border-none text-center font-bold text-lg focus-visible:ring-0" />
+                                  <Button type="button" variant="ghost" onClick={() => handleUpdateStagedSwatchField(index, { meterRequired: (sw.meterRequired ?? 1) + 0.25 })} className="h-12 w-14 rounded-none border-l shrink-0">
                                     <Plus className="h-5 w-5" />
                                   </Button>
                                 </div>
@@ -2291,7 +2290,7 @@ export default function OrderNew({ readOnly = false }: { readOnly?: boolean }) {
                             <span className="text-muted-foreground">₹</span>
                             <Input
                               type="number"
-                              className="h-8 w-24 text-right bg-card"
+                              className="h-9 w-20 text-right text-base md:text-sm font-bold border-none bg-muted/30 focus-visible:ring-0"
                               value={swatchGroupBasePrice || ""}
                               onChange={(e) => setSwatchGroupBasePrice(Math.max(0, parseInt(e.target.value) || 0))}
                               placeholder="0"
@@ -2358,7 +2357,7 @@ export default function OrderNew({ readOnly = false }: { readOnly?: boolean }) {
                         placeholder="Stitching Note"
                         value={fabricNote}
                         onChange={(e) => setFabricNote(e.target.value)}
-                        className="h-10 text-sm bg-card"
+                        className="h-10 text-base md:text-sm bg-card"
                       />
                     </div>
                     <div className="space-y-2">
@@ -2367,7 +2366,7 @@ export default function OrderNew({ readOnly = false }: { readOnly?: boolean }) {
                         <Button type="button" variant="ghost" onClick={() => setFabricMeter(m => Math.max(0.1, m - 0.25))} className="h-12 w-14 rounded-none border-r shrink-0">
                           <Minus className="h-5 w-5" />
                         </Button>
-                        <MeterInput value={fabricMeter} onChange={(val) => setFabricMeter(Math.max(0.1, val))} className="flex-1 h-12 border-none text-center font-bold text-lg focus-visible:ring-0" />
+                        <MeterInput value={fabricMeter} onChange={(val) => setFabricMeter(val)} className="flex-1 h-12 border-none text-center font-bold text-lg focus-visible:ring-0" />
                         <Button type="button" variant="ghost" onClick={() => setFabricMeter(m => m + 0.25)} className="h-12 w-14 rounded-none border-l shrink-0">
                           <Plus className="h-5 w-5" />
                         </Button>
