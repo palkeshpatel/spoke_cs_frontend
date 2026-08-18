@@ -216,9 +216,9 @@ export default function Dashboard() {
         <div className="flex flex-col gap-6">
           {/* Today's Schedule */}
           <section className="bg-card rounded-xl border border-border/60 shadow-sm overflow-hidden flex flex-col">
-          <div className="p-4 border-b border-border/50 flex items-center justify-between">
-            <h2 className="text-sm font-bold tracking-widest uppercase text-foreground">Today's Schedule</h2>
-            <Link to="/appointments" className="text-sm text-primary hover:underline font-medium">View Calendar</Link>
+          <div className="flex items-center justify-between border-b pb-4 p-4">
+            <h2 className="text-sm font-extrabold uppercase tracking-widest text-foreground">Today's Schedule</h2>
+            <Link to="/appointments" className="text-sm text-primary hover:underline font-medium">View All</Link>
           </div>
           <div className="p-4 flex-1">
             {todaysAppointments.length === 0 ? (

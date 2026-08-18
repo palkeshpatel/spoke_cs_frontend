@@ -189,8 +189,10 @@ export default function OrderNew({ readOnly = false }: { readOnly?: boolean }) {
   >(null);
 
   // Mobile Step State
-  const [mobileStep, setMobileStep] = useState<number>(isEdit || readOnly ? 5 : 1);
+  const [mobileStep, setMobileStep] = useState<number>(1);
   const [showCustomerError, setShowCustomerError] = useState<boolean>(false);
+  const [showTrialDateError, setShowTrialDateError] = useState<boolean>(false);
+  const [showDeliveryDateError, setShowDeliveryDateError] = useState<boolean>(false);
 
   const fileInputRef = useRef<HTMLInputElement | null>(null);
   const stagedSwatchFileInputRef = useRef<HTMLInputElement | null>(null);
@@ -252,8 +254,8 @@ export default function OrderNew({ readOnly = false }: { readOnly?: boolean }) {
       setCustomerId(order.customer_id.toString());
       setNotes(order.notes || "");
       setStatus(order.status as any);
-      setTrialDate(order.trial_date || "");
-      setDeliveryDate(order.delivery_date || "");
+      setTrialDate(order.trial_date ? order.trial_date.substring(0, 10) : "");
+      setDeliveryDate(order.delivery_date ? order.delivery_date.substring(0, 10) : "");
 
       const items: OrderItemEntry[] = [];
       const swatchesByGarment = new Map<string, { swatches: any[], basePrice: number }>();
@@ -776,6 +778,14 @@ export default function OrderNew({ readOnly = false }: { readOnly?: boolean }) {
       toast({ title: "Customer required", description: "Please select customer.", variant: "destructive" });
       return;
     }
+    if (!trialDate) {
+      toast({ title: "Trial Date required", description: "Please select a trial date.", variant: "destructive" });
+      return;
+    }
+    if (!deliveryDate) {
+      toast({ title: "Delivery Date required", description: "Please select a delivery date.", variant: "destructive" });
+      return;
+    }
     if (orderItems.length === 0) {
       toast({ title: "Items required", description: "Please add at least one item to the order.", variant: "destructive" });
       return;
@@ -936,12 +946,14 @@ export default function OrderNew({ readOnly = false }: { readOnly?: boolean }) {
 
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <label className="text-xs text-muted-foreground mb-1 block">Trial Date</label>
-                  <DatePicker value={trialDate} onChange={setTrialDate} />
+                  <label className="text-xs text-muted-foreground mb-1 block">Trial Date *</label>
+                  <DatePicker value={trialDate} onChange={(val) => { setTrialDate(val); if (val) setShowTrialDateError(false); }} />
+                  {showTrialDateError && <p className="text-xs text-destructive mt-1.5 font-medium">Please select a trial date.</p>}
                 </div>
                 <div>
-                  <label className="text-xs text-muted-foreground mb-1 block">Delivery Date</label>
-                  <DatePicker value={deliveryDate} onChange={setDeliveryDate} />
+                  <label className="text-xs text-muted-foreground mb-1 block">Delivery Date *</label>
+                  <DatePicker value={deliveryDate} onChange={(val) => { setDeliveryDate(val); if (val) setShowDeliveryDateError(false); }} />
+                  {showDeliveryDateError && <p className="text-xs text-destructive mt-1.5 font-medium">Please select a delivery date.</p>}
                 </div>
               </div>
             </div>
@@ -1892,7 +1904,17 @@ export default function OrderNew({ readOnly = false }: { readOnly?: boolean }) {
         <div className="shrink-0 relative z-40 bg-[#4A2B15] text-white p-3 flex items-center gap-3 shadow-md">
           <button
             type="button"
-            onClick={() => mobileStep > 1 && !readOnly ? setMobileStep(m => m - 1) : navigate(-1)}
+            onClick={() => {
+              if (mobileStep === 5 && (isEdit || readOnly || orderItems.length > 0)) {
+                setMobileStep(1);
+              } else if (mobileStep === 6) {
+                setMobileStep(5);
+              } else if (mobileStep > 1 && !readOnly) {
+                setMobileStep(m => m - 1);
+              } else {
+                navigate(-1);
+              }
+            }}
             className="pointer-events-auto"
           >
             <ArrowLeft className="h-5 w-5" />
@@ -1944,25 +1966,42 @@ export default function OrderNew({ readOnly = false }: { readOnly?: boolean }) {
                   </div>
                 </div>
                 <div>
-                  <label className="text-xs text-muted-foreground mb-1 block">Trial Date</label>
-                  <DatePicker value={trialDate} onChange={setTrialDate} usePopover={true} />
+                  <label className="text-xs text-muted-foreground mb-1 block">Trial Date *</label>
+                  <DatePicker value={trialDate} onChange={(val) => { setTrialDate(val); if(val) setShowTrialDateError(false); }} usePopover={true} />
+                  {showTrialDateError && <p className="text-xs text-destructive mt-1.5 font-medium">Please select a trial date.</p>}
                 </div>
                 <div>
-                  <label className="text-xs text-muted-foreground mb-1 block">Delivery Date</label>
-                  <DatePicker value={deliveryDate} onChange={setDeliveryDate} usePopover={true} />
+                  <label className="text-xs text-muted-foreground mb-1 block">Delivery Date *</label>
+                  <DatePicker value={deliveryDate} onChange={(val) => { setDeliveryDate(val); if(val) setShowDeliveryDateError(false); }} usePopover={true} />
+                  {showDeliveryDateError && <p className="text-xs text-destructive mt-1.5 font-medium">Please select a delivery date.</p>}
                 </div>
               </div>
               <Button
                 onClick={() => {
+                  let hasError = false;
                   if (!customerId) {
                     setShowCustomerError(true);
-                  } else {
-                    setMobileStep(2);
+                    hasError = true;
+                  }
+                  if (!trialDate) {
+                    setShowTrialDateError(true);
+                    hasError = true;
+                  }
+                  if (!deliveryDate) {
+                    setShowDeliveryDateError(true);
+                    hasError = true;
+                  }
+                  if (!hasError) {
+                    if (orderItems.length > 0) {
+                      setMobileStep(5);
+                    } else {
+                      setMobileStep(2);
+                    }
                   }
                 }}
                 className="shrink-0 w-full bg-[#4A2B15] text-white h-10 rounded-xl text-base font-bold"
               >
-                Next
+                {orderItems.length > 0 ? "View Items" : "Next"}
               </Button>
             </div>
           )}
@@ -2017,9 +2056,9 @@ export default function OrderNew({ readOnly = false }: { readOnly?: boolean }) {
           )}
 
           {mobileStep === 3 && (
-            <div className="flex-1 flex flex-col overflow-hidden space-y-2">
-              <div className="bg-card p-3 rounded-xl border border-border shadow-sm space-y-3 flex-1 overflow-hidden">
-                <div className="flex border-b border-border w-full">
+            <div className="flex-1 flex flex-col min-h-0 overflow-hidden space-y-2">
+              <div className="bg-card p-3 rounded-xl border border-border shadow-sm space-y-3 flex-1 flex flex-col min-h-0 overflow-hidden">
+                <div className="flex border-b border-border w-full shrink-0">
                   <button
                     type="button"
                     onClick={() => setActiveTab("in_stock")}
@@ -2039,7 +2078,7 @@ export default function OrderNew({ readOnly = false }: { readOnly?: boolean }) {
                 </div>
 
                 {activeTab === "in_stock" ? (
-                  <div className="flex-1 flex flex-col overflow-hidden space-y-3">
+                  <div className="flex-1 flex flex-col min-h-0 overflow-hidden space-y-3">
                     <Input
                       placeholder="Search fabric..."
                       value={fabricSearch}
@@ -2051,7 +2090,7 @@ export default function OrderNew({ readOnly = false }: { readOnly?: boolean }) {
                     ) : fabrics.length === 0 ? (
                       <p className="text-sm text-muted-foreground py-6 text-center">No fabric stock found.</p>
                     ) : (
-                      <div className="flex-1 overflow-hidden border border-border rounded-xl flex flex-col">
+                      <div className="flex-1 overflow-hidden border border-border rounded-xl flex flex-col min-h-0">
                         <div className="flex-1 overflow-y-auto"><table className="w-full text-left text-sm border-collapse">
                           <thead>
                             <tr className="bg-muted/40 text-muted-foreground border-b font-medium">

@@ -168,7 +168,7 @@ export default function CalendarView() {
 
   const { data: orderData, isLoading: orderLoading } = useQuery({
     queryKey: ["orders", "list"],
-    queryFn: () => listOrders(500),
+    queryFn: () => listOrders(1, 500),
   });
 
   const appointments = useMemo(() => apptData?.data ?? [], [apptData]);
@@ -203,7 +203,7 @@ export default function CalendarView() {
           push(key, {
             id: o.id,
             type: "trial",
-            label: `Trial · ${o.order_number} ${truncLabel(o.customer?.name)}`,
+            label: `Trial · ${truncLabel(o.customer?.name)}`,
             linkTo: `/orders/${o.id}`,
           });
         }
@@ -215,7 +215,7 @@ export default function CalendarView() {
           push(key, {
             id: o.id,
             type: "delivery",
-            label: `Delivery · ${o.order_number} ${truncLabel(o.customer?.name)}`,
+            label: `Delivery · ${truncLabel(o.customer?.name)}`,
             linkTo: `/orders/${o.id}`,
           });
         }

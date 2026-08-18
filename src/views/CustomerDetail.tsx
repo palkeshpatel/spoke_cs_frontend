@@ -108,7 +108,7 @@ export default function CustomerDetail() {
 
   const customerOrdersQuery = useQuery({
     queryKey: ["orders", "customer", customerId],
-    queryFn: () => listOrders(200, customerId),
+    queryFn: () => listOrders(1, 200, customerId),
     enabled: Number.isFinite(customerId),
   });
 
