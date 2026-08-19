@@ -45,7 +45,7 @@ export function OrderStatusStepper({
   const [pendingStatus, setPendingStatus] = useState<string | null>(null);
 
   // If status is completed or delivered, we treat all steps as done
-  const isFullyDone = status === "completed" || status === "delivered";
+  const isFullyDone = status === "completed" || status === "delivered" || status === "delivery";
   const currentIndex = isFullyDone ? ORDER_STATUS_STEPS.length : (ORDER_STATUS_INDEX[status] ?? 0);
 
   const handleStepClick = (stepId: string) => {
