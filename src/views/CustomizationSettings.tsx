@@ -202,7 +202,7 @@ export default function CustomizationSettings() {
   const garmentsList = garmentsData ?? [];
 
   return (
-    <div className="pb-10">
+    <div className="pb-24 md:pb-10">
       <PageHeader
         title="Customisation Settings"
         subtitle="Manage garment customization groups and options with prices"

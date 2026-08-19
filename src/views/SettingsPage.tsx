@@ -70,7 +70,7 @@ export default function SettingsPage() {
   const update = (key: string, val: string) => setForm(f => ({ ...f, [key]: val }));
 
   return (
-    <div>
+    <div className="pb-20 md:pb-0">
       <PageHeader
         title="Settings"
         subtitle="Manage your shop settings"

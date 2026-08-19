@@ -50,6 +50,16 @@ const GARMENT_TYPES: GarmentType[] = ["Body", "Suit", "Shirt", "Pants"];
 const BODY_HIDDEN_FIELDS = ["Chest", "Waist", "Hip"];
 
 const FIELD_ORDER = [
+  "Shirt Length",
+  "Blazer Length/Jodhpuri Length",
+  "Nawabi Length",
+  "Open Indo Western Length",
+  "Bomber Jacket Length",
+  "Sherwani Length",
+  "Short Kurta Length",
+  "Long Kurta Length",
+  "Anarkali Length",
+  "Nehru Jacket Length",
   "Blazer Shoulder",
   "Shirt Shoulder",
   "Blazer Sleeve Length",
@@ -822,7 +832,7 @@ table { width: 100%; border-collapse: collapse; }
 
   return (
     <div className="measurement-print-root">
-      <div className="screen-only-measurement">
+      <div className="screen-only-measurement pb-20 md:pb-0">
         {isEditMode ? (
           <PageHeader
             title={measurement?.customer?.name ?? "Measurement"}

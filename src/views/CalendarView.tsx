@@ -228,7 +228,7 @@ export default function CalendarView() {
   const isLoading = apptLoading || orderLoading;
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-4 pb-20 md:pb-0">
       <PageHeader
         title="Calendar"
         subtitle="All appointments, trial dates & delivery dates"

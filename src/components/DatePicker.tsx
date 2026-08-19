@@ -77,7 +77,9 @@ export default function DatePicker({
     },
     disabled: minDate ? { before: minDate } : undefined,
     defaultMonth: selectedDate && isValid(selectedDate) ? selectedDate : new Date(),
-    className: "!p-2 text-xs [&_.rdp-day]:h-7 [&_.rdp-day]:w-7 [&_.rdp-day_button]:h-7 [&_.rdp-day_button]:w-7 [&_.rdp-day_button]:text-xs [&_.rdp-weekday]:w-7 [&_.rdp-weekday]:text-xs [&_.rdp-caption_label]:text-xs [&_.rdp-nav_button]:h-6 [&_.rdp-nav_button]:w-6 bg-card"
+    className: isMobile 
+      ? "!p-4 text-base [&_.rdp-day]:h-11 [&_.rdp-day]:w-11 [&_.rdp-day_button]:h-11 [&_.rdp-day_button]:w-11 [&_.rdp-day_button]:text-base [&_.rdp-weekday]:w-11 [&_.rdp-weekday]:text-sm [&_.rdp-caption_label]:text-lg [&_.rdp-nav_button]:h-8 [&_.rdp-nav_button]:w-8 bg-card flex justify-center"
+      : "!p-2 text-xs [&_.rdp-day]:h-7 [&_.rdp-day]:w-7 [&_.rdp-day_button]:h-7 [&_.rdp-day_button]:w-7 [&_.rdp-day_button]:text-xs [&_.rdp-weekday]:w-7 [&_.rdp-weekday]:text-xs [&_.rdp-caption_label]:text-xs [&_.rdp-nav_button]:h-6 [&_.rdp-nav_button]:w-6 bg-card"
   };
 
   if (usePopover || isMobile) {
@@ -90,9 +92,9 @@ export default function DatePicker({
                 {buttonContent}
               </button>
             </DialogTrigger>
-            <DialogContent className="w-auto p-0 border-none bg-transparent shadow-none [&>button]:hidden">
+            <DialogContent className="w-[95vw] max-w-sm p-0 border-none bg-transparent shadow-none [&>button]:hidden flex justify-center mx-auto">
               <DialogTitle className="sr-only">Select Date</DialogTitle>
-              <div className="bg-card rounded-2xl shadow-2xl p-2 border overflow-hidden mx-auto">
+              <div className="bg-card rounded-2xl shadow-2xl p-2 sm:p-4 border overflow-hidden flex justify-center w-full">
                 <Calendar {...calendarProps} />
               </div>
             </DialogContent>

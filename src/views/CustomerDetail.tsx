@@ -267,7 +267,7 @@ export default function CustomerDetail() {
   ];
 
   return (
-    <div>
+    <div className="pb-20 md:pb-0">
       <PageHeader
         title={customer.name}
         subtitle={customer.customer_code}

@@ -16,6 +16,7 @@ export default function GarmentCategoryList() {
   const [editingGarment, setEditingGarment] = useState<Garment | null>(null);
   
   const [name, setName] = useState("");
+  const [price, setPrice] = useState("");
   const [imageFile, setImageFile] = useState<File | null>(null);
 
   const { data: garments, isLoading } = useQuery({
@@ -25,6 +26,7 @@ export default function GarmentCategoryList() {
 
   const resetForm = () => {
     setName("");
+    setPrice("");
     setImageFile(null);
     setEditingGarment(null);
   };
@@ -38,6 +40,7 @@ export default function GarmentCategoryList() {
     resetForm();
     setEditingGarment(g);
     setName(g.name);
+    setPrice(g.price ? g.price.toString() : "");
     setDialogOpen(true);
   };
 
@@ -84,6 +87,7 @@ export default function GarmentCategoryList() {
 
     const formData = new FormData();
     formData.append("name", name);
+    if (price) formData.append("price", price);
     if (imageFile) {
       formData.append("image_file", imageFile);
     }
@@ -96,7 +100,7 @@ export default function GarmentCategoryList() {
   };
 
   return (
-    <div className="p-6 md:p-10 max-w-7xl mx-auto space-y-6">
+    <div className="p-6 md:p-10 max-w-7xl mx-auto space-y-6 pb-20 md:pb-0">
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <div>
           <h1 className="text-2xl font-bold tracking-tight text-foreground">Garment Categories</h1>
@@ -181,6 +185,18 @@ export default function GarmentCategoryList() {
                 value={name}
                 onChange={(e) => setName(e.target.value)}
                 placeholder="e.g. Co-ord Set"
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="price">Base Price</Label>
+              <Input
+                id="price"
+                type="number"
+                min="0"
+                step="0.01"
+                value={price}
+                onChange={(e) => setPrice(e.target.value)}
+                placeholder="0.00"
               />
             </div>
             <div className="space-y-2">

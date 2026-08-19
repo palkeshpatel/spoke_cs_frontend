@@ -5,6 +5,7 @@ export type Garment = {
   id: number;
   branch_id: number | null;
   name: string;
+  price?: number | string | null;
   image_path?: string | null;
   created_at: string;
   updated_at: string;

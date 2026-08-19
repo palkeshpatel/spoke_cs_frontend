@@ -463,7 +463,16 @@ export default function OrderDetail() {
                            </div>
                            <div className="flex-1 min-w-0 flex flex-col justify-between">
                               <div>
-                                <h4 className="font-bold text-sm text-foreground">{item.garment_type || "Unknown Category"}</h4>
+                                <h4 className="font-bold text-sm text-foreground">
+                                  {item.garment_type || "Unknown Category"}
+                                  {(() => {
+                                    const custSum = Object.keys(item.customizations || {}).reduce((s, id) => s + (item.customizations[Number(id)]?.priceModifier || 0), 0);
+                                    const ppm = item.inventory_stock?.price_per_meter ? Number(item.inventory_stock.price_per_meter) : 0;
+                                    const basePrice = Math.max(0, Number(item.price || 0) - (ppm * Number(item.meter_required || 0)) - Number(item.handwork_price || 0) - custSum);
+                                    if (basePrice > 0) return <span className="text-muted-foreground font-normal ml-1">(Base: ₹{basePrice.toLocaleString("en-IN")})</span>;
+                                    return null;
+                                  })()}
+                                </h4>
                                 {item.inventory_stock ? (
                                   <p className="text-xs text-muted-foreground font-medium mt-0.5">{item.inventory_stock.fabric_code} | {item.inventory_stock.color}</p>
                                 ) : (

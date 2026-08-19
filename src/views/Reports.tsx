@@ -28,7 +28,7 @@ export default function Reports() {
   const { monthlyRevenue, ordersPerMonth, topCustomers } = data;
 
   return (
-    <div>
+    <div className="pb-20 md:pb-0">
       <div className="mb-6">
         <h1 className="text-xl sm:text-2xl font-bold text-foreground">Reports</h1>
         <p className="text-sm text-muted-foreground">Business analytics and insights</p>
