@@ -2474,7 +2474,9 @@ export default function OrderNew({ readOnly = false }: { readOnly?: boolean }) {
                                 )}
                                 <div className="min-w-0 flex-1">
                                   <div className="flex justify-between items-start gap-2">
-                                    <span className="font-extrabold text-sm text-foreground block truncate">{item.garmentName}</span>
+                                    <span className="font-extrabold text-sm text-foreground block truncate">
+                                      {item.garmentName} {(item.garmentBasePrice || 0) > 0 ? `(₹${Math.round(item.garmentBasePrice!).toLocaleString("en-IN")})` : ""}
+                                    </span>
                                     <div className="flex gap-2">
                                       <button type="button" onClick={() => { handleStartEditItem(itemIdx); setMobileStep(4); }} className="text-muted-foreground p-1 border rounded"><Edit2 className="h-4 w-4" /></button>
                                       <button type="button" onClick={() => handleRemoveItem(itemIdx)} className="text-muted-foreground hover:text-destructive p-1 border rounded"><Trash2 className="h-4 w-4" /></button>
@@ -2528,7 +2530,9 @@ export default function OrderNew({ readOnly = false }: { readOnly?: boolean }) {
                             <div key={item.id} className="relative border bg-card p-2 rounded-xl space-y-1">
                               <div className="flex justify-between items-center pb-2 border-b">
                                 <div>
-                                  <span className="font-extrabold text-sm text-foreground block">{item.garmentName}</span>
+                                  <span className="font-extrabold text-sm text-foreground block">
+                                    {item.garmentName} {(item.garmentBasePrice || 0) > 0 ? `(₹${Math.round(item.garmentBasePrice!).toLocaleString("en-IN")})` : ""}
+                                  </span>
                                   <span className="text-xs font-bold text-foreground block mt-0.5">
                                     ₹{Math.round((item.garmentBasePrice || 0) + (item.swatchBasePrice || 0) + item.swatches.reduce((sum, sw) => sum + (sw.handworkPrice || 0) + Object.values(sw.customizations).reduce((s, c) => s + (c.priceModifier || 0), 0), 0)).toLocaleString("en-IN")}
                                   </span>
