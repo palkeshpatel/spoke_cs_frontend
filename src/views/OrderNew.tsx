@@ -1696,7 +1696,9 @@ export default function OrderNew({ readOnly = false }: { readOnly?: boolean }) {
 
                           <div className="min-w-0 flex-1">
                             <div className="flex justify-between items-start gap-1">
-                              <span className="font-extrabold text-sm text-foreground block truncate">{item.garmentName}</span>
+                              <span className="font-extrabold text-sm text-foreground block truncate">
+                                {item.garmentName} {(item.garmentBasePrice || 0) > 0 ? `(₹${Math.round(item.garmentBasePrice!).toLocaleString("en-IN")})` : ""}
+                              </span>
                               <div className="flex gap-1">
                                 <button
                                   type="button"
@@ -1722,7 +1724,7 @@ export default function OrderNew({ readOnly = false }: { readOnly?: boolean }) {
                               <span className="block">{item.meterRequired} m</span>
                               {item.note && <span className="block italic text-muted-foreground">Note: "{item.note}"</span>}
                               <span className="block font-bold text-foreground">
-                                ₹{Math.round((item.pricePerMeter! * item.meterRequired!) + (item.handworkPrice || 0)).toLocaleString("en-IN")}
+                                ₹{Math.round((item.garmentBasePrice || 0) + (item.pricePerMeter! * item.meterRequired!) + (item.handworkPrice || 0) + Object.values(item.customizations || {}).reduce((s, c) => s + (c.priceModifier || 0), 0)).toLocaleString("en-IN")}
                               </span>
                             </div>
                           </div>
@@ -1730,6 +1732,16 @@ export default function OrderNew({ readOnly = false }: { readOnly?: boolean }) {
 
                         {/* Badges footer */}
                         <div className="flex flex-wrap gap-1 mt-1">
+                          {(item.garmentBasePrice || 0) > 0 && (
+                            <span className="inline-flex items-center px-1.5 py-0.5 rounded-full text-[9px] font-semibold bg-muted/50 text-muted-foreground border border-border">
+                              Garment (₹{item.garmentBasePrice})
+                            </span>
+                          )}
+                          {(item.pricePerMeter || 0) > 0 && (item.meterRequired || 0) > 0 && (
+                            <span className="inline-flex items-center px-1.5 py-0.5 rounded-full text-[9px] font-semibold bg-muted/50 text-muted-foreground border border-border">
+                              Fabric (₹{Math.round(item.pricePerMeter! * item.meterRequired!)})
+                            </span>
+                          )}
                           {item.handwork && (
                             <span className="inline-flex items-center px-1.5 py-0.5 rounded-full text-[9px] font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200">
                               Handwork {item.handworkPrice ? `(₹${item.handworkPrice})` : ""}
@@ -1758,10 +1770,19 @@ export default function OrderNew({ readOnly = false }: { readOnly?: boolean }) {
                       <div key={item.id} className={`relative border bg-card p-4 rounded-xl space-y-3 shadow-xs group ${editingItemIndex === itemIdx ? "ring-2 ring-primary border-primary bg-primary/[0.01]" : "border-border"}`}>
                         <div className="flex justify-between items-center pb-2 border-b">
                           <div>
-                            <span className="font-extrabold text-sm text-foreground block">{item.garmentName}</span>
-                            <span className="text-xs font-bold text-foreground block mt-1">
-                              ₹{Math.round((item.swatchBasePrice || 0) + item.swatches.reduce((sum, sw) => sum + (sw.handworkPrice || 0) + Object.values(sw.customizations).reduce((s, c) => s + (c.priceModifier || 0), 0), 0)).toLocaleString("en-IN")}
+                            <span className="font-extrabold text-sm text-foreground block">
+                              {item.garmentName} {(item.garmentBasePrice || 0) > 0 ? `(₹${Math.round(item.garmentBasePrice!).toLocaleString("en-IN")})` : ""}
                             </span>
+                            <span className="text-xs font-bold text-foreground block mt-1">
+                              ₹{Math.round((item.garmentBasePrice || 0) + (item.swatchBasePrice || 0) + item.swatches.reduce((sum, sw) => sum + (sw.handworkPrice || 0) + Object.values(sw.customizations).reduce((s, c) => s + (c.priceModifier || 0), 0), 0)).toLocaleString("en-IN")}
+                            </span>
+                            {((item.garmentBasePrice || 0) + (item.swatchBasePrice || 0)) > 0 && (
+                              <div className="mt-1.5">
+                                <span className="inline-flex items-center px-1.5 py-0.5 rounded-full text-[9px] font-semibold bg-muted/50 text-muted-foreground border border-border">
+                                  Garment (₹{(item.garmentBasePrice || 0) + (item.swatchBasePrice || 0)})
+                                </span>
+                              </div>
+                            )}
                           </div>
                           <div className="flex gap-1 items-center">
                             <span className="text-[10px] text-muted-foreground font-semibold mr-1">Swatch Item ({item.swatches.length})</span>
