@@ -328,8 +328,11 @@ export default function MeasurementNew() {
   };
 
   const handleMeasurementChange = (fieldId: number, value: string, syncAcrossGarments: boolean = false, fieldName?: string) => {
-    // Only allow max 3 digits before decimal, and max 2 digits after decimal.
-    if (value !== "" && !/^\d{0,3}(\.\d{0,2})?$/.test(value)) {
+    const actualFieldName = fieldName || allFields.find(f => f.id === fieldId)?.field_name;
+    const maxDigits = (actualFieldName === "Height" || actualFieldName === "Weight") ? 3 : 2;
+    const regex = new RegExp(`^\\d{0,${maxDigits}}(\\.\\d{0,2})?$`);
+
+    if (value !== "" && !regex.test(value)) {
       return;
     }
 
