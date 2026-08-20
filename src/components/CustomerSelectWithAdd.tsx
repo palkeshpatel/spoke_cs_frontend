@@ -6,7 +6,7 @@
  * mutation so parent pages only need to supply `value` / `onChange`.
  */
 import * as React from "react";
-import { useMemo, useState } from "react";
+import { useMemo, useState, useRef } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Plus, X, UserPlus, Loader2, Check, ChevronsUpDown } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -49,6 +49,7 @@ export default function CustomerSelectWithAdd({
   className,
 }: CustomerSelectWithAddProps) {
   const queryClient = useQueryClient();
+  const containerRef = useRef<HTMLDivElement>(null);
 
   // ── mode ────────────────────────────────────────────────────────────────────
   const [mode, setMode] = useState<"select" | "create">("select");
@@ -265,9 +266,16 @@ export default function CustomerSelectWithAdd({
 
   // ── SELECT MODE ──────────────────────────────────────────────────────────────
   return (
-    <div className={cn("flex items-center gap-2", className)}>
+    <div className={cn("flex items-center gap-2", className)} ref={containerRef}>
       {/* Combobox */}
-      <Popover open={open} onOpenChange={setOpen}>
+      <Popover open={open} onOpenChange={(newOpen) => {
+        setOpen(newOpen);
+        if (newOpen && containerRef.current) {
+          setTimeout(() => {
+            containerRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+          }, 150);
+        }
+      }}>
         <PopoverTrigger asChild>
           <Button
             variant="outline"

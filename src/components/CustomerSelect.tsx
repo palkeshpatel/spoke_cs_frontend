@@ -26,6 +26,7 @@ interface CustomerSelectProps {
 
 export default function CustomerSelect({ customers, value, onChange, isLoading, disabled }: CustomerSelectProps) {
   const [open, setOpen] = React.useState(false);
+  const buttonRef = React.useRef<HTMLButtonElement>(null);
 
   const sortedCustomers = React.useMemo(() => {
     return [...customers].sort((a, b) => a.name.localeCompare(b.name));
@@ -34,9 +35,17 @@ export default function CustomerSelect({ customers, value, onChange, isLoading, 
   const selectedCustomer = sortedCustomers.find((c) => String(c.id) === value);
 
   return (
-    <Popover open={open} onOpenChange={setOpen}>
+    <Popover open={open} onOpenChange={(newOpen) => {
+      setOpen(newOpen);
+      if (newOpen && buttonRef.current) {
+        setTimeout(() => {
+          buttonRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }, 150);
+      }
+    }}>
       <PopoverTrigger asChild>
         <Button
+          ref={buttonRef}
           variant="outline"
           role="combobox"
           aria-expanded={open}
