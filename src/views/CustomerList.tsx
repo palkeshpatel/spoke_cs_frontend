@@ -51,7 +51,7 @@ export default function CustomerList() {
   }, [customers]);
 
   return (
-    <div className="pb-20 md:pb-0">
+    <div className="">
       <PageHeader
         title="Customer Profiles"
         subtitle="Manage customer database"

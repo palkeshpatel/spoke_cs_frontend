@@ -318,7 +318,7 @@ export default function Layout() {
         </div>
 
         <main className="flex-1 lg:overflow-y-auto pb-16 lg:pb-0">
-          <div className={`max-w-7xl mx-auto max-md:h-[calc(100dvh-120px)] ${location.pathname === '/orders/new' ? 'max-md:p-0 p-4 sm:p-6' : 'p-4 sm:p-6'}`}>
+          <div className={`max-w-7xl mx-auto ${/^\/orders\/(new|edit|\d+)/.test(location.pathname) ? 'max-md:h-[calc(100dvh-120px)] max-md:p-0' : 'max-md:min-h-[calc(100dvh-120px)]'} p-4 sm:p-6`}>
             {isUserLoading ? (
               <div className="flex min-h-[40vh] items-center justify-center text-sm text-muted-foreground animate-pulse">
                 Loading…

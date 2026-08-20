@@ -93,7 +93,7 @@ export default function OrderList() {
   };
 
   return (
-    <div className="pb-20 md:pb-0">
+    <div >
       <PageHeader
         title="Orders"
         subtitle={`${totalCount} orders`}

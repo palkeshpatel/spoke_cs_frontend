@@ -184,7 +184,7 @@ export default function Dashboard() {
   const showData = !dashboardQuery.isPending && !loadFailed && dashboard != null;
 
   return (
-    <div className="space-y-8 pb-20 md:pb-0">
+    <div className="space-y-8 ">
       {loadFailed ? (
         <div className="rounded-xl border border-destructive/40 bg-destructive/5 px-4 py-4 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
           <div className="flex items-start gap-2">

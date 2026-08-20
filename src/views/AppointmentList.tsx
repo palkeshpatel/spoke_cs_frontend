@@ -61,7 +61,7 @@ export default function AppointmentList() {
   const completedCount = appointments.filter((a) => a.status === 'completed').length;
 
   return (
-    <div className="pb-20 md:pb-0">
+    <div >
       <PageHeader
         title="Appointments"
         subtitle={`${appointments.length} appointments`}

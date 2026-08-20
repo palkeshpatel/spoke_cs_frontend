@@ -1948,7 +1948,7 @@ export default function OrderNew({ readOnly = false }: { readOnly?: boolean }) {
             <ArrowLeft className="h-5 w-5" />
           </button>
           <div className="flex-1 font-semibold text-base pointer-events-auto">
-            {mobileStep === 1 && "New Order"}
+            {mobileStep === 1 && (readOnly ? (orderQuery.data?.order_number || "Order Details") : isEdit ? (orderQuery.data?.order_number || "Edit Order") : "New Order")}
             {mobileStep === 2 && "Select Category"}
             {mobileStep === 3 && "Select Fabric"}
             {mobileStep === 4 && (activeTab === "swatch" ? "Swatch Details" : "Fabric Details")}

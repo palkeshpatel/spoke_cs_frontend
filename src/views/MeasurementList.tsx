@@ -113,7 +113,7 @@ export default function MeasurementList() {
         </div>
       </div>
 
-      <div className="grid md:grid-cols-2 gap-4 pb-20 md:pb-0">
+      <div className="grid md:grid-cols-2 gap-4 ">
         {measurementsQuery.isLoading ? (
           <div className="text-sm text-muted-foreground">Loading...</div>
         ) : filtered.length === 0 ? (

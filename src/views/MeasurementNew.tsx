@@ -832,7 +832,7 @@ table { width: 100%; border-collapse: collapse; }
 
   return (
     <div className="measurement-print-root">
-      <div className="screen-only-measurement pb-20 md:pb-0">
+      <div className="screen-only-measurement ">
         {isEditMode ? (
           <PageHeader
             title={measurement?.customer?.name ?? "Measurement"}

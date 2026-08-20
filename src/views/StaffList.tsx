@@ -49,7 +49,7 @@ export default function StaffList() {
   }, [staff, search]);
 
   return (
-    <div className="space-y-6 pb-20 md:pb-0">
+    <div className="space-y-6 ">
       <PageHeader
         title="Staff Management"
         subtitle={`${filtered.length} staff members`}
