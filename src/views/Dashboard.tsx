@@ -4,7 +4,6 @@ import { AlertCircle, CalendarDays, Clock, DollarSign, Ruler, TrendingUp, Users 
 import { Link } from "react-router-dom";
 import { getDashboard } from "@/services/dashboard";
 import { listOrders } from "@/services/orders";
-import { WorkTimer } from "@/components/WorkTimer";
 import { OrderStatusStepper } from "@/components/OrderStatusStepper";
 import { StatusBadge } from "@/components/StatusBadge";
 import { Button } from "@/components/ui/button";
@@ -204,11 +203,7 @@ export default function Dashboard() {
         </div>
       ) : null}
 
-      {!isAdmin && (
-        <div className="max-w-md">
-          <WorkTimer />
-        </div>
-      )}
+
 
 
 

@@ -92,7 +92,6 @@ export default function Layout() {
       icon: Users,
       items: [
         { path: '/staff', label: 'Staff', icon: Users, permission: 'manage_users' },
-        { path: '/staff-monitoring', label: 'Staff Monitor', icon: Users, permission: 'manage_users' },
         { path: '/work-reports', label: 'Work Report', icon: BarChart3, permission: 'view_reports' },
       ].filter(canViewItem),
     },
