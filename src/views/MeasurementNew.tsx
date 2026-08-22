@@ -47,13 +47,13 @@ type GarmentDraft = {
 };
 const GARMENT_TYPES: GarmentType[] = ["Body", "Suit", "Shirt", "Pants"];
 // These Body fields are hidden from the Body tab view (they appear within Suit/Shirt/Pants sections instead)
-const BODY_HIDDEN_FIELDS = ["Chest", "Waist", "Hip"];
+const BODY_HIDDEN_FIELDS = ["Chest", "Waist", "UB Hip"];
 
 const FIELD_ORDER = [
   "Shirt Length",
-  "Blazer Length/Jodhpuri Length",
+  "Blazer Jodhpuri Length",
   "Nawabi Length",
-  "Open Indo Western Length",
+  "Indo Western Length",
   "Bomber Jacket Length",
   "Sherwani Length",
   "Short Kurta Length",
@@ -66,7 +66,7 @@ const FIELD_ORDER = [
   "Shirt Sleeve Length",
   "Chest",
   "Stomach",
-  "Hip",
+  "UB Hip",
   "Collar/Neck",
   "Bicep",
   "Fore-arm",
@@ -1153,7 +1153,7 @@ table { width: 100%; border-collapse: collapse; }
                   (Object.keys(fieldsByGarment) as GarmentType[]).map((g) => {
                     let grpFields = fieldsByGarment[g] ?? [];
                     if (g === "Body") {
-                      const hiddenFields = ["Chest", "Waist", "Hip"];
+                      const hiddenFields = ["Chest", "Waist", "UB Hip"];
                       grpFields = grpFields.filter((f) => !hiddenFields.includes(f.field_name));
                     }
                     if (grpFields.length === 0) return null;
