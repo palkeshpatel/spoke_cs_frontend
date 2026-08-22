@@ -268,14 +268,7 @@ export default function CustomerSelectWithAdd({
   return (
     <div className={cn("flex items-center gap-2", className)} ref={containerRef}>
       {/* Combobox */}
-      <Popover open={open} onOpenChange={(newOpen) => {
-        setOpen(newOpen);
-        if (newOpen && containerRef.current) {
-          setTimeout(() => {
-            containerRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
-          }, 150);
-        }
-      }}>
+      <Popover open={open} onOpenChange={setOpen}>
         <PopoverTrigger asChild>
           <Button
             variant="outline"

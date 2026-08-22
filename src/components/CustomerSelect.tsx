@@ -35,14 +35,7 @@ export default function CustomerSelect({ customers, value, onChange, isLoading, 
   const selectedCustomer = sortedCustomers.find((c) => String(c.id) === value);
 
   return (
-    <Popover open={open} onOpenChange={(newOpen) => {
-      setOpen(newOpen);
-      if (newOpen && buttonRef.current) {
-        setTimeout(() => {
-          buttonRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
-        }, 150);
-      }
-    }}>
+    <Popover open={open} onOpenChange={setOpen}>
       <PopoverTrigger asChild>
         <Button
           ref={buttonRef}
