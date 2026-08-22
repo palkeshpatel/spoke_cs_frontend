@@ -78,12 +78,12 @@ const FIELD_ORDER = [
   "Trouser Length",
   "In-Seam Length",
   "Waist",
-  "Thigh",
   "Knee",
-  "Calf",
+  "Thigh",
   "Bottom",
-  "Fly",
+  "Calf",
   "SR",
+  "Fly",
   "Height",
   "Weight"
 ];
