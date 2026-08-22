@@ -59,7 +59,6 @@ export default function Layout() {
     { path: '/calendar', label: 'Calendar', icon: Calendar, permission: 'manage_appointments' },
     { path: '/measurements', label: 'Measurements', icon: Ruler, permission: '' },
     { path: '/orders', label: 'Orders', icon: Package, permission: 'manage_orders' },
-    { path: '/billing', label: 'Billing', icon: Receipt, permission: 'manage_billing' },
   ].filter((item) => item.path === '/measurements' ? canViewMeasurements(user) : canViewItem(item));
 
   const settingsNavItem = { path: '/settings', label: 'Settings', icon: Settings };
