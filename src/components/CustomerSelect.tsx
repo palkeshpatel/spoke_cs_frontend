@@ -56,7 +56,7 @@ export default function CustomerSelect({ customers, value, onChange, isLoading, 
         </Button>
       </PopoverTrigger>
       {/* Set same width as trigger for popover via CSS variable hack or just allow dynamic growth. Setting w-[var(--radix-popover-trigger-width)] works great internally for popovers to match input width! */}
-      <PopoverContent className="w-[var(--radix-popover-trigger-width)] p-0" align="start">
+      <PopoverContent className="w-[var(--radix-popover-trigger-width)] p-0" align="start" side="bottom" avoidCollisions={false}>
         <Command>
           <CommandInput placeholder="Search by name, code, or phone..." />
           <CommandList>
