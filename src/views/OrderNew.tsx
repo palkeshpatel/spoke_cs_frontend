@@ -830,7 +830,7 @@ export default function OrderNew({ readOnly = false }: { readOnly?: boolean }) {
           itemsPayload.push({
             garment_type: item.garmentName,
             quantity: 1,
-            price: (idx === 0 ? ((item.garmentBasePrice || 0) + (item.swatchBasePrice || 0)) : 0) + (sw.handworkPrice || 0) + customizationPriceSum,
+            price: (idx === 0 ? (item.garmentBasePrice || 0) : 0) + ((item.swatchBasePrice || 0) * (sw.meterRequired || 1)) + (sw.handworkPrice || 0) + customizationPriceSum,
             icon_path: sw.customImage || null,
             note: sw.note || null,
             handwork: sw.handwork,
@@ -873,13 +873,12 @@ export default function OrderNew({ readOnly = false }: { readOnly?: boolean }) {
         );
         return acc + (curr.garmentBasePrice || 0) + (curr.pricePerMeter! * curr.meterRequired!) + (curr.handworkPrice || 0) + customizationPriceSum;
       } else {
-        const swatchesPriceSum = curr.swatches.reduce((sum, sw) => {
-          const customizationPriceSum = Object.values(sw.customizations).reduce(
-            (sum2, c) => sum2 + (c.priceModifier || 0), 0
-          );
-          return sum + (sw.handworkPrice || 0) + customizationPriceSum;
+        const swatchesPriceSum = curr.swatches.reduce((s, sw) => {
+          const custSum = Object.values(sw.customizations).reduce((sum, c) => sum + (c.priceModifier || 0), 0);
+          const fabricPrice = (curr.swatchBasePrice || 0) * (sw.meterRequired || 1);
+          return s + fabricPrice + (sw.handworkPrice || 0) + custSum;
         }, 0);
-        return acc + (curr.garmentBasePrice || 0) + (curr.swatchBasePrice || 0) + swatchesPriceSum;
+        return acc + (curr.garmentBasePrice || 0) + swatchesPriceSum;
       }
     }, 0);
   }, [orderItems]);
@@ -1474,8 +1473,9 @@ export default function OrderNew({ readOnly = false }: { readOnly?: boolean }) {
                       <span className="text-base text-foreground">
                         ₹{stagedSwatches.reduce((sum, sw) => {
                           const custSum = Object.values(sw.customizations).reduce((s, c) => s + (c.priceModifier || 0), 0);
-                          return sum + (sw.handworkPrice || 0) + custSum;
-                        }, swatchGroupBasePrice).toLocaleString("en-IN")}
+                          const fabricPrice = swatchGroupBasePrice * (sw.meterRequired || 1);
+                          return sum + fabricPrice + (sw.handworkPrice || 0) + custSum;
+                        }, 0).toLocaleString("en-IN")}
                       </span>
                     </div>
 
@@ -1769,16 +1769,9 @@ export default function OrderNew({ readOnly = false }: { readOnly?: boolean }) {
                         <div className="flex justify-between items-center pb-2 border-b">
                           <div>
                             <span className="font-extrabold text-sm text-foreground block">{item.garmentName}</span>
-                            <span className="text-xs font-bold text-foreground block mt-1">
-                              ₹{Math.round((item.garmentBasePrice || 0) + (item.swatchBasePrice || 0) + item.swatches.reduce((sum, sw) => sum + (sw.handworkPrice || 0) + Object.values(sw.customizations).reduce((s, c) => s + (c.priceModifier || 0), 0), 0)).toLocaleString("en-IN")}
+                            <span className="font-bold whitespace-nowrap">
+                              ₹{Math.round((item.garmentBasePrice || 0) + item.swatches.reduce((sum, sw) => sum + ((item.swatchBasePrice || 0) * (sw.meterRequired || 1)) + (sw.handworkPrice || 0) + Object.values(sw.customizations).reduce((s, c) => s + (c.priceModifier || 0), 0), 0)).toLocaleString("en-IN")}
                             </span>
-                            {((item.garmentBasePrice || 0) + (item.swatchBasePrice || 0)) > 0 && (
-                              <div className="mt-1.5">
-                                <span className="inline-flex items-center px-1.5 py-0.5 rounded-full text-[9px] font-semibold bg-amber-50 text-amber-700 border border-amber-200">
-                                  Garment (₹{(item.garmentBasePrice || 0) + (item.swatchBasePrice || 0)})
-                                </span>
-                              </div>
-                            )}
                           </div>
                           <div className="flex gap-1 items-center">
                             <span className="text-[10px] text-muted-foreground font-semibold mr-1">Swatch Item ({item.swatches.length})</span>
@@ -1884,9 +1877,10 @@ export default function OrderNew({ readOnly = false }: { readOnly?: boolean }) {
                         </div>
                       );
                     } else {
-                      const totalPrice = (item.garmentBasePrice || 0) + (item.swatchBasePrice || 0) + item.swatches.reduce((sum, sw) => {
+                      const totalPrice = (item.garmentBasePrice || 0) + item.swatches.reduce((sum, sw) => {
                         const custSum = Object.values(sw.customizations || {}).reduce((s, c) => s + (c.priceModifier || 0), 0);
-                        return sum + (sw.handworkPrice || 0) + custSum;
+                        const fabricPrice = (item.swatchBasePrice || 0) * (sw.meterRequired || 1);
+                        return sum + fabricPrice + (sw.handworkPrice || 0) + custSum;
                       }, 0);
                       return (
                         <div key={idx} className="flex justify-between text-xs mb-2">
@@ -2369,8 +2363,9 @@ export default function OrderNew({ readOnly = false }: { readOnly?: boolean }) {
                           <span className="text-lg text-foreground">
                             ₹{stagedSwatches.reduce((sum, sw) => {
                               const custSum = Object.values(sw.customizations).reduce((s, c) => s + (c.priceModifier || 0), 0);
-                              return sum + (sw.handworkPrice || 0) + custSum;
-                            }, swatchGroupBasePrice).toLocaleString("en-IN")}
+                              const fabricPrice = swatchGroupBasePrice * (sw.meterRequired || 1);
+                              return sum + fabricPrice + (sw.handworkPrice || 0) + custSum;
+                            }, 0).toLocaleString("en-IN")}
                           </span>
                         </div>
                       </div>
@@ -2546,16 +2541,22 @@ export default function OrderNew({ readOnly = false }: { readOnly?: boolean }) {
                               <div className="flex justify-between items-center pb-2 border-b">
                                 <div>
                                   <span className="font-extrabold text-sm text-foreground block">{item.garmentName}</span>
-                                  <span className="text-xs font-bold text-foreground block mt-0.5">
-                                    ₹{Math.round((item.garmentBasePrice || 0) + (item.swatchBasePrice || 0) + item.swatches.reduce((sum, sw) => sum + (sw.handworkPrice || 0) + Object.values(sw.customizations).reduce((s, c) => s + (c.priceModifier || 0), 0), 0)).toLocaleString("en-IN")}
+                                  <span className="font-bold text-foreground">
+                                    ₹{Math.round((item.garmentBasePrice || 0) + item.swatches.reduce((sum, sw) => sum + ((item.swatchBasePrice || 0) * (sw.meterRequired || 1)) + (sw.handworkPrice || 0) + Object.values(sw.customizations).reduce((s, c) => s + (c.priceModifier || 0), 0), 0)).toLocaleString("en-IN")}
                                   </span>
-                                  {((item.garmentBasePrice || 0) + (item.swatchBasePrice || 0)) > 0 && (
-                                    <div className="mt-1.5">
-                                      <span className="inline-flex items-center px-2 py-1 rounded-full text-[10px] font-semibold bg-amber-50 text-amber-700 border border-amber-200">
-                                        Garment (₹{(item.garmentBasePrice || 0) + (item.swatchBasePrice || 0)})
-                                      </span>
-                                    </div>
-                                  )}
+                                </div>
+                                
+                                <div className="flex flex-col gap-0.5 text-xs text-muted-foreground mt-2 border-t pt-2">
+                                  {item.swatches.map((sw, idx) => {
+                                    const fabricPrice = (item.swatchBasePrice || 0) * (sw.meterRequired || 1);
+                                    return (
+                                      <div key={idx} className="flex flex-wrap gap-1">
+                                        <span>S#{idx + 1}:</span>
+                                        {fabricPrice > 0 && <span>Fabric ₹{fabricPrice}</span>}
+                                        {sw.handworkPrice && <span>HW ₹{sw.handworkPrice}</span>}
+                                      </div>
+                                    );
+                                  })}
                                 </div>
                                 <div className="flex gap-2">
                                   <button type="button" onClick={() => { handleStartEditItem(itemIdx); setMobileStep(4); }} className="text-muted-foreground p-1 border rounded"><Edit2 className="h-4 w-4" /></button>
