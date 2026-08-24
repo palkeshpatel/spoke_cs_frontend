@@ -50,7 +50,7 @@ function priorityLabel(p: string): "HIGH" | "NORMAL" | "LOW" {
 }
 
 const customerDetailTabTriggerClass =
-  "rounded-full text-sm font-medium text-muted-foreground transition-colors data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:shadow-sm data-[state=inactive]:hover:text-foreground";
+  "rounded-lg sm:rounded-full py-2 sm:py-1 text-sm font-medium text-muted-foreground transition-colors data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:shadow-sm data-[state=inactive]:hover:text-foreground";
 
 function measurementEditPathForCustomer(measurements: MeasurementDto[], cid: number): string {
   const byGarment: Partial<Record<"Suit" | "Shirt" | "Pants", MeasurementDto>> = {};
@@ -417,7 +417,7 @@ export default function CustomerDetail() {
         {/* Right column: tabs, quick actions under tab panel, then body images */}
         <div className="lg:col-span-2 space-y-6">
           <Tabs defaultValue="orders">
-            <TabsList className="w-full grid grid-cols-4 h-12 gap-1 rounded-full border border-border/60 bg-muted/50 p-1 shadow-sm mb-4">
+            <TabsList className="w-full grid grid-cols-2 sm:grid-cols-4 h-auto sm:h-12 gap-1 rounded-xl sm:rounded-full border border-border/60 bg-muted/50 p-1 shadow-sm mb-4">
               <TabsTrigger value="orders" className={customerDetailTabTriggerClass}>
                 Orders
               </TabsTrigger>
