@@ -143,6 +143,20 @@ export default function StaffList() {
                       <span className="text-[11px] font-medium text-muted-foreground uppercase tracking-tight">
                         {s.status ? 'Active' : 'On Leave'}
                       </span>
+                      {!isAdminStaff && (
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="h-8 w-8 ml-2 text-destructive hover:text-destructive hover:bg-destructive/10"
+                          onClick={(e) => {
+                            e.preventDefault();
+                            e.stopPropagation();
+                            handleDelete(s.id);
+                          }}
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
+                      )}
                     </div>
                   </div>
                 </>
@@ -188,7 +202,23 @@ export default function StaffList() {
                         )}
                       </div>
                       <div className="flex flex-col items-end gap-2">
-                        <div className={`w-2.5 h-2.5 rounded-full ${s.status ? 'bg-green-500 shadow-[0_0_8px_rgba(34,197,94,0.4)]' : 'bg-red-400'}`} />
+                        <div className="flex items-center gap-2">
+                          {!isAdminStaff && (
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              className="h-6 w-6 text-destructive hover:text-destructive hover:bg-destructive/10"
+                              onClick={(e) => {
+                                e.preventDefault();
+                                e.stopPropagation();
+                                handleDelete(s.id);
+                              }}
+                            >
+                              <Trash2 className="h-3.5 w-3.5" />
+                            </Button>
+                          )}
+                          <div className={`w-2.5 h-2.5 rounded-full ${s.status ? 'bg-green-500 shadow-[0_0_8px_rgba(34,197,94,0.4)]' : 'bg-red-400'}`} />
+                        </div>
                         <Badge variant="outline" className={`text-[10px] font-bold ${
                           isAdminStaff
                             ? 'border-border bg-muted text-muted-foreground'

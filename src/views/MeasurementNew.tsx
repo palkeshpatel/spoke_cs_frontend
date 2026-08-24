@@ -582,6 +582,7 @@ table { width: 100%; border-collapse: collapse; }
 .measure-table td { border: 1px solid #ddd; padding: 8px; }
 .measure-table th { background: #f5f5f5; border: 1px solid #ddd; padding: 8px; text-align: left; }
 .value { width: 90px; text-align: center; font-weight: bold; }
+.measure-table tr { page-break-inside: avoid; }
 .footer { text-align: center; margin-top: 20px; color: #777; font-size: 12px; padding-top: 20px; border-top: 1px solid #ddd; }
 @media print {
   @page { margin: 0; }
@@ -611,7 +612,7 @@ table { width: 100%; border-collapse: collapse; }
     const garmentGroupsToShow = garmentType === "Body" ? ["Body", "Suit", "Shirt", "Pants"] : [garmentType];
 
     for (const g of garmentGroupsToShow) {
-      let currentFields = fieldsByGarment[g] ?? [];
+      let currentFields = sortFields(fieldsByGarment[g] ?? []);
       if (g === "Body") {
         currentFields = currentFields.filter((f) => !BODY_HIDDEN_FIELDS.includes(f.field_name));
       }
@@ -630,10 +631,10 @@ table { width: 100%; border-collapse: collapse; }
     }
 
     for (const section of printGroups) {
-      // Filter out empty rows to keep the print clean
-      const filledRows = section.rows.filter(r => r.value && String(r.value).trim() !== "");
+      const filledRows = section.rows;
       if (filledRows.length === 0) continue;
 
+      html += `<div class="print-group">`;
       html += `<div class="section">${section.label}</div>`;
       html += `<table class="measure-table"><tr><th>Measurement</th><th class="value">Value</th><th>Measurement</th><th class="value">Value</th></tr>`;
 
@@ -641,24 +642,24 @@ table { width: 100%; border-collapse: collapse; }
         const row1 = filledRows[i];
         const row2 = i + 1 < filledRows.length ? filledRows[i + 1] : null;
 
-        const val1 = row1.value ? `${row1.value} ${row1.unit || ""}`.trim() : "-";
-        const val2 = row2 && row2.value ? `${row2.value} ${row2.unit || ""}`.trim() : (row2 ? "-" : "");
+        const val1 = row1.value && String(row1.value).trim() !== "" ? `${row1.value} ${row1.unit || ""}`.trim() : "N/A";
+        const val2 = row2 ? (row2.value && String(row2.value).trim() !== "" ? `${row2.value} ${row2.unit || ""}`.trim() : "N/A") : "";
 
         html += `<tr>`;
         html += `<td>${row1.name}</td><td class="value">${val1}</td>`;
         if (row2) {
           html += `<td>${row2.name}</td><td class="value">${val2}</td>`;
         } else {
-          html += `<td></td><td></td>`;
+          html += `<td></td><td class="value"></td>`;
         }
         html += `</tr>`;
       }
       html += `</table>`;
-
       const gNotes = section.type === "Suit" ? suitNotes : section.type === "Shirt" ? shirtNotes : section.type === "Pants" ? pantNotes : "";
       if (gNotes && gNotes.trim() !== "") {
         html += `<div style="margin-top: 10px; font-size: 13px;"><b>Notes:</b> <span style="white-space: pre-wrap;">${gNotes}</span></div>`;
       }
+      html += `</div>`;
     }
 
     html += `
