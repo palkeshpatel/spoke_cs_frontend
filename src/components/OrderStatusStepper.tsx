@@ -18,7 +18,7 @@ export const ORDER_STATUS_STEPS = [
   { id: "stitching", label: "Stitching" },
   { id: "trial_1", label: "Trial 1" },
   { id: "trial_2", label: "Trial 2" },
-  { id: "delivery", label: "Delivery" },
+  { id: "delivery", label: "Delivered" },
 ];
 
 export const ORDER_STATUS_INDEX = ORDER_STATUS_STEPS.reduce(

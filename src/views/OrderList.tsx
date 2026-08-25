@@ -135,7 +135,7 @@ export default function OrderList() {
             { id: "stitching", label: "Stitching", icon: PenTool },
             { id: "trial_1", label: "Trial 1", icon: User },
             { id: "trial_2", label: "Trial 2", icon: UserCheck },
-            { id: "delivery", label: "Delivery", icon: Truck },
+            { id: "delivery", label: "Delivered", icon: Truck },
           ].map((tab) => (
             <button
               key={tab.id}
