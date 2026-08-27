@@ -28,9 +28,16 @@ const priorityStyles: Record<string, string> = {
 };
 
 export function StatusBadge({ status }: { status: string }) {
+  let displayStatus = status;
+  if (status === 'delivery') {
+    displayStatus = 'delivered';
+  } else if (status) {
+    displayStatus = status.replace(/[_-]/g, ' ');
+  }
+
   return (
-    <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${statusStyles[status] || 'bg-muted text-muted-foreground'}`}>
-      {status}
+    <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium capitalize ${statusStyles[status] || 'bg-muted text-muted-foreground'}`}>
+      {displayStatus}
     </span>
   );
 }
