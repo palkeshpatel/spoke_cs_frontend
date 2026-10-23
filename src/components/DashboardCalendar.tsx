@@ -11,6 +11,7 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 
 import { listAppointments } from "@/services/appointments";
 import { listOrders } from "@/services/orders";
+import { listMeasurements, type MeasurementDto } from "@/services/measurements";
 import { cn } from "@/lib/utils";
 
 // ─── Types ───────────────────────────────────────────────────────────────────
@@ -100,7 +101,7 @@ function UnifiedCalendarDayCell(props: DayProps) {
             <div className="hidden sm:flex flex-col gap-1 px-1 pb-2 pt-0.5">
               {list.slice(0, maxShown).map((evt, i) => (
                 <Link
-                  key={`${evt.type}-${evt.id}-${i}`}
+                  key={`${evt.type}-${evt.linkTo}-${i}`}
                   to={evt.linkTo}
                   className={cn(
                     "relative z-[1] block w-full max-w-full rounded-md px-2 py-1 text-left text-xs font-medium leading-snug shadow-sm",
@@ -132,7 +133,7 @@ function UnifiedCalendarDayCell(props: DayProps) {
               <PopoverContent className="w-56 p-2 space-y-1 z-50">
                 {list.map((evt, i) => (
                   <Link
-                    key={`mob-${evt.type}-${evt.id}-${i}`}
+                    key={`mob-${evt.type}-${evt.linkTo}-${i}`}
                     to={evt.linkTo}
                     className={cn(
                       "block w-full rounded-md px-2 py-2 text-left text-xs font-medium leading-snug shadow-sm",
@@ -171,8 +172,25 @@ export function DashboardCalendar() {
     queryFn: () => listOrders(1, 500),
   });
 
+  const { data: measurementData, isLoading: measurementLoading } = useQuery({
+    queryKey: ["measurements", "list"],
+    queryFn: () => listMeasurements(500),
+  });
+
   const appointments = useMemo(() => apptData?.data ?? [], [apptData]);
   const orders = useMemo(() => orderData?.data ?? [], [orderData]);
+  const measurements = useMemo(() => {
+    const raw = measurementData?.data ?? [];
+    const seen = new Set<number>();
+    const list: MeasurementDto[] = [];
+    for (const m of raw) {
+      if (!seen.has(m.id)) {
+        seen.add(m.id);
+        list.push(m);
+      }
+    }
+    return list;
+  }, [measurementData]);
 
   const byDate = useMemo(() => {
     const map = new Map<string, CalendarEvent[]>();
@@ -195,11 +213,15 @@ export function DashboardCalendar() {
       });
     }
 
+    // Keep track of order dates to avoid duplicate tags if an order already exists for same customer and date
+    const orderDateKeys = new Set<string>();
+
     // Orders — Trial Date
     for (const o of orders) {
       if (o.trial_date) {
         const key = normalizeDate(o.trial_date);
         if (key) {
+          if (o.customer_id) orderDateKeys.add(`trial-${o.customer_id}-${key}`);
           push(key, {
             id: o.id,
             type: "trial",
@@ -212,6 +234,7 @@ export function DashboardCalendar() {
       if (o.delivery_date) {
         const key = normalizeDate(o.delivery_date);
         if (key) {
+          if (o.customer_id) orderDateKeys.add(`delivery-${o.customer_id}-${key}`);
           push(key, {
             id: o.id,
             type: "delivery",
@@ -222,10 +245,36 @@ export function DashboardCalendar() {
       }
     }
 
-    return map;
-  }, [appointments, orders]);
+    // Measurements — Trial Date & Delivery Date
+    for (const m of measurements) {
+      if (m.trial_date) {
+        const key = normalizeDate(m.trial_date);
+        if (key && !orderDateKeys.has(`trial-${m.customer_id}-${key}`)) {
+          push(key, {
+            id: m.id,
+            type: "trial",
+            label: `Trial · ${truncLabel(m.customer?.name)}`,
+            linkTo: `/measurements/${m.id}`,
+          });
+        }
+      }
+      if (m.delivery_date) {
+        const key = normalizeDate(m.delivery_date);
+        if (key && !orderDateKeys.has(`delivery-${m.customer_id}-${key}`)) {
+          push(key, {
+            id: m.id,
+            type: "delivery",
+            label: `Delivery · ${truncLabel(m.customer?.name)}`,
+            linkTo: `/measurements/${m.id}`,
+          });
+        }
+      }
+    }
 
-  const isLoading = apptLoading || orderLoading;
+    return map;
+  }, [appointments, orders, measurements]);
+
+  const isLoading = apptLoading || orderLoading || measurementLoading;
 
   return (
     <section className="bg-card rounded-xl border border-border/60 p-4 shadow-sm space-y-4">
@@ -250,7 +299,7 @@ export function DashboardCalendar() {
           <p className="text-sm text-muted-foreground">
             {isLoading
               ? "Loading…"
-              : `${appointments.length} appointments · ${orders.filter(o => o.trial_date || o.delivery_date).length} orders with dates`}
+              : `${appointments.length} appointments · ${orders.filter(o => o.trial_date || o.delivery_date).length} orders · ${measurements.filter(m => m.trial_date || m.delivery_date).length} measurements with dates`}
           </p>
         </div>
 
