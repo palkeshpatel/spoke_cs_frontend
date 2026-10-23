@@ -60,6 +60,7 @@ const FIELD_ORDER = [
   "Long Kurta Length",
   "Anarkali Length",
   "Nehru Jacket Length",
+  "Nehru Jacket Shoulder",
   "Blazer Shoulder",
   "Shirt Shoulder",
   "Blazer Sleeve Length",
