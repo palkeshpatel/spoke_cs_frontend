@@ -115,6 +115,74 @@ const formatDateString = (str: string | null | undefined): string => {
   return str.substring(0, 10);
 };
 
+const READY_FIELD_KEY_MAP: Record<string, Record<string, string>> = {
+  Body: {
+    Height: "ready_height",
+    Weight: "ready_weight",
+  },
+  Suit: {
+    "Blazer Jodhpuri Length": "ready_blazer_jodhpuri_length",
+    "Nawabi Length": "ready_nawabi_length",
+    "Indo Western Length": "ready_indo_western_length",
+    "Bomber Jacket Length": "ready_bomber_jacket_length",
+    "Sherwani Length": "ready_sherwani_length",
+    "Anarkali Length": "ready_anarkali_length",
+    "Nehru Jacket Length": "ready_nehru_jacket_length",
+    "Nehru Jacket Shoulder": "ready_nehru_jacket_shoulder",
+    "Blazer Shoulder": "ready_blazer_shoulder",
+    "Blazer Sleeve Length": "ready_blazer_sleeve_length",
+    "Chest": "ready_suit_chest",
+    "Stomach": "ready_suit_stomach",
+    "UB Hip": "ready_suit_ub_hip",
+    "Collar/Neck": "ready_suit_collar_neck",
+    "Bicep": "ready_suit_bicep",
+    "Fore-arm": "ready_suit_fore_arm",
+    "Front Chest (FC)": "ready_suit_front_chest",
+    "Half Chest": "ready_suit_half_chest",
+    "Back Chest (BC)": "ready_suit_back_chest",
+    "Arm Hole": "ready_suit_arm_hole",
+  },
+  Shirt: {
+    "Shirt Length": "ready_shirt_length",
+    "Short Kurta Length": "ready_short_kurta_length",
+    "Long Kurta Length": "ready_long_kurta_length",
+    "Shirt Shoulder": "ready_shirt_shoulder",
+    "Shirt Sleeve Length": "ready_shirt_sleeve_length",
+    "Chest": "ready_shirt_chest",
+    "Stomach": "ready_shirt_stomach",
+    "UB Hip": "ready_shirt_ub_hip",
+    "Collar/Neck": "ready_shirt_collar_neck",
+    "Bicep": "ready_shirt_bicep",
+    "Fore-arm": "ready_shirt_fore_arm",
+    "Front Chest (FC)": "ready_shirt_front_chest",
+    "Half Chest": "ready_shirt_half_chest",
+    "Back Chest (BC)": "ready_shirt_back_chest",
+    "Arm Hole": "ready_shirt_arm_hole",
+  },
+  Pants: {
+    "Trouser Length": "ready_trouser_length",
+    "In-Seam Length": "ready_in_seam_length",
+    "Waist": "ready_waist",
+    "LB Hip": "ready_lb_hip",
+    "Thigh": "ready_thigh",
+    "Knee": "ready_knee",
+    "Calf": "ready_calf",
+    "Bottom": "ready_bottom",
+    "Fly": "ready_fly",
+    "SR": "ready_sr",
+  },
+};
+
+const getReadyDbKey = (garment: string, fieldName: string): string => {
+  if (READY_FIELD_KEY_MAP[garment]?.[fieldName]) {
+    return READY_FIELD_KEY_MAP[garment][fieldName];
+  }
+  const cleanName = fieldName.toLowerCase().replace(/[^a-z0-9]+/g, "_");
+  if (garment === "Suit") return `ready_suit_${cleanName}`;
+  if (garment === "Shirt") return `ready_shirt_${cleanName}`;
+  return `ready_${cleanName}`;
+};
+
 export default function MeasurementNew() {
   const navigate = useNavigate();
   const location = useLocation();
@@ -135,13 +203,19 @@ export default function MeasurementNew() {
   const [suitNotes, setSuitNotes] = useState<string>("");
   const [shirtNotes, setShirtNotes] = useState<string>("");
   const [pantNotes, setPantNotes] = useState<string>("");
+  const [readySuitNotes, setReadySuitNotes] = useState<string>("");
+  const [readyShirtNotes, setReadyShirtNotes] = useState<string>("");
+  const [readyPantNotes, setReadyPantNotes] = useState<string>("");
   const [trialDate, setTrialDate] = useState<string>("");
   const [deliveryDate, setDeliveryDate] = useState<string>("");
   const [valuesDraft, setValuesDraft] = useState<Record<number, string>>({});
+  const [readyValuesDraft, setReadyValuesDraft] = useState<Record<string, string>>({});
   const [isEditing, setIsEditing] = useState<boolean>(false);
 
   const [pendingChange, setPendingChange] = useState<{
-    fieldId: number;
+    fieldId?: number;
+    readyKey?: string;
+    isReady?: boolean;
     fieldName: string;
     prevValue: string;
     newValue: string;
@@ -161,6 +235,32 @@ export default function MeasurementNew() {
         newValue: currentVal,
       });
     }
+  };
+
+  const handleReadyFieldBlur = (readyKey: string, fieldName: string, currentVal: string) => {
+    if (isEditMode && currentVal !== originalValue) {
+      setPendingChange({
+        readyKey,
+        isReady: true,
+        fieldName,
+        prevValue: originalValue,
+        newValue: currentVal,
+      });
+    }
+  };
+
+  const handleReadyMeasurementChange = (readyKey: string, value: string, fieldName: string) => {
+    const maxDigits = (fieldName === "Height" || fieldName === "Weight") ? 3 : 2;
+    const regex = new RegExp(`^\\d{0,${maxDigits}}(\\.\\d{0,2})?$`);
+
+    if (value !== "" && !regex.test(value)) {
+      return;
+    }
+
+    setReadyValuesDraft((prev) => ({
+      ...prev,
+      [readyKey]: value,
+    }));
   };
 
   const notesRef = useRef<HTMLTextAreaElement>(null);
@@ -325,6 +425,41 @@ export default function MeasurementNew() {
     return json;
   };
 
+  const buildReadyMeasurementJson = () => {
+    const json: Record<string, Record<string, string | null>> = {
+      Body: {},
+      Suit: {},
+      Shirt: {},
+      Pants: {},
+    };
+    for (const [garment, fields] of Object.entries(READY_FIELD_KEY_MAP)) {
+      for (const [fieldName, dbKey] of Object.entries(fields)) {
+        const raw = readyValuesDraft[dbKey] ?? "";
+        const clean = raw.trim();
+        json[garment][fieldName] = clean === "" ? null : clean;
+      }
+    }
+    json["Suit"]["Notes"] = readySuitNotes === "" ? null : readySuitNotes;
+    json["Shirt"]["Notes"] = readyShirtNotes === "" ? null : readyShirtNotes;
+    json["Pants"]["Notes"] = readyPantNotes === "" ? null : readyPantNotes;
+    return json;
+  };
+
+  const buildReadyFlatPayload = () => {
+    const payload: Record<string, string | null> = {};
+    for (const [garment, fields] of Object.entries(READY_FIELD_KEY_MAP)) {
+      for (const [fieldName, dbKey] of Object.entries(fields)) {
+        const raw = readyValuesDraft[dbKey] ?? "";
+        const clean = raw.trim();
+        payload[dbKey] = clean === "" ? null : clean;
+      }
+    }
+    payload["ready_blazer_comments"] = readySuitNotes.trim() === "" ? null : readySuitNotes.trim();
+    payload["ready_shirt_comments"] = readyShirtNotes.trim() === "" ? null : readyShirtNotes.trim();
+    payload["ready_trouser_comments"] = readyPantNotes.trim() === "" ? null : readyPantNotes.trim();
+    return payload;
+  };
+
   const handleGarmentTypeChange = (v: string) => {
     setGarmentType(v);
   };
@@ -393,9 +528,13 @@ export default function MeasurementNew() {
       setSuitNotes("");
       setShirtNotes("");
       setPantNotes("");
+      setReadySuitNotes("");
+      setReadyShirtNotes("");
+      setReadyPantNotes("");
       setTrialDate("");
       setDeliveryDate("");
       setValuesDraft({});
+      setReadyValuesDraft({});
       return;
     }
 
@@ -436,6 +575,26 @@ export default function MeasurementNew() {
       next[f.id] = fromJson === null || fromJson === undefined ? "" : String(fromJson);
     }
     setValuesDraft(next);
+
+    // Ready measurements loading
+    const nextReady: Record<string, string> = {};
+    const readyJson = (currentGarmentMeasurement.ready_measurement_json ?? {}) as Record<string, Record<string, string | null>>;
+
+    for (const [garment, fields] of Object.entries(READY_FIELD_KEY_MAP)) {
+      for (const [fieldName, dbKey] of Object.entries(fields)) {
+        const flatVal = (currentGarmentMeasurement as Record<string, unknown>)[dbKey];
+        if (flatVal !== undefined && flatVal !== null) {
+          nextReady[dbKey] = String(flatVal);
+        } else {
+          const jsonVal = readyJson[garment]?.[fieldName];
+          nextReady[dbKey] = jsonVal !== undefined && jsonVal !== null ? String(jsonVal) : "";
+        }
+      }
+    }
+    setReadyValuesDraft(nextReady);
+    setReadySuitNotes(((currentGarmentMeasurement.ready_blazer_comments as string) ?? readyJson.Suit?.Notes ?? ""));
+    setReadyShirtNotes(((currentGarmentMeasurement.ready_shirt_comments as string) ?? readyJson.Shirt?.Notes ?? ""));
+    setReadyPantNotes(((currentGarmentMeasurement.ready_trouser_comments as string) ?? readyJson.Pants?.Notes ?? ""));
   }, [currentGarmentMeasurement, customerId, allFields, isEditMode]);
 
   const createMutation = useMutation({
@@ -492,7 +651,7 @@ export default function MeasurementNew() {
     if (isEditMode && isEditing) {
       setHasUnsavedChanges(true);
     }
-  }, [valuesDraft, takenBy, notes, suitNotes, shirtNotes, pantNotes, trialDate, deliveryDate, isEditMode, isEditing]);
+  }, [valuesDraft, readyValuesDraft, takenBy, notes, suitNotes, shirtNotes, pantNotes, readySuitNotes, readyShirtNotes, readyPantNotes, trialDate, deliveryDate, isEditMode, isEditing]);
 
   const autoSaveMutation = useMutation({
     mutationFn: async ({ id, payload }: { id: number; payload: Parameters<typeof updateMeasurement>[1] }) =>
@@ -519,12 +678,14 @@ export default function MeasurementNew() {
           trial_date: trialDate || null,
           delivery_date: deliveryDate || null,
           measurement_json: buildMeasurementJson(),
+          ready_measurement_json: buildReadyMeasurementJson(),
+          ...buildReadyFlatPayload(),
         },
       });
     }, 2000); // 2 seconds debounce
 
     return () => clearTimeout(timer);
-  }, [valuesDraft, takenBy, notes, suitNotes, shirtNotes, pantNotes, trialDate, deliveryDate, isEditMode, isEditing, hasUnsavedChanges, measurementId]);
+  }, [valuesDraft, readyValuesDraft, takenBy, notes, suitNotes, shirtNotes, pantNotes, readySuitNotes, readyShirtNotes, readyPantNotes, trialDate, deliveryDate, isEditMode, isEditing, hasUnsavedChanges, measurementId]);
 
   const submit = () => {
     if (!customerId) {
@@ -562,6 +723,8 @@ export default function MeasurementNew() {
       trial_date: trialDate || null,
       delivery_date: deliveryDate || null,
       measurement_json: buildMeasurementJson(),
+      ready_measurement_json: buildReadyMeasurementJson(),
+      ...buildReadyFlatPayload(),
     });
   };
 
@@ -595,7 +758,7 @@ table { width: 100%; border-collapse: collapse; }
 <div class="header">
   <img src="/spoke-by-nishit-soni-logo.svg" alt="Spoke Logo" style="height: 50px;" />
   <div style="font-size:18px;font-weight:bold;margin-top:5px;color:#d97706;">
-    Customer Measurement
+    Customer Measurement ${garmentType === "Ready Measurement" ? "(Ready Measurement)" : ""}
   </div>
 </div>
 <table class="info">
@@ -609,18 +772,25 @@ table { width: 100%; border-collapse: collapse; }
 
     const printGroups: { label: string; type: string; rows: { name: string; value: string; unit: string }[] }[] = [];
 
+    const isReadyTab = garmentType === "Ready Measurement";
     // Which groups to print (same logic as printSections)
-    const garmentGroupsToShow = garmentType === "Body" ? ["Body", "Suit", "Shirt", "Pants"] : [garmentType];
+    const garmentGroupsToShow = (garmentType === "Body" || isReadyTab) ? ["Body", "Suit", "Shirt", "Pants"] : [garmentType];
 
     for (const g of garmentGroupsToShow) {
       let currentFields = sortFields(fieldsByGarment[g] ?? []);
       if (g === "Body") {
         currentFields = currentFields.filter((f) => !BODY_HIDDEN_FIELDS.includes(f.field_name));
       }
-      const garmentValues = mergedMeasurementJson[g] ?? {};
+      const garmentValues = isReadyTab ? (readyMeasurementJson[g] ?? {}) : (mergedMeasurementJson[g] ?? {});
 
       const rows = currentFields.map((f) => {
-        const val = garmentValues[f.field_name] ?? "";
+        let val = "";
+        if (isReadyTab) {
+          const dbKey = getReadyDbKey(g, f.field_name);
+          val = (dbKey && readyValuesDraft[dbKey]) ? readyValuesDraft[dbKey] : (garmentValues[f.field_name] ?? "");
+        } else {
+          val = garmentValues[f.field_name] ?? "";
+        }
         return { name: f.field_name, value: val, unit: f.unit ?? "" };
       });
 
@@ -656,7 +826,9 @@ table { width: 100%; border-collapse: collapse; }
         html += `</tr>`;
       }
       html += `</table>`;
-      const gNotes = section.type === "Suit" ? suitNotes : section.type === "Shirt" ? shirtNotes : section.type === "Pants" ? pantNotes : "";
+      const gNotes = isReadyTab
+        ? (section.type === "Suit" ? readySuitNotes : section.type === "Shirt" ? readyShirtNotes : section.type === "Pants" ? readyPantNotes : "")
+        : (section.type === "Suit" ? suitNotes : section.type === "Shirt" ? shirtNotes : section.type === "Pants" ? pantNotes : "");
       if (gNotes && gNotes.trim() !== "") {
         html += `<div style="margin-top: 10px; font-size: 13px;"><b>Notes:</b> <span style="white-space: pre-wrap;">${gNotes}</span></div>`;
       }
@@ -700,8 +872,37 @@ table { width: 100%; border-collapse: collapse; }
 
   // Build a helper that returns what sections to show, matching the screen exactly.
   // Body tab shows ALL garment groups (Body filtered + Suit + Shirt + Pants).
+  // Ready Measurement tab shows all garment groups with ready values.
   // Other tabs show only their own section.
   const getVisibleSections = async () => {
+    const isReadyTab = garmentType === "Ready Measurement";
+    if (isReadyTab) {
+      const readyJson = buildReadyMeasurementJson();
+      const garmentGroupsToShow = GARMENT_TYPES;
+      const sections: { label: string; rows: { name: string; value: string; unit: string }[] }[] = [];
+
+      for (const g of garmentGroupsToShow) {
+        let fieldRows = await listMeasurementFields(g);
+        if (g === "Body") {
+          fieldRows = fieldRows.filter((f) => !BODY_HIDDEN_FIELDS.includes(f.field_name));
+        }
+        const rows = fieldRows.map((f) => {
+          const dbKey = getReadyDbKey(g, f.field_name);
+          const val = (dbKey && readyValuesDraft[dbKey]) ? readyValuesDraft[dbKey] : (readyJson[g]?.[f.field_name] ?? "");
+          return { name: f.field_name, value: String(val ?? ""), unit: f.unit ?? "" };
+        });
+
+        const gNotes = g === "Suit" ? readySuitNotes : g === "Shirt" ? readyShirtNotes : g === "Pants" ? readyPantNotes : "";
+        if (gNotes && gNotes.trim() !== "") {
+          rows.push({ name: "Notes", value: gNotes, unit: "" });
+        }
+
+        const label = g === "Body" ? "Body Measurements" : `${g} Details`;
+        sections.push({ label, rows });
+      }
+      return sections;
+    }
+
     const valuesMap = new Map<number, string>();
     for (const v of measurement?.values ?? []) {
       if (typeof v.field_id !== "number") continue;
@@ -721,7 +922,7 @@ table { width: 100%; border-collapse: collapse; }
       }
       const rows = fieldRows.map((f) => {
         const jsonVal = measurement?.measurement_json?.[g]?.[f.field_name];
-        const val = valuesMap.get(f.id) ?? (jsonVal ?? "");
+        const val = valuesDraft[f.id] ?? valuesMap.get(f.id) ?? (jsonVal ?? "");
         return { name: f.field_name, value: String(val ?? ""), unit: f.unit ?? "" };
       });
 
@@ -742,9 +943,11 @@ table { width: 100%; border-collapse: collapse; }
       return;
     }
     try {
+      const isReadyTab = garmentType === "Ready Measurement";
       const sections = await getVisibleSections();
       const lines: string[] = [];
       lines.push(`Customer: ${measurement.customer?.name ?? "—"} (${measurement.customer?.customer_code ?? "—"})`);
+      if (isReadyTab) lines.push(`Type: Ready Measurement`);
       if (trialDate) lines.push(`Trial Date: ${trialDate}`);
       if (deliveryDate) lines.push(`Delivery Date: ${deliveryDate}`);
 
@@ -768,9 +971,10 @@ table { width: 100%; border-collapse: collapse; }
   const handleWhatsApp = async () => {
     if (!measurement) return;
     try {
+      const isReadyTab = garmentType === "Ready Measurement";
       const sections = await getVisibleSections();
       const lines: string[] = [];
-      lines.push(`*Measurement Card*`);
+      lines.push(isReadyTab ? `*Ready Measurement Card*` : `*Measurement Card*`);
       lines.push(`Customer: ${measurement.customer?.name ?? "—"} (${measurement.customer?.customer_code ?? "—"})`);
       if (trialDate) lines.push(`Trial Date: ${trialDate}`);
       if (deliveryDate) lines.push(`Delivery Date: ${deliveryDate}`);
@@ -801,24 +1005,38 @@ table { width: 100%; border-collapse: collapse; }
     return buildMeasurementJson();
   }, [allFields, valuesDraft]);
 
+  const readyMeasurementJson = useMemo(() => {
+    return buildReadyMeasurementJson();
+  }, [readyValuesDraft, readySuitNotes, readyShirtNotes, readyPantNotes]);
+
   // printSections mirrors the screen exactly: show ALL fields (empty ones show as "-").
-  // Body tab shows all groups; other tabs show only their group.
+  // Body and Ready Measurement tabs show all groups; other tabs show only their group.
   const printSections = useMemo(() => {
-    const garmentGroupsToShow = garmentType === "Body" ? GARMENT_TYPES : [garmentType as GarmentType];
+    const isReadyTab = garmentType === "Ready Measurement";
+    const garmentGroupsToShow = (garmentType === "Body" || isReadyTab) ? GARMENT_TYPES : [garmentType as GarmentType];
     return garmentGroupsToShow.map((g) => {
       let currentFields = fieldsByGarment[g] ?? [];
       if (g === "Body") {
         currentFields = currentFields.filter((f) => !BODY_HIDDEN_FIELDS.includes(f.field_name));
       }
-      const garmentValues = mergedMeasurementJson[g] ?? {};
+      const garmentValues = isReadyTab ? (readyMeasurementJson[g] ?? {}) : (mergedMeasurementJson[g] ?? {});
       const label = g === "Body" ? "Body Measurements" : `${g} Details`;
       // Show ALL fields (match screen — empty values show as "-")
       const entries = currentFields.map(
-        (f) => [f.field_name, garmentValues[f.field_name] ?? ""] as [string, string]
+        (f) => {
+          let val = "";
+          if (isReadyTab) {
+            const dbKey = getReadyDbKey(g, f.field_name);
+            val = (dbKey && readyValuesDraft[dbKey]) ? readyValuesDraft[dbKey] : (garmentValues[f.field_name] ?? "");
+          } else {
+            val = garmentValues[f.field_name] ?? "";
+          }
+          return [f.field_name, val] as [string, string];
+        }
       );
       return { type: g, label, entries };
     });
-  }, [mergedMeasurementJson, garmentType, fieldsByGarment]);
+  }, [mergedMeasurementJson, readyMeasurementJson, garmentType, fieldsByGarment, readyValuesDraft]);
 
   if (isEditMode && measurementQuery.isLoading) {
     return (
@@ -863,9 +1081,16 @@ table { width: 100%; border-collapse: collapse; }
               if (!currentGarmentMeasurement) {
                 setTakenBy("__none__");
                 setNotes("");
+                setSuitNotes("");
+                setShirtNotes("");
+                setPantNotes("");
+                setReadySuitNotes("");
+                setReadyShirtNotes("");
+                setReadyPantNotes("");
                 setTrialDate("");
                 setDeliveryDate("");
                 setValuesDraft({});
+                setReadyValuesDraft({});
                 setIsEditing(false);
                 return;
               }
@@ -894,6 +1119,26 @@ table { width: 100%; border-collapse: collapse; }
                 next[f.id] = fromJson === null || fromJson === undefined ? "" : String(fromJson);
               }
               setValuesDraft(next);
+
+              // Restore Ready fields
+              const nextReady: Record<string, string> = {};
+              const readyJson = (currentGarmentMeasurement.ready_measurement_json ?? {}) as Record<string, Record<string, string | null>>;
+              for (const [garment, fields] of Object.entries(READY_FIELD_KEY_MAP)) {
+                for (const [fieldName, dbKey] of Object.entries(fields)) {
+                  const flatVal = (currentGarmentMeasurement as Record<string, unknown>)[dbKey];
+                  if (flatVal !== undefined && flatVal !== null) {
+                    nextReady[dbKey] = String(flatVal);
+                  } else {
+                    const jsonVal = readyJson[garment]?.[fieldName];
+                    nextReady[dbKey] = jsonVal !== undefined && jsonVal !== null ? String(jsonVal) : "";
+                  }
+                }
+              }
+              setReadyValuesDraft(nextReady);
+              setReadySuitNotes(((currentGarmentMeasurement.ready_blazer_comments as string) ?? readyJson.Suit?.Notes ?? ""));
+              setReadyShirtNotes(((currentGarmentMeasurement.ready_shirt_comments as string) ?? readyJson.Shirt?.Notes ?? ""));
+              setReadyPantNotes(((currentGarmentMeasurement.ready_trouser_comments as string) ?? readyJson.Pants?.Notes ?? ""));
+
               setIsEditing(false);
             }}
             onSave={() => {
@@ -916,12 +1161,14 @@ table { width: 100%; border-collapse: collapse; }
 
               const payload = {
                 customer_id: Number(customerId),
-                garment_type: garmentType,
+                garment_type: garmentType === "Ready Measurement" ? "Body" : garmentType,
                 taken_by: takenBy !== "__none__" ? Number(takenBy) : null,
                 notes: notes || null,
                 trial_date: trialDate || null,
                 delivery_date: deliveryDate || null,
                 measurement_json: buildMeasurementJson(),
+                ready_measurement_json: buildReadyMeasurementJson(),
+                ...buildReadyFlatPayload(),
               };
 
               if (!currentGarmentMeasurement) {
@@ -931,12 +1178,14 @@ table { width: 100%; border-collapse: collapse; }
               updateMutation.mutate({
                 id: currentGarmentMeasurement.id,
                 payload: {
-                  garment_type: garmentType,
+                  garment_type: payload.garment_type,
                   taken_by: payload.taken_by,
                   notes: payload.notes,
                   trial_date: payload.trial_date,
                   delivery_date: payload.delivery_date,
                   measurement_json: payload.measurement_json,
+                  ready_measurement_json: payload.ready_measurement_json,
+                  ...buildReadyFlatPayload(),
                 },
               });
             }}
@@ -1068,6 +1317,9 @@ table { width: 100%; border-collapse: collapse; }
                   </TabsTrigger>
                   <TabsTrigger value="Pants" className="flex-1">
                     Pants
+                  </TabsTrigger>
+                  <TabsTrigger value="Ready Measurement" className="flex-1">
+                    Ready Measurement
                   </TabsTrigger>
                 </TabsList>
               </Tabs>
@@ -1204,6 +1456,60 @@ table { width: 100%; border-collapse: collapse; }
                     );
                   })
                 )
+              ) : garmentType === "Ready Measurement" ? (
+                (Object.keys(fieldsByGarment) as GarmentType[]).map((g) => {
+                  let grpFields = fieldsByGarment[g] ?? [];
+                  if (g === "Body") {
+                    const hiddenFields = ["Chest", "Waist", "UB Hip"];
+                    grpFields = grpFields.filter((f) => !hiddenFields.includes(f.field_name));
+                  }
+                  if (grpFields.length === 0) return null;
+                  grpFields = sortFields(grpFields);
+                  return (
+                    <div key={`ready-${g}`} className="space-y-3">
+                      <h3 className="text-sm font-semibold border-b border-border pb-1 text-primary">
+                        {g === "Body" ? "Body Measurements" : `${g} Details`}
+                      </h3>
+                      <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
+                        {grpFields.map((f) => {
+                          const dbKey = getReadyDbKey(g, f.field_name);
+                          return (
+                            <div key={`ready-${g}-${f.id}`} className="space-y-1">
+                              <div className="text-xs text-muted-foreground">
+                                {f.field_name}
+                              </div>
+                              <Input
+                                type="number"
+                                value={readyValuesDraft[dbKey] ?? ""}
+                                onChange={(e) => handleReadyMeasurementChange(dbKey, e.target.value, f.field_name)}
+                                onFocus={(e) => handleFieldFocus(e.target.value)}
+                                onBlur={(e) => handleReadyFieldBlur(dbKey, f.field_name, e.target.value)}
+                                placeholder={f.unit}
+                                disabled={!canEdit}
+                              />
+                            </div>
+                          );
+                        })}
+                      </div>
+                      {g !== "Body" && (
+                        <div className="mt-4">
+                          <div className="text-xs text-muted-foreground mb-1">{getGarmentCommentLabel(g)}</div>
+                          <Textarea
+                            value={g === "Suit" ? readySuitNotes : g === "Shirt" ? readyShirtNotes : readyPantNotes}
+                            onChange={(e) => {
+                              if (g === "Suit") setReadySuitNotes(e.target.value);
+                              else if (g === "Shirt") setReadyShirtNotes(e.target.value);
+                              else setReadyPantNotes(e.target.value);
+                            }}
+                            placeholder="Type here..."
+                            disabled={!canEdit}
+                            className="h-20"
+                          />
+                        </div>
+                      )}
+                    </div>
+                  );
+                })
               ) : (
                 <>
                   <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
@@ -1367,10 +1673,17 @@ table { width: 100%; border-collapse: collapse; }
             <AlertDialogCancel
               onClick={() => {
                 if (pendingChange) {
-                  setValuesDraft((prev) => ({
-                    ...prev,
-                    [pendingChange.fieldId]: pendingChange.prevValue,
-                  }));
+                  if (pendingChange.isReady && pendingChange.readyKey) {
+                    setReadyValuesDraft((prev) => ({
+                      ...prev,
+                      [pendingChange.readyKey!]: pendingChange.prevValue,
+                    }));
+                  } else if (pendingChange.fieldId !== undefined) {
+                    setValuesDraft((prev) => ({
+                      ...prev,
+                      [pendingChange.fieldId!]: pendingChange.prevValue,
+                    }));
+                  }
                 }
                 setPendingChange(null);
               }}

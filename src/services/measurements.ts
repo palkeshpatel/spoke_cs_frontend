@@ -40,6 +40,8 @@ export type MeasurementDto = {
   trial_date: string | null;
   delivery_date: string | null;
   measurement_json?: Record<string, Record<string, string | null>> | null;
+  ready_measurement_json?: Record<string, Record<string, string | null>> | null;
+  [key: string]: unknown;
   created_at: string;
   updated_at: string;
   customer?: CustomerLite;
@@ -129,6 +131,8 @@ export async function updateMeasurement(
     delivery_date: string | null;
     values: Array<{ field_id: number; value: number | null }>;
     measurement_json: Record<string, Record<string, string | null>>;
+    ready_measurement_json: Record<string, Record<string, string | null>>;
+    [key: string]: unknown;
   }>,
 ) {
   const res = await apiRequest<Raw>(`/api/measurements/${id}`, { method: "PUT", body: payload });
@@ -144,6 +148,8 @@ export async function createMeasurement(payload: {
   delivery_date?: string | null;
   values?: Array<{ field_id: number; value: number | null }>;
   measurement_json?: Record<string, Record<string, string | null>>;
+  ready_measurement_json?: Record<string, Record<string, string | null>>;
+  [key: string]: unknown;
 }) {
   const res = await apiRequest<Raw>(`/api/measurements`, { method: "POST", body: payload });
   return normalizeMeasurement(res);
